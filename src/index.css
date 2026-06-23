@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-chatme-black: #000000;
+  --color-chatme-surface: #111111;
+  --color-chatme-surface-secondary: #1A1A1A;
+  --color-chatme-yellow: #FCC105;
+  --color-chatme-yellow-hover: #FFD34D;
+  --color-chatme-yellow-dark: #C99600;
+  --color-chatme-white: #FFFFFF;
+  --color-chatme-muted: #8A8A8A;
+  --color-chatme-border: #2B2B2B;
+  --color-chatme-success: #22C55E;
+  --color-chatme-error: #EF4444;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+}
+
+:root {
+  --background: #000000;
+  --surface: #111111;
+  --surface-secondary: #1A1A1A;
+  --primary: #FCC105;
+  --primary-hover: #FFD34D;
+  --primary-dark: #C99600;
+  --text-primary: #FFFFFF;
+  --text-secondary: #CFCFCF;
+  --text-muted: #8A8A8A;
+  --border: #2B2B2B;
+  --success: #22C55E;
+  --error: #EF4444;
+
+  color-scheme: dark;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Custom Scrollbar for premium dark feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2B2B2B;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FCC105;
+}
+
+/* Custom styles for animations and premium highlights */
+.chat-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(252, 193, 5, 0.4);
+}
+
+.focus-yellow:focus {
+  outline: 2px solid #FCC105;
+  outline-offset: -2px;
+}

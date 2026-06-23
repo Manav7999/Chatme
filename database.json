@@ -1,0 +1,61 @@
+{
+  "users": [
+    {
+      "id": "user_1782187253179_343",
+      "username": "Alice",
+      "passwordHash": "0b18a57e246ed2e1660a28945452ac5c:07d1f2bece289a076b669edc95bfebaf8e21a7fdc3e5e195aaff8ed474223c5f4caa1c3ac8e2db47c6d4fbc95ee5168c6ce15aab0e5d0df67125cf8eff8c9d72",
+      "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1",
+      "role": "ChatMe Connected Member",
+      "createdAt": "2026-06-23T04:00:53.180Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_1782187278293_234",
+      "sender": "user_1782187253179_343",
+      "recipient": "evelyn",
+      "text": "Hello Evelyn, testing database persistence",
+      "time": "09:31 AM",
+      "msgType": "text",
+      "createdAt": "2026-06-23T04:01:18.293Z",
+      "status": "sent"
+    },
+    {
+      "id": "msg_1782187279301_482",
+      "sender": "evelyn",
+      "recipient": "user_1782187253179_343",
+      "text": "I agree. Let's make sure the scrollbars and interactive states feel smooth on the dashboard view.",
+      "time": "09:31 AM",
+      "msgType": "text",
+      "createdAt": "2026-06-23T04:01:19.301Z",
+      "status": "read"
+    },
+    {
+      "id": "msg_1782187547021_239",
+      "sender": "user_1782187253179_343",
+      "recipient": "evelyn",
+      "text": "<img src=x onerror=\"window.confirm=()=>true;console.log('injected')\">",
+      "time": "09:35 AM",
+      "msgType": "text",
+      "createdAt": "2026-06-23T04:05:47.021Z",
+      "status": "sent"
+    },
+    {
+      "id": "msg_1782187548037_486",
+      "sender": "evelyn",
+      "recipient": "user_1782187253179_343",
+      "text": "I agree. Let's make sure the scrollbars and interactive states feel smooth on the dashboard view.",
+      "time": "09:35 AM",
+      "msgType": "text",
+      "createdAt": "2026-06-23T04:05:48.037Z",
+      "status": "read"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "cf19eac806add2159b99c260205af2868f1ac0bc2debe6d7f90235e579843941",
+      "userId": "user_1782187253179_343",
+      "expiresAt": "2026-07-23T04:00:53.185Z"
+    }
+  ]
+}
