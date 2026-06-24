@@ -2,9 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatList from './components/ChatList';
 import ChatWindow from './components/ChatWindow';
+import ChannelWindow from './components/ChannelWindow';
 import ProfileSettings from './components/ProfileSettings';
+import {
+  generateKeyPair, exportPublicKey, importPublicKey,
+  deriveSharedKey, encryptMessage, decryptMessage,
+  storeSharedKey, getSharedKey, hasSharedKey,
+  exportPrivateKey, importPrivateKey, exportSharedKey, importSharedKey
+} from './crypto.js';
 import { 
-  Sparkles, Users, MessageSquare, Compass, Bell, Check, 
+  Sparkles, Users, MessageSquare, Compass, Bell, Check, Hash,
   ArrowRight, ShieldCheck, HelpCircle, Laptop, Settings, Lock,
   X, Mic, Phone, Video
 } from 'lucide-react';
@@ -12,15 +19,38 @@ import {
 // Default Scaffold Data
 const initialChats = [];
 
+// Default channel definitions (synced with server)
+const DEFAULT_CHANNEL_DEFS = [
+  { id: 'general', name: '#general', description: 'Company-wide announcements and updates', memberCount: 0, messages: [] },
+  { id: 'design', name: '#design', description: 'UI/UX branding and high-contrast design', memberCount: 0, messages: [] },
+  { id: 'engineering', name: '#engineering', description: 'Vite, React, WebRTC and code discussions', memberCount: 0, messages: [] },
+  { id: 'random', name: '#random', description: 'Off-topic fun and casual conversation', memberCount: 0, messages: [] }
+];
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isVerifyingToken, setIsVerifyingToken] = useState(() => {
+    return typeof window !== 'undefined' && !!localStorage.getItem('chatme_jwt');
+  });
   const socketRef = useRef(null);
+
+  // E2EE: our key pair for this session
+  const myKeyPairRef = useRef(null);     // { publicKey, privateKey }
+  const [myPublicKeyB64, setMyPublicKeyB64] = useState(''); // base64 export of our public key
+
   const [currentUser, setCurrentUser] = useState({
     name: 'Developer Agent',
     avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=user',
     isOnline: true
   });
   const [chats, setChats] = useState(initialChats);
+
+  // Auth state
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
   
   // Parse URL search parameters for profile link invitations
   const [inviteData, setInviteData] = useState(() => {
@@ -36,6 +66,13 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   
+  // Channels state
+  const [channelList, setChannelList] = useState(DEFAULT_CHANNEL_DEFS);
+  const [joinedChannels, setJoinedChannels] = useState(new Set()); // channel IDs
+  const [activeChannelId, setActiveChannelId] = useState(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  
   const [settings, setSettings] = useState({
     simulationSpeed: 'fast',
     soundEnabled: true,
@@ -50,6 +87,7 @@ export default function App() {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStreamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
   const activeCallRef = useRef(null);
   activeCallRef.current = activeCall;
   const ringtoneIntervalRef = useRef(null);
@@ -211,6 +249,7 @@ export default function App() {
 
     pc.ontrack = (event) => {
       console.log("Received remote track:", event.streams[0]);
+      remoteStreamRef.current = event.streams[0];
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = event.streams[0];
       }
@@ -232,6 +271,7 @@ export default function App() {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    remoteStreamRef.current = null;
   };
 
   const startCall = async (type) => {
@@ -312,6 +352,9 @@ export default function App() {
         to: activeCall.chat.id
       }));
     }
+    if (activeCall.direction === 'outgoing') {
+      logCallMessage(activeCall.chat.id, activeCall.type, 'missed', 0);
+    }
     setActiveCall(null);
     playDisconnectTone();
   };
@@ -326,6 +369,9 @@ export default function App() {
         type: 'call_end',
         to: activeCall.chat.id
       }));
+    }
+    if (activeCall.direction === 'outgoing') {
+      logCallMessage(activeCall.chat.id, activeCall.type, 'completed', activeCall.duration);
     }
     setActiveCall(null);
     playDisconnectTone();
@@ -367,30 +413,108 @@ export default function App() {
       return;
     }
     
-    // Only show notification if page is hidden OR user is looking at a different chat/tab
     const isPageHidden = document.visibilityState === 'hidden';
     const isDifferentChat = activeChatIdRef.current !== senderId || activeTabRef.current !== 'chats';
     
     if (isPageHidden || isDifferentChat) {
       try {
-        const notification = new Notification(senderName, {
-          body: text,
-          icon: avatarUrl || '/chatmeappicon.png',
-          tag: senderId,
-          renotify: true
-        });
-        
-        notification.onclick = () => {
-          window.focus();
-          handleSelectChat(senderId);
-          setActiveTab('chats');
-          notification.close();
-        };
+        // Prefer SW notification (works in background, mobile, etc.)
+        if (swRegistrationRef.current) {
+          swRegistrationRef.current.showNotification(senderName, {
+            body: text.length > 80 ? text.slice(0, 80) + '…' : text,
+            icon: avatarUrl || '/chatmeappicon.png',
+            badge: '/favicon.svg',
+            tag: senderId,
+            renotify: true,
+            vibrate: [200, 100, 200],
+            data: { senderId }
+          });
+        } else {
+          // Fallback to standard Notification API
+          const notification = new Notification(senderName, {
+            body: text,
+            icon: avatarUrl || '/chatmeappicon.png',
+            tag: senderId,
+            renotify: true
+          });
+          notification.onclick = () => {
+            window.focus();
+            handleSelectChat(senderId);
+            setActiveTab('chats');
+            notification.close();
+          };
+        }
       } catch (e) {
         console.warn('Failed to send desktop notification:', e);
       }
     }
   };
+
+
+  // Generate or load E2EE key pair and restore derived keys on mount
+  useEffect(() => {
+    const initE2EE = async () => {
+      try {
+        const storedPubB64 = localStorage.getItem('chatme_ecdh_public_b64');
+        const storedPrivJwk = localStorage.getItem('chatme_ecdh_private_jwk');
+
+        if (storedPubB64 && storedPrivJwk) {
+          console.log('Loading existing E2EE keys from localStorage...');
+          const pubKey = await importPublicKey(storedPubB64);
+          const privKey = await importPrivateKey(storedPrivJwk);
+          myKeyPairRef.current = { publicKey: pubKey, privateKey: privKey };
+          setMyPublicKeyB64(storedPubB64);
+          console.log('E2EE keys loaded successfully.');
+        } else {
+          console.log('Generating fresh E2EE key pair...');
+          const kp = await generateKeyPair();
+          myKeyPairRef.current = kp;
+          
+          const pubB64 = await exportPublicKey(kp.publicKey);
+          const privJwk = await exportPrivateKey(kp.privateKey);
+          
+          localStorage.setItem('chatme_ecdh_public_b64', pubB64);
+          localStorage.setItem('chatme_ecdh_private_jwk', privJwk);
+          
+          setMyPublicKeyB64(pubB64);
+          console.log('Fresh E2EE key pair generated and persisted.');
+        }
+
+        // Restore derived shared keys from localStorage
+        const keysToLoad = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('chatme_shared_key_')) {
+            const peerId = key.replace('chatme_shared_key_', '');
+            const b64 = localStorage.getItem(key);
+            keysToLoad.push({ peerId, b64 });
+          }
+        }
+
+        await Promise.all(keysToLoad.map(async ({ peerId, b64 }) => {
+          try {
+            const sharedKey = await importSharedKey(b64);
+            storeSharedKey(peerId, sharedKey);
+          } catch (e) {
+            console.warn(`Failed to import stored shared key for ${peerId}:`, e);
+          }
+        }));
+        console.log(`Loaded ${keysToLoad.length} E2EE shared keys from localStorage.`);
+      } catch (err) {
+        console.warn('E2EE initialization failed, generating fallback ephemeral key...', err);
+        try {
+          const kp = await generateKeyPair();
+          myKeyPairRef.current = kp;
+          const pubB64 = await exportPublicKey(kp.publicKey);
+          setMyPublicKeyB64(pubB64);
+        } catch (innerErr) {
+          console.warn('Fallback E2EE keygen failed:', innerErr);
+        }
+      }
+    };
+
+    initE2EE();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -399,24 +523,60 @@ export default function App() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+
   }, []);
 
-  // Local Storage syncing
+  // Service Worker registration for background push notifications
+  const swRegistrationRef = useRef(null);
   useEffect(() => {
-    const savedUser = localStorage.getItem('chatme_user');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+          swRegistrationRef.current = reg;
+          console.log('ChatMe Service Worker registered:', reg.scope);
+        })
+        .catch(err => console.warn('SW registration failed:', err));
+    }
+  }, []);
+
+
+  // Local Storage syncing + JWT auto-login
+  useEffect(() => {
     const savedChats = localStorage.getItem('chatme_chats');
     const savedSettings = localStorage.getItem('chatme_settings');
-    const savedLogin = localStorage.getItem('chatme_loggedin');
+    const savedToken = localStorage.getItem('chatme_jwt');
 
-    if (savedUser) setCurrentUser(JSON.parse(savedUser));
-    if (savedChats) setChats(JSON.parse(savedChats));
+    if (savedChats) {
+      setChats(JSON.parse(savedChats));
+      setIsLoadingChats(false);
+    } else {
+      setIsLoadingChats(true);
+    }
     if (savedSettings) setSettings(JSON.parse(savedSettings));
-    if (savedLogin) setIsLoggedIn(JSON.parse(savedLogin));
+
+    // Auto-verify JWT token
+    if (savedToken) {
+      fetch('/api/auth/verify', {
+        headers: { Authorization: `Bearer ${savedToken}` }
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.user) {
+            setCurrentUser({ ...data.user, isOnline: true });
+            setIsLoggedIn(true);
+          } else {
+            localStorage.removeItem('chatme_jwt');
+          }
+        })
+        .catch(() => localStorage.removeItem('chatme_jwt'))
+        .finally(() => setIsVerifyingToken(false));
+    }
   }, []);
+
 
   // WebSocket Connection Handler
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && myPublicKeyB64) {
       connectWebSocket();
     } else {
       if (socketRef.current) {
@@ -428,7 +588,7 @@ export default function App() {
         socketRef.current.close();
       }
     };
-  }, [isLoggedIn, currentUser.name, currentUser.avatarUrl]);
+  }, [isLoggedIn, currentUser.name, currentUser.avatarUrl, myPublicKeyB64]);
 
   const connectWebSocket = () => {
     if (socketRef.current && (socketRef.current.readyState === WebSocket.OPEN || socketRef.current.readyState === WebSocket.CONNECTING)) {
@@ -450,18 +610,22 @@ export default function App() {
 
     ws.onopen = () => {
       console.log('WebSocket connection opened successfully.');
-      const userId = localStorage.getItem('chatme_user_id') || `real_${currentUser.name.toLowerCase().replace(/\s+/g, '_')}_${Math.floor(Math.random() * 1000)}`;
-      localStorage.setItem('chatme_user_id', userId);
+      // Use the authenticated user ID from JWT, falling back to a stable local ID
+      const userId = currentUser.id || localStorage.getItem('chatme_user_id') || `real_${currentUser.name.toLowerCase().replace(/\s+/g, '_')}_${Math.floor(Math.random() * 1000)}`;
+      if (!currentUser.id) localStorage.setItem('chatme_user_id', userId);
+
 
       const registerPayload = {
         type: 'register',
         user: {
           id: userId,
           name: currentUser.name,
-          avatarUrl: currentUser.avatarUrl
+          avatarUrl: currentUser.avatarUrl,
+          publicKey: myPublicKeyB64   // E2EE public key
         }
       };
       ws.send(JSON.stringify(registerPayload));
+
     };
 
     ws.onmessage = async (event) => {
@@ -563,6 +727,20 @@ export default function App() {
                     messages: []
                   });
                 }
+
+                // E2EE: derive shared key with this peer if they have a publicKey
+                const storedPeerPubKey = localStorage.getItem(`chatme_peer_pubkey_${onlineUser.id}`);
+                const needsDerivation = !hasSharedKey(onlineUser.id) || storedPeerPubKey !== onlineUser.publicKey;
+
+                if (onlineUser.publicKey && myKeyPairRef.current && needsDerivation) {
+                  importPublicKey(onlineUser.publicKey).then(peerPub => {
+                    return deriveSharedKey(myKeyPairRef.current.privateKey, peerPub);
+                  }).then(sharedKey => {
+                    storeSharedKey(onlineUser.id, sharedKey);
+                    localStorage.setItem(`chatme_peer_pubkey_${onlineUser.id}`, onlineUser.publicKey);
+                    console.log(`E2EE key established with ${onlineUser.name}`);
+                  }).catch(err => console.warn('E2EE key derivation failed:', err));
+                }
               });
 
               // Mark offline
@@ -575,27 +753,46 @@ export default function App() {
               saveToLocalStorage(updated);
               return updated;
             });
+            setIsLoadingChats(false);
             break;
 
-          case 'direct_message':
+
+          case 'direct_message': {
+            const senderId = data.sender;
+            const now2 = new Date();
+            const timeStr2 = now2.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Decrypt if message is encrypted
+            let displayText = data.text;
+            if (data.encrypted && data.iv && data.ciphertext) {
+              const sharedKey = getSharedKey(senderId);
+              if (sharedKey) {
+                try {
+                  displayText = await decryptMessage(sharedKey, { iv: data.iv, ciphertext: data.ciphertext });
+                } catch {
+                  displayText = '🔒 [Encrypted — key mismatch]';
+                }
+              } else {
+                displayText = '🔒 [Encrypted — no key]';
+              }
+            }
+
+            const newMsg = {
+              id: data.id,
+              sender: senderId,
+              text: displayText,
+              time: data.time || timeStr2,
+              status: 'read',
+              type: data.msgType || 'text',
+              mediaUrl: data.mediaUrl,
+              size: data.size,
+              duration: data.duration,
+              waveform: data.waveform,
+              encrypted: !!data.encrypted
+            };
+
+
             setChats(prev => {
-              const senderId = data.sender;
-              const now = new Date();
-              const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-              const newMsg = {
-                id: data.id,
-                sender: senderId,
-                text: data.text,
-                time: data.time || timeStr,
-                status: 'read',
-                type: data.msgType || 'text',
-                mediaUrl: data.mediaUrl,
-                size: data.size,
-                duration: data.duration,
-                waveform: data.waveform
-              };
-
               const existingIdx = prev.findIndex(c => c.id === senderId);
               let updated = [...prev];
 
@@ -624,12 +821,14 @@ export default function App() {
                 });
               }
 
-              triggerNotification(data.senderName, data.text, data.senderAvatar, senderId);
+              triggerNotification(data.senderName, displayText, data.senderAvatar, senderId);
               playNotifySound();
               saveToLocalStorage(updated);
               return updated;
             });
             break;
+          }
+
 
           case 'typing_state':
             setChats(prev => {
@@ -675,6 +874,9 @@ export default function App() {
               stopRingtoneLoop();
               stopLocalStream();
               closePeerConnection();
+              if (activeCallRef.current.direction === 'outgoing') {
+                logCallMessage(activeCallRef.current.chat.id, activeCallRef.current.type, 'declined', 0);
+              }
               setActiveCall(null);
               playDisconnectTone();
             }
@@ -685,6 +887,9 @@ export default function App() {
               stopRingtoneLoop();
               stopLocalStream();
               closePeerConnection();
+              if (activeCallRef.current.direction === 'outgoing') {
+                logCallMessage(activeCallRef.current.chat.id, activeCallRef.current.type, 'completed', activeCallRef.current.duration);
+              }
               setActiveCall(null);
               playDisconnectTone();
             }
@@ -726,8 +931,57 @@ export default function App() {
             ));
             break;
 
+          case 'channel_joined':
+            setJoinedChannels(prev => {
+              const next = new Set(prev);
+              next.add(data.channel);
+              return next;
+            });
+            setChannelList(prev => prev.map(ch =>
+              ch.id === data.channel ? { ...ch, memberCount: data.memberCount } : ch
+            ));
+            break;
+
+          case 'channel_left':
+            setJoinedChannels(prev => {
+              const next = new Set(prev);
+              next.delete(data.channel);
+              return next;
+            });
+            if (activeChannelId === data.channel) setActiveChannelId(null);
+            break;
+
+          case 'channel_message': {
+            const now2 = new Date();
+            const timeStr2 = now2.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const chanMsg = {
+              id: data.id || `chanmsg_${Date.now()}`,
+              sender: data.sender,
+              senderName: data.senderName,
+              senderAvatar: data.senderAvatar,
+              text: data.text,
+              time: data.time || timeStr2,
+              type: data.msgType || 'text',
+              mediaUrl: data.mediaUrl || null,
+              size: data.size || null
+            };
+            setChannelList(prev => prev.map(ch =>
+              ch.id === data.channel
+                ? { ...ch, messages: [...(ch.messages || []), chanMsg] }
+                : ch
+            ));
+            break;
+          }
+
+          case 'channel_roster':
+            setChannelList(prev => prev.map(ch =>
+              ch.id === data.channel ? { ...ch, memberCount: data.memberCount } : ch
+            ));
+            break;
+
           default:
             console.warn('Unhandled WS message:', data.type);
+
         }
       } catch (e) {
         console.error('WS message parse error:', e);
@@ -841,7 +1095,8 @@ export default function App() {
     }, delay);
   };
 
-  const handleSendMessage = (text, type = 'text', extra = {}) => {
+  const handleSendMessage = async (text, type = 'text', extra = {}) => {
+
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const clientMsgId = `usrmsg_${Date.now()}`;
@@ -875,27 +1130,267 @@ export default function App() {
     if (isBot) {
       triggerBotResponse(activeChatId, text);
     } else if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const sendPayload = {
-        type: 'direct_message',
-        clientMsgId,
-        to: activeChatId,
-        text,
-        time: timeStr,
-        msgType: type,
-        mediaUrl: extra.mediaUrl,
-        size: extra.size,
-        duration: extra.duration,
-        waveform: extra.waveform
-      };
+      // Encrypt if we have a shared key with the recipient
+      const sharedKey = getSharedKey(activeChatId);
+      let sendPayload;
+      if (sharedKey && type === 'text') {
+        try {
+          const { iv, ciphertext } = await encryptMessage(sharedKey, text);
+          sendPayload = {
+            type: 'direct_message',
+            clientMsgId,
+            to: activeChatId,
+            text: '🔒 Encrypted',    // placeholder visible in transit
+            iv,
+            ciphertext,
+            time: timeStr,
+            msgType: type,
+            encrypted: true
+          };
+        } catch {
+          sendPayload = { type: 'direct_message', clientMsgId, to: activeChatId, text, time: timeStr, msgType: type, mediaUrl: extra.mediaUrl, size: extra.size, duration: extra.duration, waveform: extra.waveform };
+        }
+      } else {
+        sendPayload = {
+          type: 'direct_message',
+          clientMsgId,
+          to: activeChatId,
+          text,
+          time: timeStr,
+          msgType: type,
+          mediaUrl: extra.mediaUrl,
+          size: extra.size,
+          duration: extra.duration,
+          waveform: extra.waveform
+        };
+      }
       socketRef.current.send(JSON.stringify(sendPayload));
     }
+
+  };
+
+  const logCallMessage = (peerId, callType, callStatus, durationSeconds) => {
+    let callDuration = 'No answer';
+    if (callStatus === 'completed') {
+      const mins = Math.floor(durationSeconds / 60);
+      const secs = durationSeconds % 60;
+      callDuration = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else if (callStatus === 'declined') {
+      callDuration = 'Declined';
+    }
+
+    handleSendMessage(
+      callType === 'video' ? 'Video call' : 'Voice call',
+      'call_history',
+      {
+        callType,
+        callStatus, // 'completed' | 'missed' | 'declined'
+        callDuration
+      }
+    );
   };
 
   const handleSendMedia = (mediaObj) => {
-    handleSendMessage(mediaObj.text, mediaObj.type, mediaObj);
+    const targetChatId = activeChatId;
+    if (!targetChatId) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const clientMsgId = `usrmsg_${Date.now()}`;
+
+    const uploadMsg = {
+      id: clientMsgId,
+      sender: 'user',
+      text: mediaObj.text,
+      time: timeStr,
+      status: 'uploading',
+      progress: 0,
+      type: mediaObj.type,
+      mediaUrl: mediaObj.mediaUrl,
+      size: mediaObj.size
+    };
+
+    setChats(prev => {
+      const updated = prev.map(c => {
+        if (c.id === targetChatId) {
+          return { ...c, messages: [...c.messages, uploadMsg] };
+        }
+        return c;
+      });
+      saveToLocalStorage(updated);
+      return updated;
+    });
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.floor(Math.random() * 20) + 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+
+        setChats(prev => {
+          const updated = prev.map(c => {
+            if (c.id === targetChatId) {
+              return {
+                ...c,
+                messages: c.messages.map(m => m.id === clientMsgId ? { ...m, status: 'sent', progress: 100 } : m)
+              };
+            }
+            return c;
+          });
+          saveToLocalStorage(updated);
+          return updated;
+        });
+
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          const sendPayload = {
+            type: 'direct_message',
+            clientMsgId,
+            to: targetChatId,
+            text: mediaObj.text,
+            time: timeStr,
+            msgType: mediaObj.type,
+            mediaUrl: mediaObj.mediaUrl,
+            size: mediaObj.size
+          };
+          socketRef.current.send(JSON.stringify(sendPayload));
+        }
+      } else {
+        setChats(prev => prev.map(c => {
+          if (c.id === targetChatId) {
+            return {
+              ...c,
+              messages: c.messages.map(m => m.id === clientMsgId ? { ...m, progress } : m)
+            };
+          }
+          return c;
+        }));
+      }
+    }, 150);
   };
 
-  const handleSelectChat = (chatId) => {
+  const joinChannel = (channelId) => {
+    if (joinedChannels.has(channelId)) return;
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: 'join_channel', channel: channelId }));
+    }
+    setActiveChannelId(channelId);
+  };
+
+  const leaveChannel = (channelId) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: 'leave_channel', channel: channelId }));
+    }
+    setJoinedChannels(prev => { const n = new Set(prev); n.delete(channelId); return n; });
+    if (activeChannelId === channelId) setActiveChannelId(null);
+  };
+
+  const handleChannelMessage = (channelId, text, type = 'text', extra = {}) => {
+    if (!joinedChannels.has(channelId)) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const localMsg = {
+      id: `chanlocal_${Date.now()}`,
+      sender: currentUser.id || 'user',
+      senderName: currentUser.name,
+      senderAvatar: currentUser.avatarUrl,
+      text,
+      time: timeStr,
+      type,
+      mediaUrl: extra.mediaUrl || null,
+      size: extra.size || null
+    };
+    // Optimistic local add
+    setChannelList(prev => prev.map(ch =>
+      ch.id === channelId
+        ? { ...ch, messages: [...(ch.messages || []), localMsg] }
+        : ch
+    ));
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'channel_message',
+        channel: channelId,
+        text,
+        time: timeStr,
+        msgType: type,
+        mediaUrl: extra.mediaUrl || null,
+        size: extra.size || null
+      }));
+    }
+  };
+
+  const handleChannelSendMedia = (channelId, mediaObj) => {
+    const targetChannelId = channelId;
+    if (!joinedChannels.has(targetChannelId)) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const clientMsgId = `chanlocal_${Date.now()}`;
+
+    const uploadMsg = {
+      id: clientMsgId,
+      sender: currentUser.id || 'user',
+      senderName: currentUser.name,
+      senderAvatar: currentUser.avatarUrl,
+      text: mediaObj.text,
+      time: timeStr,
+      status: 'uploading',
+      progress: 0,
+      type: mediaObj.type,
+      mediaUrl: mediaObj.mediaUrl,
+      size: mediaObj.size
+    };
+
+    setChannelList(prev => prev.map(ch =>
+      ch.id === targetChannelId
+        ? { ...ch, messages: [...(ch.messages || []), uploadMsg] }
+        : ch
+    ));
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.floor(Math.random() * 20) + 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+
+        setChannelList(prev => prev.map(ch => {
+          if (ch.id === targetChannelId) {
+            return {
+              ...ch,
+              messages: ch.messages.map(m => m.id === clientMsgId ? { ...m, status: 'sent', progress: 100 } : m)
+            };
+          }
+          return ch;
+        }));
+
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          socketRef.current.send(JSON.stringify({
+            type: 'channel_message',
+            channel: targetChannelId,
+            text: mediaObj.text,
+            time: timeStr,
+            msgType: mediaObj.type,
+            mediaUrl: mediaObj.mediaUrl,
+            size: mediaObj.size
+          }));
+        }
+      } else {
+        setChannelList(prev => prev.map(ch => {
+          if (ch.id === targetChannelId) {
+            return {
+              ...ch,
+              messages: ch.messages.map(m => m.id === clientMsgId ? { ...m, progress } : m)
+            };
+          }
+          return ch;
+        }));
+      }
+    }, 150);
+  };
+
+
+  const handleSelectChat = async (chatId) => {
     setActiveChatId(chatId);
     setChats(prev => {
       const updated = prev.map(c => c.id === chatId ? { ...c, unreadCount: 0 } : c);
@@ -903,15 +1398,80 @@ export default function App() {
       return updated;
     });
 
-    // Send read receipts to the peer: tell them we've read their messages
+    // Send read receipts to the peer
     const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
     if (!botIds.includes(chatId) && socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
         type: 'message_read',
-        from: chatId   // we are reading messages FROM this user
+        from: chatId
       }));
     }
+
+    // Fetch persistent message history from server for real users
+    if (!botIds.includes(chatId) && currentUser.id) {
+      const token = localStorage.getItem('chatme_jwt');
+      if (!token) return;
+      setIsLoadingHistory(true);
+      try {
+        const res = await fetch(`/api/messages/${currentUser.id}/${chatId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const history = await res.json();
+        if (!Array.isArray(history) || history.length === 0) return;
+
+        const chatObj = chats.find(c => c.id === chatId);
+        const chatName = chatObj ? chatObj.name : 'Peer';
+        const existingIds = new Set(chatObj?.messages.map(m => m.id) || []);
+
+        const newMsgsPromises = history
+          .filter(m => !existingIds.has(m.id))
+          .map(async (m) => {
+            let displayText = m.text;
+            if (m.encrypted && m.iv && m.ciphertext) {
+              const sharedKey = getSharedKey(chatId);
+              if (sharedKey) {
+                try {
+                  displayText = await decryptMessage(sharedKey, { iv: m.iv, ciphertext: m.ciphertext });
+                } catch {
+                  displayText = '🔒 [Encrypted — key mismatch]';
+                }
+              } else {
+                displayText = '🔒 [Encrypted — no key]';
+              }
+            }
+
+            return {
+              id: m.id,
+              sender: m.sender === currentUser.id ? 'user' : m.sender,
+              senderName: m.sender === currentUser.id ? currentUser.name : chatName,
+              text: displayText,
+              time: m.time,
+              status: 'read',
+              type: m.msgType || 'text',
+              mediaUrl: m.mediaUrl,
+              size: m.size || null,
+              encrypted: !!m.encrypted,
+              iv: m.iv || null,
+              ciphertext: m.ciphertext || null
+            };
+          });
+
+        const newMsgs = await Promise.all(newMsgsPromises);
+        if (newMsgs.length === 0) return;
+
+        setChats(prev => prev.map(c => {
+          if (c.id !== chatId) return c;
+          return { ...c, messages: [...newMsgs, ...c.messages.filter(m => !newMsgs.find(n => n.id === m.id))] };
+        }));
+      } catch (e) {
+        console.warn('Could not fetch message history:', e);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
   };
+
 
   const handleNewChat = () => {
     const names = ['Aria Miller', 'Dexter Payne', 'Cleo Sterling', 'Leo Martinez'];
@@ -952,10 +1512,23 @@ export default function App() {
     saveToLocalStorage(updated);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('chatme_jwt');
+    localStorage.removeItem('chatme_chats');
+    localStorage.removeItem('chatme_user');
+    if (socketRef.current) socketRef.current.close();
+    setIsLoggedIn(false);
+    setChats(initialChats);
+    setCurrentUser({ name: 'Developer Agent', avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=user', isOnline: true });
+    setAuthPassword('');
+    setAuthError('');
+  };
+
   const handleResetAllData = () => {
     localStorage.removeItem('chatme_user');
     localStorage.removeItem('chatme_chats');
     localStorage.removeItem('chatme_settings');
+    localStorage.removeItem('chatme_jwt');
     setChats(initialChats);
     setActiveChatId('evelyn');
     setSettings({
@@ -970,105 +1543,213 @@ export default function App() {
     });
   };
 
-  const handleLoginSubmit = (e) => {
+
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser.name.trim()) return;
-    setIsLoggedIn(true);
-    localStorage.setItem('chatme_loggedin', 'true');
-    saveToLocalStorage(chats, currentUser, settings);
-    playNotifySound();
+    if (!currentUser.name.trim() || !authPassword.trim()) {
+      setAuthError('Please fill in all fields');
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError('');
+
+    try {
+      const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const body = authMode === 'register'
+        ? { username: currentUser.name.trim(), password: authPassword, avatarUrl: currentUser.avatarUrl }
+        : { username: currentUser.name.trim(), password: authPassword };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAuthError(data.error || 'Something went wrong');
+        setAuthLoading(false);
+        return;
+      }
+
+      // Save JWT and user data
+      localStorage.setItem('chatme_jwt', data.token);
+      const updatedUser = { ...data.user, isOnline: true };
+      setCurrentUser(updatedUser);
+      saveToLocalStorage(chats, updatedUser, settings);
+      setIsLoggedIn(true);
+      playNotifySound();
+    } catch {
+      setAuthError('Network error — is the server running?');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
-  // Render Splash Login Screen
-  if (!isLoggedIn) {
+  // Render Splash Loading Screen
+  if (isVerifyingToken) {
     return (
       <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none">
-        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img src="/chatmeappicon.png" alt="ChatMe" className="w-16 h-16 object-contain animate-pulse" />
+          </div>
+          <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight animate-pulse">
+            CHAT<span className="text-[#FCC105]">ME</span>
+          </h1>
+          <div className="mt-4 flex items-center gap-2 text-xs text-[#8A8A8A] font-medium tracking-wider uppercase">
+            <span className="w-1.5 h-1.5 bg-[#FCC105] rounded-full animate-ping" />
+            Connecting Securely...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Splash Login/Register Screen
+  if (!isLoggedIn) {
+    const avatarOptions = [
+      'https://api.dicebear.com/7.x/bottts/svg?seed=user',
+      'https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1',
+      'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+      'https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar2',
+      'https://api.dicebear.com/7.x/lorelei/svg?seed=pixel5',
+      'https://api.dicebear.com/7.x/bottts/svg?seed=robby'
+    ];
+    return (
+      <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none">
         {/* Splash Card */}
-        <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-2xl p-8 relative overflow-hidden shadow-2xl">
-          {/* Subtle brand border indicator */}
+        <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#FCC105]" />
           
           <div className="flex flex-col items-center text-center">
-            {/* Logo */}
             <div className="w-16 h-16 flex items-center justify-center">
               <img src="/chatmeappicon.png" alt="ChatMe" className="w-16 h-16 object-contain" />
             </div>
-            
             <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight">
               CHAT<span className="text-[#FCC105]">ME</span>
             </h1>
             <p className="text-sm text-[#8A8A8A] mt-1.5 max-w-[280px]">
-              Secure Premium Messaging Application
+              {authMode === 'register' ? 'Create your secure account' : 'Sign in to your account'}
             </p>
           </div>
 
-          <form onSubmit={handleLoginSubmit} className="mt-8 space-y-5">
-            {/* Name Input */}
-            <div className="space-y-2">
+          {/* Mode Toggle */}
+          <div className="flex mt-8 bg-[#111111] border border-[#2B2B2B] rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => { setAuthMode('login'); setAuthError(''); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                authMode === 'login' ? 'bg-[#FCC105] text-[#000000]' : 'text-[#8A8A8A] hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('register'); setAuthError(''); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                authMode === 'register' ? 'bg-[#FCC105] text-[#000000]' : 'text-[#8A8A8A] hover:text-white'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          <form onSubmit={handleAuthSubmit} className="mt-6 space-y-4">
+            {/* Username Input */}
+            <div className="space-y-1.5">
               <label htmlFor="login-name" className="text-xs font-semibold text-[#FFFFFF] block">
-                Enter Username / Profile Name
+                Username
               </label>
               <input
                 id="login-name"
                 type="text"
-                value={currentUser.name}
+                value={currentUser.name === 'Developer Agent' ? '' : currentUser.name}
                 onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
-                placeholder="Developer"
+                placeholder="Enter your username"
                 required
-                className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3.5 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all"
+                autoComplete="username"
+                className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all"
               />
             </div>
 
-            {/* Avatar Select inside login */}
-            <div className="space-y-2">
-              <span className="text-xs font-semibold text-[#FFFFFF] block">
-                Select Identity Avatar
-              </span>
-              <div className="flex justify-between items-center bg-[#1A1A1A] p-3 rounded-xl border border-[#2B2B2B]">
-                {[
-                  'https://api.dicebear.com/7.x/bottts/svg?seed=user',
-                  'https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1',
-                  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-                  'https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar2'
-                ].map((url, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setCurrentUser({ ...currentUser, avatarUrl: url })}
-                    className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-transform hover:scale-105 cursor-pointer ${
-                      currentUser.avatarUrl === url ? 'border-[#FCC105]' : 'border-transparent'
-                    }`}
-                  >
-                    <img src={url} alt="option" className="w-full h-full bg-[#111111]" />
-                  </button>
-                ))}
-              </div>
+            {/* Password Input */}
+            <div className="space-y-1.5">
+              <label htmlFor="login-password" className="text-xs font-semibold text-[#FFFFFF] block">
+                Password
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder={authMode === 'register' ? 'Create a strong password' : 'Enter your password'}
+                required
+                autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all"
+              />
             </div>
+
+            {/* Avatar Selection (only for registration) */}
+            {authMode === 'register' && (
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-[#FFFFFF] block">Choose Avatar</span>
+                <div className="flex flex-wrap gap-2 justify-center items-center bg-[#1A1A1A] p-2.5 rounded-xl border border-[#2B2B2B]">
+                  {avatarOptions.map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setCurrentUser({ ...currentUser, avatarUrl: url })}
+                      className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${
+                        currentUser.avatarUrl === url ? 'border-[#FCC105] scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={url} alt="avatar option" className="w-full h-full bg-[#111111]" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {authError && (
+              <div className="text-xs text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/20 px-3 py-2 rounded-lg flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full shrink-0" />
+                {authError}
+              </div>
+            )}
 
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-[#FCC105] text-[#000000] font-bold text-sm hover:bg-[#FFD34D] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-lg shadow-[#FCC105]/10 flex items-center justify-center gap-2 cursor-pointer"
+              disabled={authLoading}
+              className="w-full py-3.5 rounded-xl bg-[#FCC105] text-[#000000] font-bold text-sm hover:bg-[#FFD34D] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-lg shadow-[#FCC105]/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Connect to ChatMe
-              <ArrowRight className="w-4 h-4" />
+              {authLoading ? (
+                <span className="w-4 h-4 border-2 border-[#000000]/30 border-t-[#000000] rounded-full animate-spin" />
+              ) : (
+                <>
+                  {authMode === 'register' ? 'Create Account' : 'Sign In'}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
           {/* Core App Tech Pillars */}
-          <div className="mt-8 pt-6 border-t border-[#2B2B2B]/60 flex items-center justify-around text-[10px] text-[#8A8A8A]">
+          <div className="mt-6 pt-5 border-t border-[#2B2B2B]/60 flex items-center justify-around text-[10px] text-[#8A8A8A]">
             <div className="flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-[#FCC105]" />
-              <span>TLS Enforced</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Laptop className="w-3.5 h-3.5 text-[#FCC105]" />
-              <span>Vite Engine</span>
+              <span>JWT Secured</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-[#FCC105]" />
-              <span>Tailwind v4</span>
+              <span>bcrypt Passwords</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Laptop className="w-3.5 h-3.5 text-[#FCC105]" />
+              <span>WebRTC P2P</span>
             </div>
           </div>
         </div>
@@ -1076,11 +1757,12 @@ export default function App() {
     );
   }
 
+
   // Active Chats Workspace
   const activeChat = chats.find(c => c.id === activeChatId);
 
   return (
-    <div className="flex h-screen bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans">
+    <div className="flex w-full max-w-full h-screen bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans">
       
       {/* 1. Left Vertical Nav Sidebar */}
       <Sidebar 
@@ -1092,7 +1774,7 @@ export default function App() {
 
       {/* 2. Main Tab View Panels */}
       {activeTab === 'chats' && (
-        <>
+        <div className={`flex-1 flex h-full min-w-0 overflow-hidden ${isMobile && !activeChatId ? 'pb-16' : ''}`}>
           {/* On mobile, if a chat is active, we hide the ChatList. Otherwise we show it. */}
           {(!isMobile || !activeChatId) && (
             <ChatList 
@@ -1101,6 +1783,7 @@ export default function App() {
               onSelectChat={handleSelectChat}
               onNewChat={handleNewChat}
               currentUser={currentUser}
+              isLoading={isLoadingChats}
             />
           )}
           {/* On mobile, if a chat is active, we show the ChatWindow. Otherwise we hide it. On desktop we show it always. */}
@@ -1113,9 +1796,11 @@ export default function App() {
               onBack={() => setActiveChatId(null)}
               isMobile={isMobile}
               onStartCall={startCall}
+              isEncrypted={!!activeChat && !['liam','sienna','marcus','evelyn'].includes(activeChat.id) && hasSharedKey(activeChat.id)}
+              isLoadingHistory={isLoadingHistory}
             />
           )}
-        </>
+        </div>
       )}
 
       {activeTab === 'contacts' && (
@@ -1169,47 +1854,77 @@ export default function App() {
       )}
 
       {activeTab === 'discover' && (
-        <div className="flex-1 bg-[#000000] p-6 pb-24 md:pb-6 overflow-y-auto select-none">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div>
-              <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                <Compass className="w-6 h-6 text-[#FCC105]" />
-                Public Channels
-              </h1>
-              <p className="text-sm text-[#8A8A8A] mt-1">
-                Explore channels and public group discussions across the organization.
-              </p>
+        <div className={`flex-1 flex h-full min-w-0 overflow-hidden ${isMobile && !activeChannelId ? 'pb-16' : ''}`}>
+          {/* Channel list panel */}
+          {(!isMobile || !activeChannelId) && (
+            <div className="w-full md:w-80 bg-[#000000] border-r border-[#2B2B2B] flex flex-col h-full">
+              <div className="p-5 border-b border-[#2B2B2B]">
+                <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-[#FCC105]" />
+                  Channels
+                </h1>
+                <p className="text-xs text-[#8A8A8A] mt-1">Join a group channel to chat</p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {channelList.map(ch => {
+                  const isJoined = joinedChannels.has(ch.id);
+                  const isActive = activeChannelId === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => {
+                        setActiveChannelId(ch.id);
+                        if (!isJoined) joinChannel(ch.id);
+                      }}
+                      className={`w-full text-left p-3.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                        isActive
+                          ? 'bg-[#FCC105]/10 border-[#FCC105]/40 text-white'
+                          : 'bg-[#111111] border-[#2B2B2B] hover:border-[#FCC105]/30 hover:bg-[#111111]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          isActive ? 'bg-[#FCC105] text-black' : 'bg-[#1A1A1A] text-[#FCC105]'
+                        }`}>
+                          <Hash className="w-4.5 h-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white truncate">{ch.name}</span>
+                            {isJoined && (
+                              <span className="text-[9px] bg-[#22C55E]/20 text-[#22C55E] px-1.5 py-0.5 rounded-full border border-[#22C55E]/30 font-bold uppercase tracking-wider shrink-0">
+                                Joined
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#8A8A8A] truncate mt-0.5">{ch.description}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Users className="w-3 h-3 text-[#8A8A8A]" />
+                            <span className="text-[10px] text-[#8A8A8A]">{ch.memberCount || 0} online</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          )}
 
-            <div className="space-y-4">
-              {[
-                { name: '#general-announcements', desc: 'Company-wide updates and launch information', count: '14 active members' },
-                { name: '#vite4-migration-specs', desc: 'Discussions related to compiler speeds, configurations and HMR', count: '4 active members' },
-                { name: '#design-high-contrast', desc: 'Branding discussions on yellow accents, shadows and custom layouts', count: '6 active members' }
-              ].map((room, idx) => (
-                <div 
-                  key={idx}
-                  className="bg-[#111111] border border-[#2B2B2B] rounded-2xl p-5 flex items-center justify-between hover:border-[#FCC105]/40 transition-all duration-300"
-                >
-                  <div>
-                    <h3 className="text-base font-bold text-white tracking-tight">{room.name}</h3>
-                    <p className="text-xs text-[#8A8A8A] mt-1">{room.desc}</p>
-                    <span className="text-[10px] text-[#FCC105] font-semibold block mt-2">{room.count}</span>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      alert("Connecting to this public workspace channel... This simulated feature is in development!");
-                    }}
-                    className="py-2 px-4 rounded-xl border border-[#FCC105] text-[#FCC105] text-xs font-semibold hover:bg-[rgba(252,193,5,0.12)] transition-colors cursor-pointer shrink-0"
-                  >
-                    Join Channel
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Channel Window (or placeholder) */}
+          {(!isMobile || activeChannelId) && (
+            <ChannelWindow
+              channel={channelList.find(ch => ch.id === activeChannelId) || null}
+              currentUser={currentUser}
+              onSendMessage={handleChannelMessage}
+              onSendMedia={handleChannelSendMedia}
+              onBack={() => setActiveChannelId(null)}
+              isMobile={isMobile}
+            />
+          )}
         </div>
       )}
+
 
       {activeTab === 'notifications' && (
         <div className="flex-1 bg-[#000000] p-6 pb-24 md:pb-6 overflow-y-auto select-none">
@@ -1282,7 +1997,7 @@ export default function App() {
       )}
 
       {/* Mobile Bottom Navigation Bar */}
-      {(!isMobile || !activeChatId || activeTab !== 'chats') && (
+      {(!isMobile || (activeTab === 'chats' && !activeChatId) || (activeTab === 'discover' && !activeChannelId) || (activeTab !== 'chats' && activeTab !== 'discover')) && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center justify-around z-20 px-2 select-none">
           {/* Chats Tab */}
           <button
@@ -1357,114 +2072,81 @@ export default function App() {
           localStorage.setItem('chatme_settings', JSON.stringify(updatedSettings));
         }}
         onResetAllData={handleResetAllData}
+        onLogout={handleLogout}
       />
 
-      {/* Call Overlay View */}
-      {activeCall && (
-        <div className="fixed inset-0 z-50 bg-[#000000]/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 select-none animate-fade-in">
-          <audio ref={remoteAudioRef} autoPlay />
-          <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-3xl p-8 flex flex-col items-center justify-between min-h-[500px] relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#FCC105]" />
-            
-            {/* Call Header / Info */}
-            <div className="w-full flex flex-col items-center mt-4">
-              <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/10 px-3 py-1 rounded-full border border-[#FCC105]/20">
-                {activeCall.type === 'video' ? 'Secure Video Session' : 'Secure Voice Session'}
-              </span>
-              
-              <h2 className="text-2xl font-display font-black text-white mt-6 tracking-tight">
-                {activeCall.chat.name}
-              </h2>
-              
-              <div className="text-xs text-[#8A8A8A] mt-2 font-medium">
-                {activeCall.status === 'ringing' ? (
-                  activeCall.direction === 'incoming' ? 'Incoming call...' : 'Ringing...'
-                ) : (
-                  <span className="flex items-center gap-2 text-[#FCC105] font-bold">
-                    <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-ping" />
-                    {formatCallDuration(activeCall.duration)}
-                  </span>
-                )}
-              </div>
-            </div>
 
-            {/* Video stream container / Pulsing Ring */}
-            <div className="relative w-full flex-1 flex items-center justify-center my-6 min-h-[220px]">
-              {activeCall.type === 'video' && activeCall.status === 'connected' ? (
-                <div className="relative w-full h-[240px] rounded-2xl border border-[#2B2B2B] bg-[#111111] overflow-hidden">
-                  {/* Real Remote Video Stream */}
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Fallback avatar shown when remote video stream isn't yet active */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] pointer-events-none"
-                    style={{ opacity: remoteVideoRef.current?.srcObject ? 0 : 1, transition: 'opacity 0.4s' }}>
-                    <img src={activeCall.chat.avatarUrl} alt="Remote" className="w-20 h-20 rounded-full border border-[#2B2B2B]" />
-                    <span className="text-xs text-[#8A8A8A] mt-3 font-semibold">Connecting stream...</span>
-                  </div>
-                  
-                  {/* Local video PIP */}
-                  {!activeCall.isVideoOff && (
-                    <div className="absolute bottom-3 right-3 w-24 h-32 rounded-xl overflow-hidden border border-[#FCC105] shadow-2xl bg-black">
-                      <video 
-                        ref={localVideoRef} 
-                        autoPlay 
-                        playsInline 
-                        muted 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+      {/* Call Overlay View */}
+      {activeCall && (() => {
+        const isFullScreenVideo = activeCall.type === 'video' && activeCall.status === 'connected';
+        return (
+          <div className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-xl flex flex-col items-center justify-center p-0 select-none animate-fade-in">
+            <audio ref={remoteAudioRef} autoPlay />
+            
+            {isFullScreenVideo ? (
+              /* Full Screen Video Call Layout */
+              <div className="w-full h-full relative overflow-hidden bg-black flex flex-col justify-between">
+                {/* Remote Video (Fills Screen) */}
+                <video
+                  ref={(el) => {
+                    remoteVideoRef.current = el;
+                    if (el && remoteStreamRef.current) {
+                      el.srcObject = remoteStreamRef.current;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                />
+                
+                {/* Connecting fallback */}
+                <div 
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] pointer-events-none z-10 transition-opacity duration-300"
+                  style={{ opacity: remoteStreamRef.current ? 0 : 1 }}
+                >
+                  <img src={activeCall.chat.avatarUrl} alt="Remote" className="w-24 h-24 rounded-full border-2 border-[#2B2B2B]" />
+                  <span className="text-xs text-[#8A8A8A] mt-3 font-semibold">Connecting video stream...</span>
                 </div>
-              ) : (
-                /* Waveform / Ringing state layout */
-                <div className="relative flex items-center justify-center">
-                  {activeCall.status === 'ringing' && (
-                    <>
-                      <div className="absolute w-36 h-36 rounded-full border border-[#FCC105]/20 animate-ping duration-1000" />
-                      <div className="absolute w-44 h-44 rounded-full border border-[#FCC105]/10 animate-ping duration-1000 delay-300" />
-                    </>
-                  )}
-                  <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#FCC105] shadow-2xl relative z-10 bg-[#111111]">
-                    <img 
-                      src={activeCall.chat.avatarUrl} 
-                      alt="avatar" 
-                      className="w-full h-full object-cover" 
+
+                {/* Local Camera Floating PiP */}
+                {!activeCall.isVideoOff && (
+                  <div className="absolute top-24 right-4 w-28 h-36 rounded-2xl overflow-hidden border border-[#FCC105] shadow-2xl bg-black z-20">
+                    <video 
+                      ref={(el) => {
+                        localVideoRef.current = el;
+                        if (el && localStreamRef.current) {
+                          el.srcObject = localStreamRef.current;
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
                     />
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-
-            {/* Bottom Controls */}
-            <div className="w-full flex justify-center items-center gap-6 mt-4">
-              {activeCall.status === 'ringing' && activeCall.direction === 'incoming' ? (
-                /* Accept / Decline triggers */
-                <>
-                  <button
-                    onClick={declineCall}
-                    className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
-                    title="Decline"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
+                {/* Floating Top Header (overlayed over video) */}
+                <div className="absolute top-0 left-0 right-0 p-6 pt-10 flex flex-col items-center bg-gradient-to-b from-[#000000]/90 via-[#000000]/40 to-[#000000]/0 z-20">
+                  <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/15 px-3 py-1 rounded-full border border-[#FCC105]/20 backdrop-blur-md">
+                    Secure Video Session
+                  </span>
                   
-                  <button
-                    onClick={acceptCall}
-                    className="w-14 h-14 rounded-full bg-[#22C55E] text-white flex items-center justify-center hover:scale-105 hover:bg-[#4ADE80] transition-all cursor-pointer shadow-lg shadow-[#22C55E]/20"
-                    title="Accept"
-                  >
-                    <Phone className="w-6 h-6" />
-                  </button>
-                </>
-              ) : (
-                /* Active controls */
-                <>
-                  {/* Mute toggle */}
+                  <h2 className="text-2xl font-display font-black text-white mt-4 tracking-tight drop-shadow-md">
+                    {activeCall.chat.name}
+                  </h2>
+                  
+                  <div className="text-xs text-[#8A8A8A] mt-1.5 font-medium">
+                    <span className="flex items-center gap-2 text-[#FCC105] font-bold drop-shadow">
+                      <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-ping" />
+                      {formatCallDuration(activeCall.duration)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Floating Bottom Controls (overlayed over video) */}
+                <div className="absolute bottom-0 left-0 right-0 p-8 pb-10 flex justify-center items-center gap-6 bg-gradient-to-t from-[#000000]/90 via-[#000000]/40 to-[#000000]/0 z-20">
+                  {/* Mute Mic */}
                   <button
                     onClick={() => {
                       const updatedMuted = !activeCall.isMuted;
@@ -1473,54 +2155,171 @@ export default function App() {
                         localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !updatedMuted);
                       }
                     }}
-                    className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
                       activeCall.isMuted 
-                        ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
-                        : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                        ? 'bg-[#FCC105] text-[#000000]' 
+                        : 'bg-[#1A1A1A]/85 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
                     }`}
                     title={activeCall.isMuted ? "Unmute Mic" : "Mute Mic"}
                   >
-                    {activeCall.isMuted ? <Mic className="w-5 h-5 text-black" /> : <Mic className="w-5 h-5" />}
+                    {activeCall.isMuted ? <Mic className="w-5.5 h-5.5 text-black" /> : <Mic className="w-5.5 h-5.5" />}
                   </button>
 
                   {/* End call */}
                   <button
                     onClick={endCall}
-                    className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
+                    className="w-16 h-16 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/30"
                     title="End Call"
                   >
-                    <Phone className="w-6 h-6 rotate-[135deg]" />
+                    <Phone className="w-6.5 h-6.5 rotate-[135deg]" />
                   </button>
 
-                  {/* Camera toggle (video calls only) */}
-                  {activeCall.type === 'video' ? (
-                    <button
-                      onClick={() => {
-                        const updatedVideoOff = !activeCall.isVideoOff;
-                        setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
-                        if (localStreamRef.current) {
-                          localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
-                        }
-                      }}
-                      className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
-                        activeCall.isVideoOff 
-                          ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
-                          : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
-                      }`}
-                      title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
-                    >
-                      {activeCall.isVideoOff ? <Video className="w-5 h-5 text-black" /> : <Video className="w-5 h-5" />}
-                    </button>
+                  {/* Toggle Camera */}
+                  <button
+                    onClick={() => {
+                      const updatedVideoOff = !activeCall.isVideoOff;
+                      setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
+                      if (localStreamRef.current) {
+                        localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
+                      }
+                    }}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
+                      activeCall.isVideoOff 
+                        ? 'bg-[#FCC105] text-[#000000]' 
+                        : 'bg-[#1A1A1A]/85 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
+                    }`}
+                    title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                  >
+                    {activeCall.isVideoOff ? <Video className="w-5.5 h-5.5 text-black" /> : <Video className="w-5.5 h-5.5" />}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Centered Card Call Layout (Ringing, incoming, or voice sessions) */
+              <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-3xl p-8 flex flex-col items-center justify-between min-h-[460px] sm:min-h-[500px] relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#FCC105]" />
+                
+                {/* Call Header / Info */}
+                <div className="w-full flex flex-col items-center mt-4">
+                  <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/10 px-3 py-1 rounded-full border border-[#FCC105]/20">
+                    {activeCall.type === 'video' ? 'Secure Video Session' : 'Secure Voice Session'}
+                  </span>
+                  
+                  <h2 className="text-2xl font-display font-black text-white mt-6 tracking-tight">
+                    {activeCall.chat.name}
+                  </h2>
+                  
+                  <div className="text-xs text-[#8A8A8A] mt-2 font-medium">
+                    {activeCall.status === 'ringing' ? (
+                      activeCall.direction === 'incoming' ? 'Incoming call...' : 'Ringing...'
+                    ) : (
+                      <span className="flex items-center gap-2 text-[#FCC105] font-bold">
+                        <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-ping" />
+                        {formatCallDuration(activeCall.duration)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Avatar / Ringing state */}
+                <div className="relative w-full flex-1 flex items-center justify-center my-6 min-h-[220px]">
+                  <div className="relative flex items-center justify-center">
+                    {activeCall.status === 'ringing' && (
+                      <>
+                        <div className="absolute w-36 h-36 rounded-full border border-[#FCC105]/20 animate-ping duration-1000" />
+                        <div className="absolute w-44 h-44 rounded-full border border-[#FCC105]/10 animate-ping duration-1000 delay-300" />
+                      </>
+                    )}
+                    <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#FCC105] shadow-2xl relative z-10 bg-[#111111]">
+                      <img 
+                        src={activeCall.chat.avatarUrl} 
+                        alt="avatar" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Controls */}
+                <div className="w-full flex justify-center items-center gap-6 mt-4">
+                  {activeCall.status === 'ringing' && activeCall.direction === 'incoming' ? (
+                    <>
+                      <button
+                        onClick={declineCall}
+                        className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
+                        title="Decline"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                      
+                      <button
+                        onClick={acceptCall}
+                        className="w-14 h-14 rounded-full bg-[#22C55E] text-white flex items-center justify-center hover:scale-105 hover:bg-[#4ADE80] transition-all cursor-pointer shadow-lg shadow-[#22C55E]/20"
+                        title="Accept"
+                      >
+                        <Phone className="w-6 h-6" />
+                      </button>
+                    </>
                   ) : (
-                    /* Dummy button to keep balance */
-                    <div className="w-12 h-12" />
+                    <>
+                      {/* Mute Mic */}
+                      <button
+                        onClick={() => {
+                          const updatedMuted = !activeCall.isMuted;
+                          setActiveCall(prev => ({ ...prev, isMuted: updatedMuted }));
+                          if (localStreamRef.current) {
+                            localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !updatedMuted);
+                          }
+                        }}
+                        className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                          activeCall.isMuted 
+                            ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
+                            : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                        }`}
+                        title={activeCall.isMuted ? "Unmute Mic" : "Mute Mic"}
+                      >
+                        {activeCall.isMuted ? <Mic className="w-5 h-5 text-black" /> : <Mic className="w-5 h-5" />}
+                      </button>
+
+                      {/* End call */}
+                      <button
+                        onClick={endCall}
+                        className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
+                        title="End Call"
+                      >
+                        <Phone className="w-6 h-6 rotate-[135deg]" />
+                      </button>
+
+                      {/* Camera toggle (video calls only) */}
+                      {activeCall.type === 'video' ? (
+                        <button
+                          onClick={() => {
+                            const updatedVideoOff = !activeCall.isVideoOff;
+                            setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
+                            if (localStreamRef.current) {
+                              localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
+                            }
+                          }}
+                          className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                            activeCall.isVideoOff 
+                              ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
+                              : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                          }`}
+                          title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                        >
+                          {activeCall.isVideoOff ? <Video className="w-5 h-5 text-black" /> : <Video className="w-5 h-5" />}
+                        </button>
+                      ) : (
+                        <div className="w-12 h-12" />
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

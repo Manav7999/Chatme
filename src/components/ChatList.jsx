@@ -1,7 +1,24 @@
 import React, { useState } from 'react';
 import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2 } from 'lucide-react';
 
-export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser }) {
+const ChatListSkeleton = () => (
+  <div className="flex flex-col space-y-1 w-full animate-pulse select-none">
+    {[1, 2, 3, 4].map(idx => (
+      <div key={idx} className="flex items-center gap-3.5 p-3.5 rounded-xl border-l-4 border-transparent">
+        <div className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-[#1A1A1A] border border-[#2B2B2B] shrink-0" />
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <div className="w-24 h-3.5 bg-[#1A1A1A] rounded" />
+            <div className="w-8 h-2 bg-[#1A1A1A] rounded" />
+          </div>
+          <div className="w-36 h-3 bg-[#1A1A1A] rounded" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser, isLoading }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredChats = chats.filter(chat =>
@@ -10,9 +27,9 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
   );
 
   return (
-    <div className="w-80 md:w-96 bg-[#111111] border-r border-[#2B2B2B] flex flex-col h-full select-none">
+    <div className="w-full md:w-96 bg-[#111111] border-r border-[#2B2B2B] flex flex-col h-full select-none">
       {/* Header */}
-      <div className="p-5 pb-3 flex items-center justify-between">
+      <div className="p-4 pb-2 md:p-5 md:pb-3 flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-display font-bold text-[#FFFFFF] tracking-tight">
             Messages
@@ -45,7 +62,7 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
       </div>
 
       {/* Search Input */}
-      <div className="px-5 pb-4">
+      <div className="px-4 pb-3 md:px-5 md:pb-4">
         <div className="relative">
           <input
             type="text"
@@ -54,13 +71,15 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all duration-200"
           />
-          <Search className="absolute left-3.5 top-3 w-4.5 h-4.5 text-[#8A8A8A]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#8A8A8A]" />
         </div>
       </div>
 
       {/* Chat List Items */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 pb-4">
-        {filteredChats.length > 0 ? (
+        {isLoading ? (
+          <ChatListSkeleton />
+        ) : filteredChats.length > 0 ? (
           filteredChats.map((chat) => {
             const isSelected = chat.id === activeChatId;
             const lastMsg = chat.messages[chat.messages.length - 1];

@@ -8,7 +8,8 @@ export default function ProfileSettings({
   onUpdateUser, 
   settings, 
   onUpdateSettings,
-  onResetAllData 
+  onResetAllData,
+  onLogout
 }) {
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
@@ -306,20 +307,34 @@ export default function ProfileSettings({
         </form>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-[#000000] border-t border-[#2B2B2B] flex items-center justify-end gap-3.5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="py-2.5 px-5 rounded-xl border border-[#FCC105] text-[#FCC105] text-xs font-semibold hover:bg-[rgba(252,193,5,0.12)] transition-all cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-bold hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/10"
-          >
-            Save Configuration
-          </button>
+        <div className="p-4 bg-[#000000] border-t border-[#2B2B2B] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Logout on the left */}
+          {onLogout && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Sign out of ChatMe?')) onLogout();
+              }}
+              className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-[#EF4444]/30 text-[#EF4444] text-xs font-semibold hover:bg-[#EF4444]/10 transition-all cursor-pointer text-center"
+            >
+              Sign Out
+            </button>
+          )}
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:ml-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto py-2.5 px-5 rounded-xl border border-[#FCC105] text-[#FCC105] text-xs font-semibold hover:bg-[rgba(252,193,5,0.12)] transition-all cursor-pointer text-center"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-bold hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/10 text-center"
+            >
+              Save Configuration
+            </button>
+          </div>
         </div>
 
         {/* Success Alert toast inside modal */}
