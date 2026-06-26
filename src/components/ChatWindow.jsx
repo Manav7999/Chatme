@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, Paperclip, Smile, MoreVertical, 
   Phone, Video, Mic, Check, CheckCheck, 
-  Image, FileText, X, ChevronRight, ChevronLeft, Play, Pause
+  Image, FileText, X, ChevronRight, ChevronLeft, Play, Pause,
+  Copy, Trash2
 } from 'lucide-react';
 
 const MessageSkeleton = () => (
+  // ...
   <div className="flex flex-col space-y-4 w-full p-4 animate-pulse select-none">
     {/* Left (incoming) skeleton */}
     <div className="flex items-start gap-3 max-w-[70%]">
@@ -43,11 +45,26 @@ const MessageSkeleton = () => (
   </div>
 );
 
-export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearChat, onBack, isMobile, onStartCall, isEncrypted, isLoadingHistory }) {
+export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearChat, onDeleteChat, onDeleteMessage, onBack, isMobile, onStartCall, isEncrypted, isLoadingHistory }) {
 
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+
+  const handleCopyConversation = () => {
+    if (!chat || !chat.messages || chat.messages.length === 0) {
+      alert("No messages in conversation to copy.");
+      return;
+    }
+    const transcript = chat.messages
+      .map(msg => {
+        const sender = msg.sender === 'user' ? 'Me' : chat.name;
+        return `[${msg.time}] ${sender}: ${msg.text || `[${msg.type} attachment]`}`;
+      })
+      .join('\n');
+    navigator.clipboard.writeText(transcript);
+    alert("Copied entire conversation transcript to clipboard!");
+  };
   const [activeAudioPlaying, setActiveAudioPlaying] = useState(null); // id of playing audio
   const messagesEndRef = useRef(null);
 
@@ -356,10 +373,30 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             </button>
             <div className="hidden group-hover:block absolute right-0 top-8 bg-[#111111] border border-[#2B2B2B] rounded-lg shadow-xl py-1.5 w-40 z-20">
               <button 
+                type="button"
+                onClick={handleCopyConversation} 
+                className="w-full px-4 py-2 text-left text-xs text-white hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+              >
+                Copy Conversation
+              </button>
+              <button 
+                type="button"
                 onClick={onClearChat} 
-                className="w-full px-4 py-2 text-left text-xs text-[#EF4444] hover:bg-[#1A1A1A] transition-colors"
+                className="w-full px-4 py-2 text-left text-xs text-white hover:bg-[#1A1A1A] transition-colors cursor-pointer"
               >
                 Clear Conversation
+              </button>
+              <div className="border-t border-[#2B2B2B]/50 my-1"></div>
+              <button 
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to permanently delete all messages and remove your conversation with ${chat.name}?`)) {
+                    onDeleteChat(chat.id);
+                  }
+                }} 
+                className="w-full px-4 py-2 text-left text-xs text-[#EF4444] hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+              >
+                Delete Conversation
               </button>
             </div>
           </div>
@@ -386,171 +423,236 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 key={msg.id}
                 className={`flex w-full ${isOutgoing ? 'justify-end' : 'justify-start'} chat-fade-in`}
               >
-                <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isOutgoing ? 'items-end' : 'items-start'}`}>
-                  {/* Bubble Container */}
-                  <div
-                    className={`rounded-2xl px-4 py-3 border text-sm shadow-sm transition-all select-text ${
-                      isOutgoing
-                        ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
-                        : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
-                    }`}
-                  >
-                    {/* Render Image Message */}
-                    {msg.type === 'image' && (
-                      <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
-                        <img src={msg.mediaUrl} alt="attachment" className="w-full object-cover max-h-48" />
-                        {msg.status === 'uploading' && (
-                          <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
-                            <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
-                              <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" />
-                              Uploading...
-                            </span>
-                            <span className="text-xs font-black">{msg.progress || 0}%</span>
-                            <div className="w-20 bg-white/20 rounded-full h-1 mt-1.5 overflow-hidden">
-                              <div className="bg-[#FCC105] h-full" style={{ width: `${msg.progress || 0}%` }} />
-                            </div>
-                          </div>
+                <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isOutgoing ? 'items-end' : 'items-start'} group/msg relative`}>
+                  {/* Message Bubble + Actions wrapper */}
+                  <div className="flex items-center gap-2 max-w-full">
+                    {/* If outgoing, show actions on the left */}
+                    {isOutgoing && (
+                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                        {msg.type !== 'call_history' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.text);
+                              alert("Copied message to clipboard!");
+                            }}
+                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            title="Copy message text"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
                         )}
-                      </div>
-                    )}
-
-                    {/* Render File Message */}
-                    {msg.type === 'file' && (
-                      <div className="relative">
-                        <a 
-                          href={msg.status === 'uploading' ? 'javascript:void(0)' : (msg.mediaUrl || '#')} 
-                          download={msg.status === 'uploading' ? undefined : msg.text}
-                          onClick={(e) => {
-                            if (msg.status === 'uploading') return;
-                            handleDownload(e, msg);
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this message?")) {
+                              onDeleteMessage(msg.id);
+                            }
                           }}
-                          className={`flex items-center gap-2.5 p-2 rounded-xl mb-1.5 transition-all ${
-                            msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
-                          } ${
-                            isOutgoing ? 'bg-[#C99600]/30 border border-[#000000]/10' : 'bg-[#111111] border border-[#2B2B2B]'
-                          }`}
+                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          title="Delete message"
                         >
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#1A1A1A] text-[#FCC105]'
-                          }`}>
-                            {msg.status === 'uploading' ? (
-                              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                            ) : downloadingStates[msg.id] !== undefined ? (
-                              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                            ) : (
-                              <FileText className="w-4.5 h-4.5" />
-                            )}
-                          </div>
-                          <div className="min-w-0 text-left flex-1">
-                            <p className={`text-xs font-semibold truncate max-w-[150px] ${
-                              isOutgoing ? 'text-[#000000]' : 'text-[#FFFFFF]'
-                            }`}>
-                              {msg.text}
-                            </p>
-                            <span className={`text-[10px] ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
-                              {msg.status === 'uploading' 
-                                ? `Uploading... ${msg.progress || 0}%` 
-                                : downloadingStates[msg.id] !== undefined 
-                                  ? `Downloading... ${downloadingStates[msg.id]}%` 
-                                  : msg.size}
-                            </span>
-                            
-                            {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
-                              <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
-                                <div 
-                                  className="h-full transition-all duration-150" 
-                                  style={{ 
-                                    width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
-                                    backgroundColor: isOutgoing ? '#000000' : '#FCC105'
-                                  }} 
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Render Audio Wave Message */}
-                    {msg.type === 'audio' && (
-                      <div className="flex items-center gap-3.5 py-1 min-w-[220px]">
-                        <button 
-                          onClick={() => handlePlayAudio(msg)}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 cursor-pointer ${
-                            isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105] text-[#000000]'
-                          }`}
-                        >
-                          {activeAudioPlaying === msg.id ? (
-                            <Pause className="w-3.5 h-3.5 fill-current" />
-                          ) : (
-                            <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                          )}
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        
-                        {/* Simulated Visual Waveform */}
-                        <div className="flex-1 flex items-center gap-[3px] h-7">
-                          {msg.waveform?.map((val, i) => {
-                            const isPlaying = activeAudioPlaying === msg.id;
-                            const isPast = isPlaying && (i / msg.waveform.length) < 0.6; // mock progress
-                            return (
-                              <span 
-                                key={i} 
-                                className="w-[3px] rounded-full transition-all"
-                                style={{ 
-                                  height: `${val}%`, 
-                                  backgroundColor: isOutgoing 
-                                    ? (isPast ? '#000000' : 'rgba(0, 0, 0, 0.25)') 
-                                    : (isPast ? '#FCC105' : '#8A8A8A'),
-                                  animation: isPlaying ? `pulse 1.2s ease-in-out infinite alternate` : 'none',
-                                  animationDelay: `${i * 0.05}s`
-                                }}
-                              />
-                            );
-                          })}
-                        </div>
-                        <span className={`text-[10px] font-medium ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
-                          {msg.duration}
-                        </span>
                       </div>
                     )}
 
-                    {/* Render Call History Message */}
-                    {msg.type === 'call_history' && (
-                      <div className="flex items-center gap-3.5 py-1 min-w-[200px] select-none">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                          isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105]/15 text-[#FCC105]'
-                        }`}>
-                          {msg.callType === 'video' ? (
-                            <Video className="w-4.5 h-4.5" />
-                          ) : (
-                            <Phone className="w-4.5 h-4.5" />
+                    {/* Bubble Container */}
+                    <div
+                      className={`rounded-2xl px-4 py-3 border text-sm shadow-sm transition-all select-text ${
+                        isOutgoing
+                          ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
+                          : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
+                      }`}
+                    >
+                      {/* Render Image Message */}
+                      {msg.type === 'image' && (
+                        <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
+                          <img src={msg.mediaUrl} alt="attachment" className="w-full object-cover max-h-48" />
+                          {msg.status === 'uploading' && (
+                            <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
+                              <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
+                                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" />
+                                Uploading...
+                              </span>
+                              <span className="text-xs font-black">{msg.progress || 0}%</span>
+                              <div className="w-20 bg-white/20 rounded-full h-1 mt-1.5 overflow-hidden">
+                                <div className="bg-[#FCC105] h-full" style={{ width: `${msg.progress || 0}%` }} />
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <div className="text-left flex-1 min-w-0">
-                          <p className={`text-xs font-bold leading-normal ${isOutgoing ? 'text-black font-extrabold' : 'text-white'}`}>
-                            {(() => {
-                              const callTypeName = msg.callType === 'video' ? 'Video Call' : 'Voice Call';
-                              if (msg.callStatus === 'completed') {
-                                return isOutgoing ? `Outgoing ${callTypeName}` : `Incoming ${callTypeName}`;
-                              } else if (msg.callStatus === 'declined') {
-                                return isOutgoing ? `Declined ${callTypeName}` : `Declined ${callTypeName}`;
-                              } else {
-                                return isOutgoing ? `Cancelled ${callTypeName}` : `Missed ${callTypeName}`;
-                              }
-                            })()}
-                          </p>
-                          <span className={`text-[10px] font-medium leading-none mt-1 block ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
-                            {msg.callStatus === 'completed' ? `Duration: ${msg.callDuration}` : msg.callDuration}
+                      )}
+
+                      {/* Render File Message */}
+                      {msg.type === 'file' && (
+                        <div className="relative">
+                          <a 
+                            href={msg.status === 'uploading' ? 'javascript:void(0)' : (msg.mediaUrl || '#')} 
+                            download={msg.status === 'uploading' ? undefined : msg.text}
+                            onClick={(e) => {
+                              if (msg.status === 'uploading') return;
+                              handleDownload(e, msg);
+                            }}
+                            className={`flex items-center gap-2.5 p-2 rounded-xl mb-1.5 transition-all ${
+                              msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
+                            } ${
+                              isOutgoing ? 'bg-[#C99600]/30 border border-[#000000]/10' : 'bg-[#111111] border border-[#2B2B2B]'
+                            }`}
+                          >
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                              isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#1A1A1A] text-[#FCC105]'
+                            }`}>
+                              {msg.status === 'uploading' ? (
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                              ) : downloadingStates[msg.id] !== undefined ? (
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                              ) : (
+                                <FileText className="w-4.5 h-4.5" />
+                              )}
+                            </div>
+                            <div className="min-w-0 text-left flex-1">
+                              <p className={`text-xs font-semibold truncate max-w-[150px] ${
+                                isOutgoing ? 'text-[#000000]' : 'text-[#FFFFFF]'
+                              }`}>
+                                {msg.text}
+                              </p>
+                              <span className={`text-[10px] ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                                {msg.status === 'uploading' 
+                                  ? `Uploading... ${msg.progress || 0}%` 
+                                  : downloadingStates[msg.id] !== undefined 
+                                    ? `Downloading... ${downloadingStates[msg.id]}%` 
+                                    : msg.size}
+                              </span>
+                              
+                              {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
+                                <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
+                                  <div 
+                                    className="h-full transition-all duration-150" 
+                                    style={{ 
+                                      width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
+                                      backgroundColor: isOutgoing ? '#000000' : '#FCC105'
+                                    }} 
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Render Audio Wave Message */}
+                      {msg.type === 'audio' && (
+                        <div className="flex items-center gap-3.5 py-1 min-w-[220px]">
+                          <button 
+                            onClick={() => handlePlayAudio(msg)}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 cursor-pointer ${
+                              isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105] text-[#000000]'
+                            }`}
+                          >
+                            {activeAudioPlaying === msg.id ? (
+                              <Pause className="w-3.5 h-3.5 fill-current" />
+                            ) : (
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            )}
+                          </button>
+                          
+                          {/* Simulated Visual Waveform */}
+                          <div className="flex-1 flex items-center gap-[3px] h-7">
+                            {msg.waveform?.map((val, i) => {
+                              const isPlaying = activeAudioPlaying === msg.id;
+                              const isPast = isPlaying && (i / msg.waveform.length) < 0.6; // mock progress
+                              return (
+                                <span 
+                                  key={i} 
+                                  className="w-[3px] rounded-full transition-all"
+                                  style={{ 
+                                    height: `${val}%`, 
+                                    backgroundColor: isOutgoing 
+                                      ? (isPast ? '#000000' : 'rgba(0, 0, 0, 0.25)') 
+                                      : (isPast ? '#FCC105' : '#8A8A8A'),
+                                    animation: isPlaying ? `pulse 1.2s ease-in-out infinite alternate` : 'none',
+                                    animationDelay: `${i * 0.05}s`
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                          <span className={`text-[10px] font-medium ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                            {msg.duration}
                           </span>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Standard text message */}
-                    {msg.type !== 'audio' && msg.type !== 'call_history' && (
-                      <p className="whitespace-pre-wrap break-words leading-relaxed select-text font-medium">
-                        {msg.text}
-                      </p>
+                      {/* Render Call History Message */}
+                      {msg.type === 'call_history' && (
+                        <div className="flex items-center gap-3.5 py-1 min-w-[200px] select-none">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105]/15 text-[#FCC105]'
+                          }`}>
+                            {msg.callType === 'video' ? (
+                              <Video className="w-4.5 h-4.5" />
+                            ) : (
+                              <Phone className="w-4.5 h-4.5" />
+                            )}
+                          </div>
+                          <div className="text-left flex-1 min-w-0">
+                            <p className={`text-xs font-bold leading-normal ${isOutgoing ? 'text-black font-extrabold' : 'text-white'}`}>
+                              {(() => {
+                                const callTypeName = msg.callType === 'video' ? 'Video Call' : 'Voice Call';
+                                if (msg.callStatus === 'completed') {
+                                  return isOutgoing ? `Outgoing ${callTypeName}` : `Incoming ${callTypeName}`;
+                                } else if (msg.callStatus === 'declined') {
+                                  return isOutgoing ? `Declined ${callTypeName}` : `Declined ${callTypeName}`;
+                                } else {
+                                  return isOutgoing ? `Cancelled ${callTypeName}` : `Missed ${callTypeName}`;
+                                }
+                              })()}
+                            </p>
+                            <span className={`text-[10px] font-medium leading-none mt-1 block ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                              {msg.callStatus === 'completed' ? `Duration: ${msg.callDuration}` : msg.callDuration}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Standard text message */}
+                      {msg.type !== 'audio' && msg.type !== 'call_history' && (
+                        <p className="whitespace-pre-wrap break-words leading-relaxed select-text font-medium">
+                          {msg.text}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* If incoming, show actions on the right */}
+                    {!isOutgoing && (
+                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                        {msg.type !== 'call_history' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.text);
+                              alert("Copied message to clipboard!");
+                            }}
+                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            title="Copy message text"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this message?")) {
+                              onDeleteMessage(msg.id);
+                            }
+                          }}
+                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
 

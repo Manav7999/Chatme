@@ -122,6 +122,25 @@ app.get('/api/messages/:userId/:peerId', (req, res) => {
   }
 });
 
+// API: delete all DM history between two users
+app.delete('/api/messages/:userId/:peerId', (req, res) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+    jwt.verify(auth.slice(7), JWT_SECRET); // validate token
+    const { userId, peerId } = req.params;
+    const db = readDB();
+    db.messages = (db.messages || []).filter(m =>
+      !((m.sender === userId && m.recipient === peerId) ||
+        (m.sender === peerId && m.recipient === userId))
+    );
+    writeDB(db);
+    res.json({ success: true });
+  } catch {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
 // Fallback all routes to index.html for React Router compatibility
 app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
@@ -464,6 +483,52 @@ wss.on('connection', (ws) => {
             }
           }
           break;
+
+        case 'delete_message': {
+          const deleteSender = clients.get(ws);
+          if (!deleteSender) break;
+          try {
+            const db = readDB();
+            db.messages = (db.messages || []).filter(m => m.id !== data.messageId);
+            writeDB(db);
+          } catch (e) {
+            console.error('Message delete error:', e);
+          }
+
+          if (data.peerId) {
+            for (const [clientSocket, info] of clients.entries()) {
+              if (info.id === data.peerId && clientSocket.readyState === clientSocket.OPEN) {
+                clientSocket.send(JSON.stringify({
+                  type: 'message_deleted',
+                  messageId: data.messageId,
+                  senderId: deleteSender.id
+                }));
+                break;
+              }
+            }
+          }
+          break;
+        }
+
+        case 'delete_channel_message': {
+          const chanDeleteSender = clients.get(ws);
+          if (!chanDeleteSender) break;
+          const channel = channels.get(data.channelId);
+          if (!channel) break;
+
+          const deletePayload = JSON.stringify({
+            type: 'channel_message_deleted',
+            messageId: data.messageId,
+            channelId: data.channelId
+          });
+
+          channel.subscribers.forEach(subSocket => {
+            if (subSocket.readyState === subSocket.OPEN) {
+              subSocket.send(deletePayload);
+            }
+          });
+          break;
+        }
 
         default:
           console.warn('Unknown message type received:', data.type);

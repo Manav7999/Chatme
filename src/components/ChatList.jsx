@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2 } from 'lucide-react';
+import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2, Trash2 } from 'lucide-react';
 
 const ChatListSkeleton = () => (
+  // ...
   <div className="flex flex-col space-y-1 w-full animate-pulse select-none">
     {[1, 2, 3, 4].map(idx => (
       <div key={idx} className="flex items-center gap-3.5 p-3.5 rounded-xl border-l-4 border-transparent">
@@ -18,7 +19,7 @@ const ChatListSkeleton = () => (
   </div>
 );
 
-export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser, isLoading }) {
+export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser, isLoading, onDeleteChat }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredChats = chats.filter(chat =>
@@ -147,6 +148,20 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     )}
                   </div>
                 </div>
+                {/* Delete button shown on hover */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Are you sure you want to delete your conversation with ${chat.name}? This will permanently delete all messages.`)) {
+                      onDeleteChat(chat.id);
+                    }
+                  }}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#EF4444] hover:text-[#FFFFFF] cursor-pointer shadow-lg z-10"
+                  title="Delete Conversation"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             );
           })

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Hash, Users, ChevronLeft, Smile, Paperclip, FileText, Image } from 'lucide-react';
+import { Send, Hash, Users, ChevronLeft, Smile, Paperclip, FileText, Image, Copy, Trash2 } from 'lucide-react';
 
-export default function ChannelWindow({ channel, currentUser, onSendMessage, onSendMedia, onBack, isMobile }) {
+export default function ChannelWindow({ channel, currentUser, onSendMessage, onSendMedia, onDeleteMessage, onBack, isMobile }) {
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -158,90 +158,154 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                   {!isOwn && (
                     <span className="text-[10px] font-bold text-[#FCC105] mb-1 ml-1">{msg.senderName}</span>
                   )}
-                  <div className={`rounded-2xl px-4 py-2.5 border text-sm shadow-sm ${
-                    isOwn
-                      ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
-                      : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
-                  }`}>
-                    {/* Render Image Message */}
-                    {msg.type === 'image' && (
-                      <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
-                        <img src={msg.mediaUrl} alt="attachment" className="w-full object-cover max-h-48" />
-                        {msg.status === 'uploading' && (
-                          <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
-                            <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
-                              <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" />
-                              Uploading...
-                            </span>
-                            <span className="text-xs font-black">{msg.progress || 0}%</span>
-                            <div className="w-20 bg-white/20 rounded-full h-1 mt-1.5 overflow-hidden">
-                              <div className="bg-[#FCC105] h-full" style={{ width: `${msg.progress || 0}%` }} />
-                            </div>
-                          </div>
+                  <div className="flex items-center gap-2 max-w-full group/msg">
+                    {/* If own message, show actions on the left */}
+                    {isOwn && (
+                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                        {msg.type !== 'call_history' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.text);
+                              alert("Copied message to clipboard!");
+                            }}
+                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            title="Copy message text"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
                         )}
-                      </div>
-                    )}
-
-                    {/* Render File Message */}
-                    {msg.type === 'file' && (
-                      <div className="relative">
-                        <a 
-                          href={msg.status === 'uploading' ? 'javascript:void(0)' : (msg.mediaUrl || '#')} 
-                          download={msg.status === 'uploading' ? undefined : msg.text}
-                          onClick={(e) => {
-                            if (msg.status === 'uploading') return;
-                            handleDownload(e, msg);
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this message?")) {
+                              onDeleteMessage(msg.id);
+                            }
                           }}
-                          className={`flex items-center gap-2.5 p-2 rounded-xl mb-1.5 transition-all ${
-                            msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
-                          } ${
-                            isOwn ? 'bg-[#C99600]/30 border border-[#000000]/10' : 'bg-[#111111] border border-[#2B2B2B]'
-                          }`}
+                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          title="Delete message"
                         >
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            isOwn ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#1A1A1A] text-[#FCC105]'
-                          }`}>
-                            {msg.status === 'uploading' ? (
-                              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                            ) : downloadingStates[msg.id] !== undefined ? (
-                              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                            ) : (
-                              <FileText className="w-4.5 h-4.5" />
-                            )}
-                          </div>
-                          <div className="min-w-0 text-left flex-1">
-                            <p className={`text-xs font-semibold truncate max-w-[150px] ${
-                              isOwn ? 'text-[#000000]' : 'text-[#FFFFFF]'
-                            }`}>
-                              {msg.text}
-                            </p>
-                            <span className={`text-[10px] ${isOwn ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
-                              {msg.status === 'uploading' 
-                                ? `Uploading... ${msg.progress || 0}%` 
-                                : downloadingStates[msg.id] !== undefined 
-                                  ? `Downloading... ${downloadingStates[msg.id]}%` 
-                                  : msg.size}
-                            </span>
-                            
-                            {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
-                              <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
-                                <div 
-                                  className="h-full transition-all duration-150" 
-                                  style={{ 
-                                    width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
-                                    backgroundColor: isOwn ? '#000000' : '#FCC105'
-                                  }} 
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </a>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )}
 
-                    {/* Render Standard Text */}
-                    {msg.type !== 'image' && msg.type !== 'file' && (
-                      <p className="whitespace-pre-wrap break-words font-medium leading-relaxed">{msg.text}</p>
+                    <div className={`rounded-2xl px-4 py-2.5 border text-sm shadow-sm ${
+                      isOwn
+                        ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
+                        : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
+                    }`}>
+                      {/* Render Image Message */}
+                      {msg.type === 'image' && (
+                        <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
+                          <img src={msg.mediaUrl} alt="attachment" className="w-full object-cover max-h-48" />
+                          {msg.status === 'uploading' && (
+                            <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
+                              <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
+                                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" />
+                                Uploading...
+                              </span>
+                              <span className="text-xs font-black">{msg.progress || 0}%</span>
+                              <div className="w-20 bg-white/20 rounded-full h-1 mt-1.5 overflow-hidden">
+                                <div className="bg-[#FCC105] h-full" style={{ width: `${msg.progress || 0}%` }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Render File Message */}
+                      {msg.type === 'file' && (
+                        <div className="relative">
+                          <a 
+                            href={msg.status === 'uploading' ? 'javascript:void(0)' : (msg.mediaUrl || '#')} 
+                            download={msg.status === 'uploading' ? undefined : msg.text}
+                            onClick={(e) => {
+                              if (msg.status === 'uploading') return;
+                              handleDownload(e, msg);
+                            }}
+                            className={`flex items-center gap-2.5 p-2 rounded-xl mb-1.5 transition-all ${
+                              msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
+                            } ${
+                              isOwn ? 'bg-[#C99600]/30 border border-[#000000]/10' : 'bg-[#111111] border border-[#2B2B2B]'
+                            }`}
+                          >
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                              isOwn ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#1A1A1A] text-[#FCC105]'
+                            }`}>
+                              {msg.status === 'uploading' ? (
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                              ) : downloadingStates[msg.id] !== undefined ? (
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                              ) : (
+                                <FileText className="w-4.5 h-4.5" />
+                              )}
+                            </div>
+                            <div className="min-w-0 text-left flex-1">
+                              <p className={`text-xs font-semibold truncate max-w-[150px] ${
+                                isOwn ? 'text-[#000000]' : 'text-[#FFFFFF]'
+                              }`}>
+                                {msg.text}
+                              </p>
+                              <span className={`text-[10px] ${isOwn ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                                {msg.status === 'uploading' 
+                                  ? `Uploading... ${msg.progress || 0}%` 
+                                  : downloadingStates[msg.id] !== undefined 
+                                    ? `Downloading... ${downloadingStates[msg.id]}%` 
+                                    : msg.size}
+                              </span>
+                              
+                              {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
+                                <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
+                                  <div 
+                                    className="h-full transition-all duration-150" 
+                                    style={{ 
+                                      width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
+                                      backgroundColor: isOwn ? '#000000' : '#FCC105'
+                                    }} 
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Render Standard Text */}
+                      {msg.type !== 'image' && msg.type !== 'file' && (
+                        <p className="whitespace-pre-wrap break-words font-medium leading-relaxed">{msg.text}</p>
+                      )}
+                    </div>
+
+                    {/* If other's message, show actions on the right */}
+                    {!isOwn && (
+                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                        {msg.type !== 'call_history' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.text);
+                              alert("Copied message to clipboard!");
+                            }}
+                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            title="Copy message text"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this message?")) {
+                              onDeleteMessage(msg.id);
+                            }
+                          }}
+                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <span className="text-[10px] font-semibold mt-1" style={{ color: isOwn ? '#4A3900' : '#8A8A8A' }}>

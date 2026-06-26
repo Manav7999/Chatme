@@ -905,6 +905,34 @@ export default function App() {
             }
             break;
 
+          case 'message_deleted':
+            setChats(prev => {
+              const updated = prev.map(chat => {
+                if (chat.id === data.senderId) {
+                  return {
+                    ...chat,
+                    messages: chat.messages.filter(msg => msg.id !== data.messageId)
+                  };
+                }
+                return chat;
+              });
+              saveToLocalStorage(updated);
+              return updated;
+            });
+            break;
+
+          case 'channel_message_deleted':
+            setChannelList(prev => prev.map(ch => {
+              if (ch.id === data.channelId) {
+                return {
+                  ...ch,
+                  messages: ch.messages.filter(msg => msg.id !== data.messageId)
+                };
+              }
+              return ch;
+            }));
+            break;
+
           case 'message_ack':
             // Server tells us if the message was delivered to an online peer or just queued
             setChats(prev => prev.map(chat => ({
@@ -1512,6 +1540,72 @@ export default function App() {
     saveToLocalStorage(updated);
   };
 
+  const handleDeleteChat = async (chatId) => {
+    const updated = chats.filter(c => c.id !== chatId);
+    setChats(updated);
+    if (activeChatId === chatId) {
+      setActiveChatId(null);
+    }
+    saveToLocalStorage(updated);
+
+    const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
+    if (!botIds.includes(chatId) && currentUser.id) {
+      const token = localStorage.getItem('chatme_jwt');
+      if (token) {
+        try {
+          await fetch(`/api/messages/${currentUser.id}/${chatId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (e) {
+          console.warn('Failed to delete messages on server:', e);
+        }
+      }
+    }
+  };
+
+  const handleDeleteMessage = (messageId, isChannel) => {
+    if (isChannel) {
+      setChannelList(prev => prev.map(ch => {
+        if (ch.id === activeChannelId) {
+          return {
+            ...ch,
+            messages: (ch.messages || []).filter(m => m.id !== messageId)
+          };
+        }
+        return ch;
+      }));
+
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: 'delete_channel_message',
+          messageId,
+          channelId: activeChannelId
+        }));
+      }
+    } else {
+      const updated = chats.map(c => {
+        if (c.id === activeChatId) {
+          return {
+            ...c,
+            messages: c.messages.filter(m => m.id !== messageId)
+          };
+        }
+        return c;
+      });
+      setChats(updated);
+      saveToLocalStorage(updated);
+
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: 'delete_message',
+          messageId,
+          peerId: activeChatId
+        }));
+      }
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('chatme_jwt');
     localStorage.removeItem('chatme_chats');
@@ -1784,6 +1878,7 @@ export default function App() {
               onNewChat={handleNewChat}
               currentUser={currentUser}
               isLoading={isLoadingChats}
+              onDeleteChat={handleDeleteChat}
             />
           )}
           {/* On mobile, if a chat is active, we show the ChatWindow. Otherwise we hide it. On desktop we show it always. */}
@@ -1793,6 +1888,8 @@ export default function App() {
               onSendMessage={handleSendMessage}
               onSendMedia={handleSendMedia}
               onClearChat={handleClearChat}
+              onDeleteChat={handleDeleteChat}
+              onDeleteMessage={(msgId) => handleDeleteMessage(msgId, false)}
               onBack={() => setActiveChatId(null)}
               isMobile={isMobile}
               onStartCall={startCall}
@@ -1920,6 +2017,7 @@ export default function App() {
               onSendMedia={handleChannelSendMedia}
               onBack={() => setActiveChannelId(null)}
               isMobile={isMobile}
+              onDeleteMessage={(msgId) => handleDeleteMessage(msgId, true)}
             />
           )}
         </div>
