@@ -7,6 +7,13 @@
       "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1",
       "role": "ChatMe Connected Member",
       "createdAt": "2026-06-23T04:00:53.180Z"
+    },
+    {
+      "id": "user_1792124667063_evodc",
+      "username": "Manav",
+      "password": "$2b$10$Bt5udiQHwrsE1Q7GsOiGeOc4aDfdKOadOs1.pVFdbG/uA/mLHOlMe",
+      "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1",
+      "createdAt": "2026-10-16T04:24:27.063Z"
     }
   ],
   "messages": [
@@ -49,6 +56,48 @@
       "msgType": "text",
       "createdAt": "2026-06-23T04:05:48.037Z",
       "status": "read"
+    },
+    {
+      "id": "servermsg_1792124764235",
+      "sender": "user_1792124667063_evodc",
+      "recipient": "new_1782179739857",
+      "text": "huu",
+      "time": "09:56 AM",
+      "msgType": "text",
+      "mediaUrl": null,
+      "size": null,
+      "createdAt": "2026-10-16T04:26:04.239Z",
+      "encrypted": false,
+      "iv": null,
+      "ciphertext": null
+    },
+    {
+      "id": "servermsg_1792124784955",
+      "sender": "user_1792124667063_evodc",
+      "recipient": "new_1782179739857",
+      "text": "gg",
+      "time": "09:56 AM",
+      "msgType": "text",
+      "mediaUrl": null,
+      "size": null,
+      "createdAt": "2026-10-16T04:26:24.957Z",
+      "encrypted": false,
+      "iv": null,
+      "ciphertext": null
+    },
+    {
+      "id": "servermsg_1792124811047",
+      "sender": "user_1792124667063_evodc",
+      "recipient": "new_1782179739857",
+      "text": "Voice call",
+      "time": "09:56 AM",
+      "msgType": "call_history",
+      "mediaUrl": null,
+      "size": null,
+      "createdAt": "2026-10-16T04:26:51.048Z",
+      "encrypted": false,
+      "iv": null,
+      "ciphertext": null
     }
   ],
   "sessions": [

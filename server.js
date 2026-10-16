@@ -553,6 +553,6 @@ wss.on('connection', (ws) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`ChatMe Real-Time backend listening on ws://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`ChatMe Real-Time backend listening on http://0.0.0.0:${PORT} and ws://0.0.0.0:${PORT}`);
 });

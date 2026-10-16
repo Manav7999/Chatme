@@ -70,6 +70,38 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
   const fileInputRef = useRef(null);
   const [downloadingStates, setDownloadingStates] = useState({}); // messageId -> progressPercentage
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const openFileInNewTab = (mediaUrl, filename) => {
+    if (!mediaUrl) return;
+    try {
+      if (mediaUrl.startsWith('data:')) {
+        const parts = mediaUrl.split(',');
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } else {
+        window.open(mediaUrl, '_blank');
+      }
+    } catch (err) {
+      console.error("Failed to open file in new tab:", err);
+      // Fallback: trigger standard download
+      const link = document.createElement('a');
+      link.href = mediaUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const handleDownload = (e, msg) => {
     e.preventDefault();
@@ -84,12 +116,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         progress = 100;
         clearInterval(interval);
         
-        const link = document.createElement('a');
-        link.href = msg.mediaUrl;
-        link.download = msg.text;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        openFileInNewTab(msg.mediaUrl, msg.text);
         
         setTimeout(() => {
           setDownloadingStates(prev => {
@@ -459,16 +486,25 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
                     {/* Bubble Container */}
                     <div
-                      className={`rounded-2xl px-4 py-3 border text-sm shadow-sm transition-all select-text ${
-                        isOutgoing
-                          ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
-                          : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
+                      className={`rounded-2xl text-sm transition-all select-text ${
+                        msg.type === 'image' || msg.type === 'file'
+                          ? 'p-0 bg-transparent border-0'
+                          : `px-4 py-3 border shadow-sm ${
+                              isOutgoing
+                                ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
+                                : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
+                            }`
                       }`}
                     >
                       {/* Render Image Message */}
                       {msg.type === 'image' && (
                         <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
-                          <img src={msg.mediaUrl} alt="attachment" className="w-full object-cover max-h-48" />
+                          <img 
+                            src={msg.mediaUrl} 
+                            alt="attachment" 
+                            className="w-full object-cover max-h-48 cursor-pointer hover:opacity-90 transition-opacity" 
+                            onClick={() => setPreviewImage(msg.mediaUrl)}
+                          />
                           {msg.status === 'uploading' && (
                             <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
                               <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
@@ -494,15 +530,13 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               if (msg.status === 'uploading') return;
                               handleDownload(e, msg);
                             }}
-                            className={`flex items-center gap-2.5 p-2 rounded-xl mb-1.5 transition-all ${
+                            className={`flex items-center gap-2.5 p-3 rounded-xl mb-1.5 transition-all ${
                               msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
                             } ${
-                              isOutgoing ? 'bg-[#C99600]/30 border border-[#000000]/10' : 'bg-[#111111] border border-[#2B2B2B]'
+                              isOutgoing ? 'bg-[#FCC105]/10 border border-[#FCC105]/20' : 'bg-[#111111] border border-[#2B2B2B]'
                             }`}
                           >
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                              isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#1A1A1A] text-[#FCC105]'
-                            }`}>
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#1A1A1A] text-[#FCC105]`}>
                               {msg.status === 'uploading' ? (
                                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
                               ) : downloadingStates[msg.id] !== undefined ? (
@@ -512,12 +546,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               )}
                             </div>
                             <div className="min-w-0 text-left flex-1">
-                              <p className={`text-xs font-semibold truncate max-w-[150px] ${
-                                isOutgoing ? 'text-[#000000]' : 'text-[#FFFFFF]'
-                              }`}>
+                              <p className="text-xs font-semibold truncate max-w-[150px] text-[#FFFFFF]">
                                 {msg.text}
                               </p>
-                              <span className={`text-[10px] ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                              <span className="text-[10px] text-[#8A8A8A]">
                                 {msg.status === 'uploading' 
                                   ? `Uploading... ${msg.progress || 0}%` 
                                   : downloadingStates[msg.id] !== undefined 
@@ -531,7 +563,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                                     className="h-full transition-all duration-150" 
                                     style={{ 
                                       width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
-                                      backgroundColor: isOutgoing ? '#000000' : '#FCC105'
+                                      backgroundColor: '#FCC105'
                                     }} 
                                   />
                                 </div>
@@ -617,7 +649,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                       )}
 
                       {/* Standard text message */}
-                      {msg.type !== 'audio' && msg.type !== 'call_history' && (
+                      {msg.type !== 'audio' && msg.type !== 'call_history' && msg.type !== 'image' && msg.type !== 'file' && (
                         <p className="whitespace-pre-wrap break-words leading-relaxed select-text font-medium">
                           {msg.text}
                         </p>
@@ -716,7 +748,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
       {/* Attachments Overlay Menu */}
       {showAttachMenu && (
-        <div className="absolute bottom-22 left-4 sm:left-5 bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-20 min-w-[180px] max-w-[calc(100vw-2rem)] chat-fade-in">
+        <div className="absolute bottom-22 left-3 right-3 sm:left-5 sm:right-auto bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-20 sm:w-48 chat-fade-in">
           <div className="px-3 py-1.5 text-[10px] font-bold text-[#8A8A8A] tracking-wider uppercase border-b border-[#2B2B2B]/50 mb-1 select-none">
             File Sharing
           </div>
@@ -761,7 +793,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
       {/* Emoji Picker Overlay */}
       {showEmojiPicker && (
-        <div className="absolute bottom-22 left-4 sm:left-16 bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 z-20 w-[calc(100vw-2rem)] sm:w-64 chat-fade-in select-none">
+        <div className="absolute bottom-22 left-3 right-3 sm:left-16 sm:right-auto bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 z-20 sm:w-64 chat-fade-in select-none">
           {emojis.map((emoji, idx) => (
             <button
               key={idx}
@@ -867,6 +899,29 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <Send className="w-4.5 h-4.5 fill-current" />
           </button>
         </form>
+      )}
+      {/* Image Preview Lightbox */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-[#000000]/95 flex items-center justify-center z-50 transition-opacity duration-300 chat-fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+            className="absolute top-5 right-5 text-white/70 hover:text-white hover:bg-white/10 p-2.5 rounded-full transition-all cursor-pointer z-51 animate-zoom-in"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewImage(null);
+            }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Full size preview" 
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl select-none animate-zoom-in"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
       )}
     </div>
   );

@@ -43,15 +43,20 @@ body {
   padding: 0;
   background-color: #000000;
   overflow: hidden;
+  overflow-x: hidden;
   height: 100vh;
   width: 100vw;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  touch-action: pan-y;
 }
 
 #root {
   height: 100%;
   width: 100%;
+  overflow: hidden;
+  overflow-x: hidden;
+  touch-action: pan-y;
 }
 
 /* Custom Scrollbar for premium dark feel */
@@ -97,3 +102,19 @@ body {
   outline: 2px solid #FCC105;
   outline-offset: -2px;
 }
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
