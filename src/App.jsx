@@ -13,7 +13,7 @@ import {
 import { 
   Sparkles, Users, MessageSquare, Compass, Bell, Check, Hash,
   ArrowRight, ShieldCheck, HelpCircle, Laptop, Settings, Lock,
-  X, Mic, Phone, Video
+  X, Mic, Phone, Video, RefreshCw, AlertCircle
 } from 'lucide-react';
 
 // Default Scaffold Data
@@ -84,7 +84,12 @@ export default function App() {
   });
 
   const [activeCall, setActiveCall] = useState(null);
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const [isSwappedVideo, setIsSwappedVideo] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
   const localVideoRef = useRef(null);
+  const previewVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
@@ -94,6 +99,45 @@ export default function App() {
   const peerConnectionRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const incomingOfferRef = useRef(null);
+  const iceCandidatesQueueRef = useRef([]);
+
+  // Bind local camera stream to local video and preview video elements
+  useEffect(() => {
+    if (localStream) {
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
+        localVideoRef.current.muted = true;
+        localVideoRef.current.defaultMuted = true;
+        localVideoRef.current.play().catch(e => console.warn("Local video play:", e));
+      }
+      if (previewVideoRef.current) {
+        previewVideoRef.current.srcObject = localStream;
+        previewVideoRef.current.muted = true;
+        previewVideoRef.current.defaultMuted = true;
+        previewVideoRef.current.play().catch(e => console.warn("Preview video play:", e));
+      }
+    } else {
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
+      if (previewVideoRef.current) previewVideoRef.current.srcObject = null;
+    }
+  }, [localStream, activeCall?.status, activeCall?.isVideoOff, isSwappedVideo]);
+
+  // Bind remote stream to remote video and audio elements
+  useEffect(() => {
+    if (remoteStream) {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+        remoteVideoRef.current.play().catch(e => console.warn("Remote video play:", e));
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.play().catch(e => console.warn("Remote audio play:", e));
+      }
+    } else {
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+      if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+    }
+  }, [remoteStream, activeCall?.status, isSwappedVideo]);
 
   useEffect(() => {
     let timer;
@@ -196,25 +240,51 @@ export default function App() {
   };
 
   const startLocalStream = async (videoRequired) => {
+    setCameraError(null);
+    const audioConstraints = {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    };
+
     try {
       const constraints = {
-        audio: true,
-        video: videoRequired
+        audio: audioConstraints,
+        video: videoRequired ? {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } : false
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      setLocalStream(stream);
       return stream;
     } catch (err) {
-      console.warn("Failed to get local user media stream:", err);
+      console.warn("Failed to get local user media with optimal constraints:", err);
+      if (videoRequired) {
+        // Fallback: simple video: true if facingMode or ideal resolution was unsupported
+        try {
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            audio: audioConstraints,
+            video: true
+          });
+          localStreamRef.current = fallbackStream;
+          setLocalStream(fallbackStream);
+          return fallbackStream;
+        } catch (vidErr) {
+          console.warn("Video completely unavailable:", vidErr);
+          setCameraError("Camera unavailable or permission denied");
+        }
+      }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
         localStreamRef.current = stream;
+        setLocalStream(stream);
         return stream;
       } catch (audioErr) {
         console.warn("Failed to get audio stream:", audioErr);
+        setCameraError("Audio/Camera permission denied");
         return null;
       }
     }
@@ -225,6 +295,11 @@ export default function App() {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
     }
+    setLocalStream(null);
+    setRemoteStream(null);
+    setIsSwappedVideo(false);
+    setCameraError(null);
+    iceCandidatesQueueRef.current = [];
   };
 
   const setupPeerConnection = (recipientId, stream) => {
@@ -248,15 +323,10 @@ export default function App() {
     };
 
     pc.ontrack = (event) => {
-      console.log("Received remote track:", event.streams[0]);
-      remoteStreamRef.current = event.streams[0];
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = event.streams[0];
-      }
-      // Also pipe to the remote video element for video calls
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
+      console.log("Received remote track:", event.streams);
+      const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+      remoteStreamRef.current = incomingStream;
+      setRemoteStream(incomingStream);
     };
 
     if (stream) {
@@ -325,6 +395,16 @@ export default function App() {
     if (pc && incomingOfferRef.current) {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(incomingOfferRef.current));
+        // Flush any queued ICE candidates that arrived before remote description
+        while (iceCandidatesQueueRef.current.length > 0) {
+          const queuedCandidate = iceCandidatesQueueRef.current.shift();
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+          } catch (iceErr) {
+            console.warn("Error adding queued ICE candidate:", iceErr);
+          }
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
@@ -862,6 +942,15 @@ export default function App() {
               if (peerConnectionRef.current && data.answer) {
                 try {
                   await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+                  // Flush any ICE candidates that arrived before caller got answer
+                  while (iceCandidatesQueueRef.current.length > 0) {
+                    const queuedCandidate = iceCandidatesQueueRef.current.shift();
+                    try {
+                      await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+                    } catch (iceErr) {
+                      console.warn("Error adding queued ICE candidate on caller:", iceErr);
+                    }
+                  }
                 } catch (err) {
                   console.warn("Failed to set remote description on caller:", err);
                 }
@@ -896,12 +985,14 @@ export default function App() {
             break;
 
           case 'call_ice_candidate':
-            if (peerConnectionRef.current && data.candidate) {
+            if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription && data.candidate) {
               try {
                 await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
               } catch (e) {
                 console.warn("Error adding ICE candidate:", e);
               }
+            } else if (data.candidate) {
+              iceCandidatesQueueRef.current.push(data.candidate);
             }
             break;
 
@@ -2177,64 +2268,176 @@ export default function App() {
       {/* Call Overlay View */}
       {activeCall && (() => {
         const isFullScreenVideo = activeCall.type === 'video' && activeCall.status === 'connected';
+        const isVideoRinging = activeCall.type === 'video' && activeCall.status === 'ringing';
+
         return (
           <div className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-xl flex flex-col items-center justify-center p-0 select-none animate-fade-in">
-            <audio ref={remoteAudioRef} autoPlay />
+            {/* Dedicated Remote Audio Player */}
+            <audio ref={remoteAudioRef} autoPlay playsInline />
             
             {isFullScreenVideo ? (
-              /* Full Screen Video Call Layout */
+              /* Full Screen Connected Video Call Layout */
               <div className="w-full h-full relative overflow-hidden bg-black flex flex-col justify-between">
-                {/* Remote Video (Fills Screen) */}
-                <video
-                  ref={(el) => {
-                    remoteVideoRef.current = el;
-                    if (el && remoteStreamRef.current) {
-                      el.srcObject = remoteStreamRef.current;
-                    }
-                  }}
-                  autoPlay
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover z-0"
-                />
-                
-                {/* Connecting fallback */}
-                <div 
-                  className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] pointer-events-none z-10 transition-opacity duration-300"
-                  style={{ opacity: remoteStreamRef.current ? 0 : 1 }}
-                >
-                  <img src={activeCall.chat.avatarUrl} alt="Remote" className="w-24 h-24 rounded-full border-2 border-[#2B2B2B]" />
-                  <span className="text-xs text-[#8A8A8A] mt-3 font-semibold">Connecting video stream...</span>
-                </div>
-
-                {/* Local Camera Floating PiP */}
-                {!activeCall.isVideoOff && (
-                  <div className="absolute top-24 right-4 w-28 h-36 rounded-2xl overflow-hidden border border-[#FCC105] shadow-2xl bg-black z-20">
-                    <video 
+                {/* 1. Main Video Surface */}
+                {!isSwappedVideo ? (
+                  /* Standard Mode: Remote Peer Fills Screen */
+                  <div className="absolute inset-0 w-full h-full">
+                    <video
                       ref={(el) => {
-                        localVideoRef.current = el;
-                        if (el && localStreamRef.current) {
-                          el.srcObject = localStreamRef.current;
+                        remoteVideoRef.current = el;
+                        if (el && remoteStream) {
+                          el.srcObject = remoteStream;
+                          el.play().catch(e => console.warn("Remote play:", e));
                         }
                       }}
                       autoPlay
                       playsInline
                       muted
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover z-0"
                     />
+                    
+                    {/* Fallback when waiting for remote video */}
+                    {(!remoteStream || remoteStream.getVideoTracks().length === 0) && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] z-10">
+                        <div className="relative">
+                          <div className="absolute -inset-3 rounded-full bg-[#FCC105]/20 animate-ping duration-1000" />
+                          <img src={activeCall.chat.avatarUrl} alt="Remote" className="w-24 h-24 rounded-full border-2 border-[#FCC105] relative z-10" />
+                        </div>
+                        <span className="text-sm text-white font-bold mt-4 tracking-wide">{activeCall.chat.name}</span>
+                        <span className="text-xs text-[#FCC105] mt-1 font-semibold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-pulse" />
+                          Connecting camera feed...
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Swapped Mode: Your Own Camera Fills Screen */
+                  <div className="absolute inset-0 w-full h-full">
+                    {!activeCall.isVideoOff && localStream ? (
+                      <video
+                        ref={(el) => {
+                          localVideoRef.current = el;
+                          if (el && localStream) {
+                            el.srcObject = localStream;
+                            el.muted = true;
+                            el.defaultMuted = true;
+                            el.play().catch(e => console.warn("Local play:", e));
+                          }
+                        }}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover z-0"
+                        style={{ transform: 'scaleX(-1)' }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] z-10">
+                        <img src={currentUser.avatarUrl} alt="You" className="w-24 h-24 rounded-full border-2 border-[#2B2B2B]" />
+                        <span className="text-xs text-[#8A8A8A] mt-3 font-semibold">Your camera is turned off</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Floating Top Header (overlayed over video) */}
-                <div className="absolute top-0 left-0 right-0 p-6 pt-10 flex flex-col items-center bg-gradient-to-b from-[#000000]/90 via-[#000000]/40 to-[#000000]/0 z-20">
-                  <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/15 px-3 py-1 rounded-full border border-[#FCC105]/20 backdrop-blur-md">
-                    Secure Video Session
-                  </span>
+                {/* 2. Floating Picture-in-Picture (PiP) Window */}
+                <div 
+                  onClick={() => setIsSwappedVideo(prev => !prev)}
+                  className="absolute top-20 right-4 sm:top-24 sm:right-6 w-32 h-44 sm:w-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-[#FCC105] shadow-2xl bg-[#111111] z-30 cursor-pointer transition-all hover:scale-105 active:scale-95 group select-none"
+                  title="Click to swap main and corner views"
+                >
+                  {!isSwappedVideo ? (
+                    /* PiP shows YOUR camera */
+                    <div className="w-full h-full relative bg-black flex items-center justify-center">
+                      {!activeCall.isVideoOff && localStream ? (
+                        <video
+                          ref={(el) => {
+                            localVideoRef.current = el;
+                            if (el && localStream) {
+                              el.srcObject = localStream;
+                              el.muted = true;
+                              el.defaultMuted = true;
+                              el.play().catch(e => console.warn("Local pip play:", e));
+                            }
+                          }}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                          style={{ transform: 'scaleX(-1)' }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-2 text-center">
+                          <img src={currentUser.avatarUrl} alt="You" className="w-12 h-12 rounded-full border border-[#2B2B2B] mb-1" />
+                          <span className="text-[10px] text-[#8A8A8A]">Camera Off</span>
+                        </div>
+                      )}
+                      
+                      {/* PiP badge overlay */}
+                      <div className="absolute bottom-1.5 left-2 right-2 py-0.5 px-2 rounded-md bg-black/75 backdrop-blur-sm border border-white/10 flex items-center justify-between text-[9px] text-white">
+                        <span className="font-semibold text-[#FCC105]">You</span>
+                        <span className="text-[8px] opacity-70 group-hover:opacity-100 flex items-center gap-0.5 text-white">
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* PiP shows REMOTE peer */
+                    <div className="w-full h-full relative bg-black flex items-center justify-center">
+                      {remoteStream && remoteStream.getVideoTracks().length > 0 ? (
+                        <video
+                          ref={(el) => {
+                            remoteVideoRef.current = el;
+                            if (el && remoteStream) {
+                              el.srcObject = remoteStream;
+                              el.muted = true;
+                              el.defaultMuted = true;
+                              el.play().catch(e => console.warn("Remote pip play:", e));
+                            }
+                          }}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-2 text-center">
+                          <img src={activeCall.chat.avatarUrl} alt="Peer" className="w-12 h-12 rounded-full border border-[#2B2B2B] mb-1" />
+                          <span className="text-[10px] text-[#8A8A8A] truncate max-w-[80px]">{activeCall.chat.name}</span>
+                        </div>
+                      )}
+                      
+                      {/* PiP badge overlay */}
+                      <div className="absolute bottom-1.5 left-2 right-2 py-0.5 px-2 rounded-md bg-black/75 backdrop-blur-sm border border-white/10 flex items-center justify-between text-[9px] text-white">
+                        <span className="font-semibold text-[#FCC105] truncate max-w-[60px]">{activeCall.chat.name}</span>
+                        <span className="text-[8px] opacity-70 group-hover:opacity-100 flex items-center gap-0.5 text-white">
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Floating Top Header */}
+                <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 pt-6 sm:pt-8 flex flex-col items-center bg-gradient-to-b from-[#000000]/90 via-[#000000]/50 to-transparent z-20 pointer-events-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/15 px-3 py-1 rounded-full border border-[#FCC105]/20 backdrop-blur-md">
+                      Encrypted Video Call
+                    </span>
+                    <button
+                      onClick={() => setIsSwappedVideo(prev => !prev)}
+                      className="text-[10px] text-white font-medium bg-[#1A1A1A]/90 hover:bg-[#2B2B2B] border border-[#333333] px-2.5 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3 text-[#FCC105]" />
+                      <span>{isSwappedVideo ? 'View peer' : 'View self'}</span>
+                    </button>
+                  </div>
                   
-                  <h2 className="text-2xl font-display font-black text-white mt-4 tracking-tight drop-shadow-md">
+                  <h2 className="text-xl sm:text-2xl font-display font-black text-white mt-2 tracking-tight drop-shadow-md">
                     {activeCall.chat.name}
                   </h2>
                   
-                  <div className="text-xs text-[#8A8A8A] mt-1.5 font-medium">
+                  <div className="text-xs text-[#8A8A8A] mt-1 font-medium">
                     <span className="flex items-center gap-2 text-[#FCC105] font-bold drop-shadow">
                       <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-ping" />
                       {formatCallDuration(activeCall.duration)}
@@ -2242,8 +2445,8 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Floating Bottom Controls (overlayed over video) */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 pb-10 flex justify-center items-center gap-6 bg-gradient-to-t from-[#000000]/90 via-[#000000]/40 to-[#000000]/0 z-20">
+                {/* 4. Floating Bottom Controls */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-8 sm:p-8 sm:pb-10 flex justify-center items-center gap-4 sm:gap-6 bg-gradient-to-t from-[#000000]/95 via-[#000000]/50 to-transparent z-20">
                   {/* Mute Mic */}
                   <button
                     onClick={() => {
@@ -2253,20 +2456,20 @@ export default function App() {
                         localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !updatedMuted);
                       }
                     }}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
+                    className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
                       activeCall.isMuted 
                         ? 'bg-[#FCC105] text-[#000000]' 
-                        : 'bg-[#1A1A1A]/85 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
+                        : 'bg-[#1A1A1A]/90 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
                     }`}
                     title={activeCall.isMuted ? "Unmute Mic" : "Mute Mic"}
                   >
                     {activeCall.isMuted ? <Mic className="w-5.5 h-5.5 text-black" /> : <Mic className="w-5.5 h-5.5" />}
                   </button>
 
-                  {/* End call */}
+                  {/* End Call */}
                   <button
                     onClick={endCall}
-                    className="w-16 h-16 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/30"
+                    className="w-15 h-15 sm:w-16 sm:h-16 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/30"
                     title="End Call"
                   >
                     <Phone className="w-6.5 h-6.5 rotate-[135deg]" />
@@ -2281,26 +2484,192 @@ export default function App() {
                         localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
                       }
                     }}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
+                    className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg hover:scale-105 ${
                       activeCall.isVideoOff 
                         ? 'bg-[#FCC105] text-[#000000]' 
-                        : 'bg-[#1A1A1A]/85 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
+                        : 'bg-[#1A1A1A]/90 border border-[#2B2B2B] text-[#FFFFFF] hover:bg-[#2B2B2B]'
                     }`}
                     title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
                   >
                     {activeCall.isVideoOff ? <Video className="w-5.5 h-5.5 text-black" /> : <Video className="w-5.5 h-5.5" />}
                   </button>
+
+                  {/* Swap Views Button */}
+                  <button
+                    onClick={() => setIsSwappedVideo(prev => !prev)}
+                    className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#1A1A1A]/90 border border-[#2B2B2B] text-[#FCC105] flex items-center justify-center hover:scale-105 hover:bg-[#2B2B2B] transition-all cursor-pointer shadow-lg"
+                    title={isSwappedVideo ? "Switch to Peer Full Screen" : "Switch to My Face Full Screen"}
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            ) : isVideoRinging ? (
+              /* Video Call Ringing Screen with LIVE CAMERA PREVIEW */
+              <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-between min-h-[500px] sm:min-h-[540px] relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#FCC105]" />
+
+                {/* Header */}
+                <div className="w-full flex flex-col items-center mt-2">
+                  <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/10 px-3 py-1 rounded-full border border-[#FCC105]/20">
+                    Video Call Preview
+                  </span>
+
+                  <h2 className="text-xl sm:text-2xl font-display font-black text-white mt-3 tracking-tight text-center">
+                    {activeCall.direction === 'incoming' ? `Incoming from ${activeCall.chat.name}` : `Calling ${activeCall.chat.name}...`}
+                  </h2>
+
+                  <div className="text-xs text-[#8A8A8A] mt-1 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#FCC105] animate-ping" />
+                    <span>{activeCall.direction === 'incoming' ? 'Ready to connect video' : 'Ringing peer...'}</span>
+                  </div>
+                </div>
+
+                {/* Live Camera Preview Box */}
+                <div className="relative w-full my-4 flex flex-col items-center justify-center">
+                  <div className="w-56 h-64 sm:w-64 sm:h-72 rounded-2xl overflow-hidden border-2 border-[#FCC105] shadow-2xl relative bg-[#111111] flex items-center justify-center">
+                    {localStream && !activeCall.isVideoOff ? (
+                      <video
+                        ref={(el) => {
+                          previewVideoRef.current = el;
+                          if (el && localStream) {
+                            el.srcObject = localStream;
+                            el.muted = true;
+                            el.defaultMuted = true;
+                            el.play().catch(e => console.warn("Preview play:", e));
+                          }
+                        }}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                        style={{ transform: 'scaleX(-1)' }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-4 text-center">
+                        <img src={currentUser.avatarUrl} alt="You" className="w-16 h-16 rounded-full border-2 border-[#2B2B2B] mb-2" />
+                        <span className="text-xs text-white font-semibold">{currentUser.name}</span>
+                        <span className="text-[10px] text-[#8A8A8A] mt-1">
+                          {cameraError || "Camera starting..."}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Small peer avatar overlay in corner */}
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
+                      <img src={activeCall.chat.avatarUrl} alt="Peer" className="w-5 h-5 rounded-full border border-[#FCC105]" />
+                      <span className="text-[10px] text-white font-medium truncate max-w-[90px]">{activeCall.chat.name}</span>
+                    </div>
+
+                    {/* "Your camera is on" status tag */}
+                    <div className="absolute bottom-2 inset-x-2 flex justify-center">
+                      <span className="text-[9px] bg-black/75 backdrop-blur-sm text-[#FCC105] font-semibold px-2.5 py-0.5 rounded-full border border-[#FCC105]/30">
+                        {activeCall.isVideoOff ? "Camera Off" : "Your Camera is Ready"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Ringing Controls */}
+                <div className="w-full flex justify-center items-center gap-5 mt-2">
+                  {activeCall.direction === 'incoming' ? (
+                    <>
+                      <button
+                        onClick={declineCall}
+                        className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
+                        title="Decline"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+
+                      {/* Toggle Camera preview */}
+                      <button
+                        onClick={() => {
+                          const updatedVideoOff = !activeCall.isVideoOff;
+                          setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
+                          if (localStreamRef.current) {
+                            localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
+                          }
+                        }}
+                        className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                          activeCall.isVideoOff 
+                            ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
+                            : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                        }`}
+                        title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                      >
+                        {activeCall.isVideoOff ? <Video className="w-5 h-5 text-black" /> : <Video className="w-5 h-5" />}
+                      </button>
+
+                      <button
+                        onClick={acceptCall}
+                        className="w-14 h-14 rounded-full bg-[#22C55E] text-white flex items-center justify-center hover:scale-105 hover:bg-[#4ADE80] transition-all cursor-pointer shadow-lg shadow-[#22C55E]/20"
+                        title="Accept Video Call"
+                      >
+                        <Video className="w-6 h-6" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Mute Mic */}
+                      <button
+                        onClick={() => {
+                          const updatedMuted = !activeCall.isMuted;
+                          setActiveCall(prev => ({ ...prev, isMuted: updatedMuted }));
+                          if (localStreamRef.current) {
+                            localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !updatedMuted);
+                          }
+                        }}
+                        className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                          activeCall.isMuted 
+                            ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
+                            : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                        }`}
+                        title={activeCall.isMuted ? "Unmute Mic" : "Mute Mic"}
+                      >
+                        {activeCall.isMuted ? <Mic className="w-5 h-5 text-black" /> : <Mic className="w-5 h-5" />}
+                      </button>
+
+                      {/* Cancel outgoing call */}
+                      <button
+                        onClick={endCall}
+                        className="w-14 h-14 rounded-full bg-[#EF4444] text-white flex items-center justify-center hover:scale-105 hover:bg-[#F87171] transition-all cursor-pointer shadow-lg shadow-[#EF4444]/20"
+                        title="Cancel Call"
+                      >
+                        <Phone className="w-6 h-6 rotate-[135deg]" />
+                      </button>
+
+                      {/* Toggle Camera */}
+                      <button
+                        onClick={() => {
+                          const updatedVideoOff = !activeCall.isVideoOff;
+                          setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
+                          if (localStreamRef.current) {
+                            localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
+                          }
+                        }}
+                        className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
+                          activeCall.isVideoOff 
+                            ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
+                            : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
+                        }`}
+                        title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                      >
+                        {activeCall.isVideoOff ? <Video className="w-5 h-5 text-black" /> : <Video className="w-5 h-5" />}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
-              /* Centered Card Call Layout (Ringing, incoming, or voice sessions) */
+              /* Voice Call Layout (Connected or Ringing) */
               <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-3xl p-8 flex flex-col items-center justify-between min-h-[460px] sm:min-h-[500px] relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#FCC105]" />
                 
                 {/* Call Header / Info */}
                 <div className="w-full flex flex-col items-center mt-4">
                   <span className="text-[10px] text-[#FCC105] tracking-widest font-extrabold uppercase bg-[#FCC105]/10 px-3 py-1 rounded-full border border-[#FCC105]/20">
-                    {activeCall.type === 'video' ? 'Secure Video Session' : 'Secure Voice Session'}
+                    Secure Voice Session
                   </span>
                   
                   <h2 className="text-2xl font-display font-black text-white mt-6 tracking-tight">
@@ -2387,29 +2756,6 @@ export default function App() {
                       >
                         <Phone className="w-6 h-6 rotate-[135deg]" />
                       </button>
-
-                      {/* Camera toggle (video calls only) */}
-                      {activeCall.type === 'video' ? (
-                        <button
-                          onClick={() => {
-                            const updatedVideoOff = !activeCall.isVideoOff;
-                            setActiveCall(prev => ({ ...prev, isVideoOff: updatedVideoOff }));
-                            if (localStreamRef.current) {
-                              localStreamRef.current.getVideoTracks().forEach(t => t.enabled = !updatedVideoOff);
-                            }
-                          }}
-                          className={`w-12 h-12 rounded-full border flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${
-                            activeCall.isVideoOff 
-                              ? 'bg-[#FCC105] border-[#FCC105] text-[#000000]' 
-                              : 'border-[#2B2B2B] text-[#8A8A8A] hover:text-white hover:bg-[#111111]'
-                          }`}
-                          title={activeCall.isVideoOff ? "Turn Video On" : "Turn Video Off"}
-                        >
-                          {activeCall.isVideoOff ? <Video className="w-5 h-5 text-black" /> : <Video className="w-5 h-5" />}
-                        </button>
-                      ) : (
-                        <div className="w-12 h-12" />
-                      )}
                     </>
                   )}
                 </div>
