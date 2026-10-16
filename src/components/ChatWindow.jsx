@@ -3,7 +3,7 @@ import {
   Send, Paperclip, Smile, MoreVertical, 
   Phone, Video, Mic, Check, CheckCheck, 
   Image, FileText, X, ChevronRight, ChevronLeft, Play, Pause,
-  Copy, Trash2
+  Copy, Trash2, Download, Film, Maximize2
 } from 'lucide-react';
 
 const MessageSkeleton = () => (
@@ -70,11 +70,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
   const fileInputRef = useRef(null);
   const [downloadingStates, setDownloadingStates] = useState({}); // messageId -> progressPercentage
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewMedia, setPreviewMedia] = useState(null); // { type: 'image' | 'video', url: string, name: string }
 
-  const openFileInNewTab = (mediaUrl, filename) => {
+  const downloadFileToDevice = (mediaUrl, filename) => {
     if (!mediaUrl) return;
     try {
+      const defaultName = filename || 'downloaded-file';
       if (mediaUrl.startsWith('data:')) {
         const parts = mediaUrl.split(',');
         const mimeMatch = parts[0].match(/:(.*?);/);
@@ -87,16 +88,42 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         }
         const blob = new Blob([u8arr], { type: mime });
         const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = defaultName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
       } else {
-        window.open(mediaUrl, '_blank');
+        // Fetch as blob to enforce download attribute on all origins/schemes
+        fetch(mediaUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = defaultName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+          })
+          .catch(() => {
+            const link = document.createElement('a');
+            link.href = mediaUrl;
+            link.download = defaultName;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
       }
     } catch (err) {
-      console.error("Failed to open file in new tab:", err);
-      // Fallback: trigger standard download
+      console.error("Failed to download file:", err);
       const link = document.createElement('a');
       link.href = mediaUrl;
-      link.download = filename;
+      link.download = filename || 'download';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -104,19 +131,19 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
   };
 
   const handleDownload = (e, msg) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (downloadingStates[msg.id] !== undefined) return;
     
     setDownloadingStates(prev => ({ ...prev, [msg.id]: 0 }));
     
     let progress = 0;
     const interval = setInterval(() => {
-      progress += Math.floor(Math.random() * 20) + 15;
+      progress += Math.floor(Math.random() * 25) + 20;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
         
-        openFileInNewTab(msg.mediaUrl, msg.text);
+        downloadFileToDevice(msg.mediaUrl, msg.text);
         
         setTimeout(() => {
           setDownloadingStates(prev => {
@@ -124,11 +151,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             delete next[msg.id];
             return next;
           });
-        }, 1000);
+        }, 800);
       }
       
       setDownloadingStates(prev => ({ ...prev, [msg.id]: progress }));
-    }, 150);
+    }, 100);
   };
   const audioPlayerRef = useRef(new Audio());
   const [isRecording, setIsRecording] = useState(false);
@@ -173,7 +200,14 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
     reader.onload = (event) => {
       const dataUrl = event.target.result;
       const sizeStr = formatBytes(file.size);
-      const type = file.type.startsWith('image/') ? 'image' : 'file';
+      let type = 'file';
+      if (file.type.startsWith('image/')) {
+        type = 'image';
+      } else if (file.type.startsWith('video/')) {
+        type = 'video';
+      } else if (file.type.startsWith('audio/')) {
+        type = 'audio';
+      }
       
       onSendMedia({
         type,
@@ -487,7 +521,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                     {/* Bubble Container */}
                     <div
                       className={`rounded-2xl text-sm transition-all select-text ${
-                        msg.type === 'image' || msg.type === 'file'
+                        msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
                           ? 'p-0 bg-transparent border-0'
                           : `px-4 py-3 border shadow-sm ${
                               isOutgoing
@@ -496,15 +530,84 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                             }`
                       }`}
                     >
+                      {/* Render Video Message */}
+                      {msg.type === 'video' && (
+                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-black max-w-[320px] relative shadow-lg">
+                          <video 
+                            src={msg.mediaUrl} 
+                            controls 
+                            playsInline
+                            preload="metadata"
+                            className="w-full max-h-64 object-contain rounded-t-xl bg-black"
+                          />
+                          
+                          {/* Video metadata footer with Direct Download Button */}
+                          <div className="p-2.5 bg-[#111111] border-t border-[#2B2B2B] flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-white truncate">{msg.text || 'Video file'}</p>
+                              {msg.size && <span className="text-[10px] text-[#8A8A8A]">{msg.size}</span>}
+                            </div>
+                            
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewMedia({ type: 'video', url: msg.mediaUrl, name: msg.text || 'video.mp4' })}
+                                className="p-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#2B2B2B] text-white transition-all cursor-pointer"
+                                title="Expand Video"
+                              >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
+                              
+                              <button
+                                type="button"
+                                onClick={(e) => handleDownload(e, msg)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FCC105] text-black font-bold text-xs hover:bg-[#FFD34D] transition-all cursor-pointer shadow-md"
+                                title="Download and save video to device"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Save</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {msg.status === 'uploading' && (
+                            <div className="absolute inset-0 bg-[#000000]/75 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
+                              <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
+                                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-[#FCC105]" />
+                                Uploading Video...
+                              </span>
+                              <span className="text-xs font-black">{msg.progress || 0}%</span>
+                              <div className="w-24 bg-white/20 rounded-full h-1 mt-1.5 overflow-hidden">
+                                <div className="bg-[#FCC105] h-full" style={{ width: `${msg.progress || 0}%` }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Render Image Message */}
                       {msg.type === 'image' && (
-                        <div className="mb-2 rounded-lg overflow-hidden border border-[#2B2B2B]/20 bg-[#000000]/10 max-w-[280px] relative">
+                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-[#000000]/20 max-w-[280px] relative group shadow-md">
                           <img 
                             src={msg.mediaUrl} 
                             alt="attachment" 
-                            className="w-full object-cover max-h-48 cursor-pointer hover:opacity-90 transition-opacity" 
-                            onClick={() => setPreviewImage(msg.mediaUrl)}
+                            className="w-full object-cover max-h-56 cursor-pointer hover:opacity-95 transition-opacity" 
+                            onClick={() => setPreviewMedia({ type: 'image', url: msg.mediaUrl, name: msg.text || 'image.png' })}
                           />
+                          
+                          {/* Direct download button on image */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(e, msg);
+                            }}
+                            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-[#FCC105] text-white hover:text-black transition-all cursor-pointer backdrop-blur-sm border border-white/10 shadow-lg"
+                            title="Save image to device"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+
                           {msg.status === 'uploading' && (
                             <div className="absolute inset-0 bg-[#000000]/70 flex flex-col items-center justify-center text-white p-3 z-10 select-none">
                               <span className="text-[11px] font-bold mb-1.5 flex items-center gap-1.5">
@@ -522,63 +625,71 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
                       {/* Render File Message */}
                       {msg.type === 'file' && (
-                        <div className="relative">
-                          <a 
-                            href={msg.status === 'uploading' ? 'javascript:void(0)' : (msg.mediaUrl || '#')} 
-                            download={msg.status === 'uploading' ? undefined : msg.text}
-                            onClick={(e) => {
-                              if (msg.status === 'uploading') return;
-                              handleDownload(e, msg);
-                            }}
-                            className={`flex items-center gap-2.5 p-3 rounded-xl mb-1.5 transition-all ${
-                              msg.status === 'uploading' ? 'opacity-70 cursor-default' : 'cursor-pointer hover:opacity-90'
+                        <div className="relative mb-1.5">
+                          <div 
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl transition-all ${
+                              msg.status === 'uploading' ? 'opacity-70' : ''
                             } ${
                               isOutgoing ? 'bg-[#FCC105]/10 border border-[#FCC105]/20' : 'bg-[#111111] border border-[#2B2B2B]'
                             }`}
                           >
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#1A1A1A] text-[#FCC105]`}>
-                              {msg.status === 'uploading' ? (
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                              ) : downloadingStates[msg.id] !== undefined ? (
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
-                              ) : (
-                                <FileText className="w-4.5 h-4.5" />
-                              )}
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#1A1A1A] text-[#FCC105]`}>
+                                {msg.status === 'uploading' ? (
+                                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                                ) : downloadingStates[msg.id] !== undefined ? (
+                                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FCC105]" />
+                                ) : (
+                                  <FileText className="w-4.5 h-4.5" />
+                                )}
+                              </div>
+                              <div className="min-w-0 text-left flex-1">
+                                <p className="text-xs font-semibold truncate max-w-[150px] text-[#FFFFFF]" title={msg.text}>
+                                  {msg.text}
+                                </p>
+                                <span className="text-[10px] text-[#8A8A8A]">
+                                  {msg.status === 'uploading' 
+                                    ? `Uploading... ${msg.progress || 0}%` 
+                                    : downloadingStates[msg.id] !== undefined 
+                                      ? `Saving... ${downloadingStates[msg.id]}%` 
+                                      : msg.size}
+                                </span>
+                                
+                                {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
+                                  <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
+                                    <div 
+                                      className="h-full transition-all duration-150" 
+                                      style={{ 
+                                        width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
+                                        backgroundColor: '#FCC105'
+                                      }} 
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="min-w-0 text-left flex-1">
-                              <p className="text-xs font-semibold truncate max-w-[150px] text-[#FFFFFF]">
-                                {msg.text}
-                              </p>
-                              <span className="text-[10px] text-[#8A8A8A]">
-                                {msg.status === 'uploading' 
-                                  ? `Uploading... ${msg.progress || 0}%` 
-                                  : downloadingStates[msg.id] !== undefined 
-                                    ? `Downloading... ${downloadingStates[msg.id]}%` 
-                                    : msg.size}
-                              </span>
-                              
-                              {(msg.status === 'uploading' || downloadingStates[msg.id] !== undefined) && (
-                                <div className="w-full bg-[#000000]/10 rounded-full h-1 mt-1 overflow-hidden">
-                                  <div 
-                                    className="h-full transition-all duration-150" 
-                                    style={{ 
-                                      width: `${msg.status === 'uploading' ? (msg.progress || 0) : downloadingStates[msg.id]}%`,
-                                      backgroundColor: '#FCC105'
-                                    }} 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </a>
+
+                            {/* Direct Download Action Button */}
+                            {msg.status !== 'uploading' && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleDownload(e, msg)}
+                                className="p-2 rounded-lg bg-[#1A1A1A] hover:bg-[#FCC105] text-[#8A8A8A] hover:text-black transition-all cursor-pointer shrink-0 shadow-sm"
+                                title="Download and save file to device"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
 
                       {/* Render Audio Wave Message */}
                       {msg.type === 'audio' && (
-                        <div className="flex items-center gap-3.5 py-1 min-w-[220px]">
+                        <div className="flex items-center gap-3 py-1 min-w-[220px]">
                           <button 
                             onClick={() => handlePlayAudio(msg)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 cursor-pointer ${
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 cursor-pointer shrink-0 ${
                               isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105] text-[#000000]'
                             }`}
                           >
@@ -605,14 +716,24 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                                       : (isPast ? '#FCC105' : '#8A8A8A'),
                                     animation: isPlaying ? `pulse 1.2s ease-in-out infinite alternate` : 'none',
                                     animationDelay: `${i * 0.05}s`
-                                  }}
+                                  }} 
                                 />
                               );
                             })}
                           </div>
-                          <span className={`text-[10px] font-medium ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                          <span className={`text-[10px] font-medium shrink-0 ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
                             {msg.duration}
                           </span>
+
+                          {/* Direct download voice note */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDownload(e, { id: msg.id, mediaUrl: msg.mediaUrl, text: msg.text || 'voice-note.webm' })}
+                            className="p-1 rounded-md text-[#8A8A8A] hover:text-[#FCC105] hover:bg-[#1A1A1A] transition-colors cursor-pointer shrink-0"
+                            title="Save voice note to device"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       )}
 
@@ -769,6 +890,19 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             onClick={() => {
               setShowAttachMenu(false);
               if (fileInputRef.current) {
+                fileInputRef.current.accept = 'video/*';
+                fileInputRef.current.click();
+              }
+            }}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+          >
+            <Film className="w-4 h-4 text-[#FCC105]" />
+            Upload Video
+          </button>
+          <button
+            onClick={() => {
+              setShowAttachMenu(false);
+              if (fileInputRef.current) {
                 fileInputRef.current.accept = '*/*';
                 fileInputRef.current.click();
               }
@@ -900,27 +1034,71 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           </button>
         </form>
       )}
-      {/* Image Preview Lightbox */}
-      {previewImage && (
+      {/* Media Preview Lightbox (Images & Videos) */}
+      {previewMedia && (
         <div 
-          className="fixed inset-0 bg-[#000000]/95 flex items-center justify-center z-50 transition-opacity duration-300 chat-fade-in"
-          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-[#000000]/95 backdrop-blur-md flex flex-col items-center justify-center z-50 p-4 transition-opacity duration-300 chat-fade-in"
+          onClick={() => setPreviewMedia(null)}
         >
-          <button 
-            className="absolute top-5 right-5 text-white/70 hover:text-white hover:bg-white/10 p-2.5 rounded-full transition-all cursor-pointer z-51 animate-zoom-in"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewImage(null);
-            }}
+          {/* Top Bar with filename, download, and close button */}
+          <div 
+            className="absolute top-4 inset-x-4 max-w-4xl mx-auto flex items-center justify-between z-52 bg-[#111111]/90 backdrop-blur-md border border-[#2B2B2B] px-4 py-2.5 rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-6 h-6" />
-          </button>
-          <img 
-            src={previewImage} 
-            alt="Full size preview" 
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl select-none animate-zoom-in"
-            onClick={(e) => e.stopPropagation()} 
-          />
+            <div className="flex items-center gap-2 min-w-0">
+              {previewMedia.type === 'video' ? (
+                <Video className="w-4 h-4 text-[#FCC105] shrink-0" />
+              ) : (
+                <Image className="w-4 h-4 text-[#FCC105] shrink-0" />
+              )}
+              <span className="text-xs font-semibold text-white truncate max-w-[180px] sm:max-w-md">
+                {previewMedia.name}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => downloadFileToDevice(previewMedia.url, previewMedia.name)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FCC105] text-black font-bold text-xs hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/20"
+                title="Save file to your device"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Save to Device</span>
+              </button>
+
+              <button 
+                type="button"
+                className="text-white/70 hover:text-white hover:bg-white/10 p-2 rounded-xl transition-all cursor-pointer"
+                onClick={() => setPreviewMedia(null)}
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Media Content */}
+          <div 
+            className="w-full max-w-4xl max-h-[80vh] flex items-center justify-center p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {previewMedia.type === 'video' ? (
+              <video 
+                src={previewMedia.url} 
+                controls 
+                autoPlay 
+                playsInline
+                className="max-w-full max-h-[75vh] rounded-2xl shadow-2xl bg-black border border-[#2B2B2B]"
+              />
+            ) : (
+              <img 
+                src={previewMedia.url} 
+                alt="Full size preview" 
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl select-none animate-zoom-in"
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -26,7 +26,8 @@ const writeDB = (data) => {
 
 const app = express();
 const server = createServer(app);
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Serve static assets from Vite's dist folder
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -147,7 +148,10 @@ app.get('/*splat', (req, res) => {
 });
 
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+  server,
+  maxPayload: 100 * 1024 * 1024 // 100MB
+});
 const PORT = process.env.PORT || 5001;
 
 // Active connections map: socket -> clientInfo
