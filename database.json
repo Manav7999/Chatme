@@ -14,6 +14,20 @@
       "password": "$2b$10$Bt5udiQHwrsE1Q7GsOiGeOc4aDfdKOadOs1.pVFdbG/uA/mLHOlMe",
       "avatarUrl": "https://api.dicebear.com/7.x/pixel-art/svg?seed=avatar1",
       "createdAt": "2026-10-16T04:24:27.063Z"
+    },
+    {
+      "id": "user_1792138258152_hrmkx",
+      "username": "user1234",
+      "password": "$2b$10$q/36tvMN1Moxmdrr00NqCuQLHh.AHAJejuc/CsAKSikaeaCVh0sye",
+      "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=user",
+      "createdAt": "2026-10-16T08:10:58.154Z"
+    },
+    {
+      "id": "user_1792138353299_x0kcw",
+      "username": "cc",
+      "password": "$2b$10$EiF3nWQKhe3kR7zwJa9Ay.jmMbsm3whrDysD50nUmR8NVvaUSQG4y",
+      "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=user",
+      "createdAt": "2026-10-16T08:12:33.299Z"
     }
   ],
   "messages": [
@@ -58,6 +72,20 @@
       "encrypted": false,
       "iv": null,
       "ciphertext": null
+    },
+    {
+      "id": "servermsg_1792138383798",
+      "sender": "user_1792138353299_x0kcw",
+      "recipient": "user_1792138258152_hrmkx",
+      "text": "🔒 Encrypted",
+      "time": "01:43 PM",
+      "msgType": "text",
+      "mediaUrl": null,
+      "size": null,
+      "createdAt": "2026-10-16T08:13:03.799Z",
+      "encrypted": true,
+      "iv": "+6nwzblNTYjcmkEA",
+      "ciphertext": "qcVoN7sLb6HZ8BGKezIDGy0j"
     }
   ],
   "sessions": [
