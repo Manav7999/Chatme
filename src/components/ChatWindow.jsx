@@ -386,11 +386,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               <h2 className="text-xs sm:text-base font-bold text-[#FFFFFF] leading-tight truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[200px]">
                 {chat.name}
               </h2>
-              {!['liam', 'sienna', 'marcus', 'evelyn'].includes(chat.id) && (
-                <span className="text-[7px] md:text-[8px] bg-[#FCC105]/10 text-[#FCC105] px-1 rounded border border-[#FCC105]/20 font-bold uppercase tracking-wider scale-90 shrink-0 select-none hidden xs:inline-block">
-                  Peer
-                </span>
-              )}
+              <span className="text-[7px] md:text-[8px] bg-[#FCC105]/10 text-[#FCC105] px-1.5 py-0.5 rounded border border-[#FCC105]/20 font-bold uppercase tracking-wider scale-90 shrink-0 select-none hidden xs:inline-block">
+                Member
+              </span>
               {isEncrypted && (
                 <span title="End-to-end encrypted" className="text-[7px] md:text-[8px] bg-[#22C55E]/10 text-[#22C55E] px-1 py-0.5 rounded border border-[#22C55E]/20 font-bold uppercase tracking-wider shrink-0 select-none flex items-center gap-0.5">
                   🔒 <span className="hidden xs:inline">E2EE</span>

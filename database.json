@@ -18,46 +18,6 @@
   ],
   "messages": [
     {
-      "id": "msg_1782187278293_234",
-      "sender": "user_1782187253179_343",
-      "recipient": "evelyn",
-      "text": "Hello Evelyn, testing database persistence",
-      "time": "09:31 AM",
-      "msgType": "text",
-      "createdAt": "2026-06-23T04:01:18.293Z",
-      "status": "sent"
-    },
-    {
-      "id": "msg_1782187279301_482",
-      "sender": "evelyn",
-      "recipient": "user_1782187253179_343",
-      "text": "I agree. Let's make sure the scrollbars and interactive states feel smooth on the dashboard view.",
-      "time": "09:31 AM",
-      "msgType": "text",
-      "createdAt": "2026-06-23T04:01:19.301Z",
-      "status": "read"
-    },
-    {
-      "id": "msg_1782187547021_239",
-      "sender": "user_1782187253179_343",
-      "recipient": "evelyn",
-      "text": "<img src=x onerror=\"window.confirm=()=>true;console.log('injected')\">",
-      "time": "09:35 AM",
-      "msgType": "text",
-      "createdAt": "2026-06-23T04:05:47.021Z",
-      "status": "sent"
-    },
-    {
-      "id": "msg_1782187548037_486",
-      "sender": "evelyn",
-      "recipient": "user_1782187253179_343",
-      "text": "I agree. Let's make sure the scrollbars and interactive states feel smooth on the dashboard view.",
-      "time": "09:35 AM",
-      "msgType": "text",
-      "createdAt": "2026-06-23T04:05:48.037Z",
-      "status": "read"
-    },
-    {
       "id": "servermsg_1792124764235",
       "sender": "user_1792124667063_evodc",
       "recipient": "new_1782179739857",

@@ -59,9 +59,7 @@ export default function App() {
     const inviteName = params.get('name');
     return inviteId ? { id: inviteId, name: inviteName } : null;
   });
-  const [activeChatId, setActiveChatId] = useState(() => {
-    return window.innerWidth < 768 ? null : 'evelyn';
-  });
+  const [activeChatId, setActiveChatId] = useState(null);
   const [activeTab, setActiveTab] = useState('chats');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -626,8 +624,15 @@ export default function App() {
     const savedSettings = localStorage.getItem('chatme_settings');
     const savedToken = localStorage.getItem('chatme_jwt');
 
+    const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
     if (savedChats) {
-      setChats(JSON.parse(savedChats));
+      try {
+        const parsed = JSON.parse(savedChats).filter(c => !botIds.includes(c.id));
+        setChats(parsed);
+        localStorage.setItem('chatme_chats', JSON.stringify(parsed));
+      } catch {
+        setChats([]);
+      }
       setIsLoadingChats(false);
     } else {
       setIsLoadingChats(true);
@@ -786,13 +791,15 @@ export default function App() {
             setChats(prev => {
               const otherOnlineUsers = data.users.filter(u => u.id !== currentUser.id);
               const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
-              let updated = [...prev];
+              let updated = prev.filter(c => !botIds.includes(c.id));
 
               otherOnlineUsers.forEach(onlineUser => {
                 const existingIdx = updated.findIndex(c => c.id === onlineUser.id);
                 if (existingIdx !== -1) {
                   updated[existingIdx] = {
                     ...updated[existingIdx],
+                    name: onlineUser.name,
+                    avatarUrl: onlineUser.avatarUrl || updated[existingIdx].avatarUrl,
                     isOnline: true
                   };
                 } else {
@@ -825,7 +832,6 @@ export default function App() {
 
               // Mark offline
               updated = updated.map(c => {
-                if (botIds.includes(c.id)) return c;
                 const isStillOnline = otherOnlineUsers.some(u => u.id === c.id);
                 return { ...c, isOnline: isStillOnline };
               });
@@ -1150,72 +1156,7 @@ export default function App() {
     }
   };
 
-  // Auto-replies logic based on contacts
-  const triggerBotResponse = (chatId, userText) => {
-    if (settings.simulationSpeed === 'none') return;
-    
-    const delay = settings.simulationSpeed === 'fast' ? 1000 : 3000;
-    
-    // Set isTyping to true
-    setChats(prev => {
-      const updated = prev.map(c => c.id === chatId ? { ...c, isTyping: true } : c);
-      saveToLocalStorage(updated);
-      return updated;
-    });
-
-    setTimeout(() => {
-      setChats(prev => {
-        const chat = prev.find(c => c.id === chatId);
-        if (!chat) return prev;
-
-        let responseText = "Thanks for your input! Let's schedule a call.";
-        if (chatId === 'evelyn') {
-          if (userText.toLowerCase().includes('color') || userText.toLowerCase().includes('theme')) {
-            responseText = "Exactly! The high-contrast palette (#FCC105 on #000000) provides outstanding readability and fits the premium look we wanted.";
-          } else {
-            responseText = "I agree. Let's make sure the scrollbars and interactive states feel smooth on the dashboard view.";
-          }
-        } else if (chatId === 'marcus') {
-          responseText = "Great! The build compiler is fully configured now. Vite HMR is running smoothly.";
-        } else if (chatId === 'sienna') {
-          responseText = "Wonderful! I'm preparing the press releases and layout mockups now. ChatMe branding is looking sharp.";
-        } else if (chatId === 'liam') {
-          responseText = `Hello! You said: "${userText}". As an AI agent, I recommend deploying this React build directly onto the server for immediate verification!`;
-        }
-
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        const newMsg = {
-          id: `botmsg_${Date.now()}`,
-          sender: chatId,
-          text: responseText,
-          time: timeStr,
-          status: 'read'
-        };
-
-        const updated = prev.map(c => {
-          if (c.id === chatId) {
-            return {
-              ...c,
-              isTyping: false,
-              unreadCount: chat.id === activeChatIdRef.current ? 0 : c.unreadCount + 1,
-              messages: [...c.messages, newMsg]
-            };
-          }
-          return c;
-        });
-
-        triggerNotification(chat.name, responseText, chat.avatarUrl, chatId);
-        playNotifySound();
-        saveToLocalStorage(updated);
-        return updated;
-      });
-    }, delay);
-  };
-
   const handleSendMessage = async (text, type = 'text', extra = {}) => {
-
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const clientMsgId = `usrmsg_${Date.now()}`;
@@ -1243,12 +1184,7 @@ export default function App() {
     setChats(updatedChats);
     saveToLocalStorage(updatedChats);
 
-    const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
-    const isBot = botIds.includes(activeChatId);
-
-    if (isBot) {
-      triggerBotResponse(activeChatId, text);
-    } else if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       // Encrypt if we have a shared key with the recipient
       const sharedKey = getSharedKey(activeChatId);
       let sendPayload;
@@ -1518,8 +1454,7 @@ export default function App() {
     });
 
     // Send read receipts to the peer
-    const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
-    if (!botIds.includes(chatId) && socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
         type: 'message_read',
         from: chatId
@@ -1527,7 +1462,7 @@ export default function App() {
     }
 
     // Fetch persistent message history from server for real users
-    if (!botIds.includes(chatId) && currentUser.id) {
+    if (currentUser.id) {
       const token = localStorage.getItem('chatme_jwt');
       if (!token) return;
       setIsLoadingHistory(true);
@@ -1639,8 +1574,7 @@ export default function App() {
     }
     saveToLocalStorage(updated);
 
-    const botIds = ['liam', 'sienna', 'marcus', 'evelyn'];
-    if (!botIds.includes(chatId) && currentUser.id) {
+    if (currentUser.id) {
       const token = localStorage.getItem('chatme_jwt');
       if (token) {
         try {
@@ -1715,7 +1649,7 @@ export default function App() {
     localStorage.removeItem('chatme_settings');
     localStorage.removeItem('chatme_jwt');
     setChats(initialChats);
-    setActiveChatId('evelyn');
+    setActiveChatId(null);
     setSettings({
       simulationSpeed: 'fast',
       soundEnabled: true,
@@ -1984,7 +1918,7 @@ export default function App() {
               onBack={() => setActiveChatId(null)}
               isMobile={isMobile}
               onStartCall={startCall}
-              isEncrypted={!!activeChat && !['liam','sienna','marcus','evelyn'].includes(activeChat.id) && hasSharedKey(activeChat.id)}
+              isEncrypted={!!activeChat && hasSharedKey(activeChat.id)}
               isLoadingHistory={isLoadingHistory}
             />
           )}
@@ -2164,7 +2098,7 @@ export default function App() {
                 }
                 systemAlerts.push(
                   { title: 'Secure connection established', time: 'Just now', desc: 'End-to-end sandbox tunnel encrypted successfully.' },
-                  { title: 'New chat simulated', time: '1 hour ago', desc: 'Liam Kincaid AI Assistant initialized for workspace debugging.' },
+                  { title: 'Real-time media tunnel ready', time: '1 hour ago', desc: 'WebSocket and WebRTC connections online for direct calling.' },
                   { title: 'Local database initialized', time: '3 hours ago', desc: 'Successfully created browser localstorage caching layers.' }
                 );
                 return systemAlerts.map((alert, idx) => (
