@@ -221,7 +221,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                   <div className="flex items-center gap-2 max-w-full group/msg">
                     {/* If own message, show actions on the left */}
                     {isOwn && (
-                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
                         {msg.type !== 'call_history' && (
                           <button
                             type="button"
@@ -229,7 +229,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                               navigator.clipboard.writeText(msg.text);
                               alert("Copied message to clipboard!");
                             }}
-                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
                             title="Copy message text"
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -242,7 +242,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                               onDeleteMessage(msg.id);
                             }
                           }}
-                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
                           title="Delete message"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -421,7 +421,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
 
                     {/* If other's message, show actions on the right */}
                     {!isOwn && (
-                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
                         {msg.type !== 'call_history' && (
                           <button
                             type="button"
@@ -429,7 +429,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                               navigator.clipboard.writeText(msg.text);
                               alert("Copied message to clipboard!");
                             }}
-                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
                             title="Copy message text"
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -442,7 +442,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                               onDeleteMessage(msg.id);
                             }
                           }}
-                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
                           title="Delete message"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

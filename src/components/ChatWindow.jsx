@@ -432,22 +432,24 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-[#111111] transition-all cursor-pointer">
               <MoreVertical className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
-            <div className="hidden group-hover:block absolute right-0 top-8 bg-[#111111] border border-[#2B2B2B] rounded-lg shadow-xl py-1.5 w-40 z-20">
+            <div className="hidden group-hover:block absolute right-0 top-8 bg-[#111111] border border-[#2B2B2B] rounded-xl shadow-2xl py-2 w-48 z-20 overflow-hidden">
               <button 
                 type="button"
                 onClick={handleCopyConversation} 
-                className="w-full px-4 py-2 text-left text-xs text-white hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-xs text-[#FCC105] hover:bg-[#FCC105]/15 flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
               >
-                Copy Conversation
+                <Copy className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <span>Copy Conversation</span>
               </button>
               <button 
                 type="button"
                 onClick={onClearChat} 
-                className="w-full px-4 py-2 text-left text-xs text-white hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-xs text-[#E0E0E0] hover:bg-[#1A1A1A] flex items-center gap-2.5 font-medium transition-colors cursor-pointer"
               >
-                Clear Conversation
+                <X className="w-4 h-4 text-[#8A8A8A] shrink-0" />
+                <span>Clear Conversation</span>
               </button>
-              <div className="border-t border-[#2B2B2B]/50 my-1"></div>
+              <div className="border-t border-[#2B2B2B] my-1"></div>
               <button 
                 type="button"
                 onClick={() => {
@@ -455,9 +457,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                     onDeleteChat(chat.id);
                   }
                 }} 
-                className="w-full px-4 py-2 text-left text-xs text-[#EF4444] hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-xs text-[#FF4D4D] hover:bg-[#FF4D4D]/15 flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
               >
-                Delete Conversation
+                <Trash2 className="w-4 h-4 text-[#FF4D4D] shrink-0" />
+                <span>Delete Conversation</span>
               </button>
             </div>
           </div>
@@ -489,7 +492,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                   <div className="flex items-center gap-2 max-w-full">
                     {/* If outgoing, show actions on the left */}
                     {isOutgoing && (
-                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
                         {msg.type !== 'call_history' && (
                           <button
                             type="button"
@@ -497,7 +500,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               navigator.clipboard.writeText(msg.text);
                               alert("Copied message to clipboard!");
                             }}
-                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
                             title="Copy message text"
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -510,7 +513,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               onDeleteMessage(msg.id);
                             }
                           }}
-                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
                           title="Delete message"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -779,7 +782,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
                     {/* If incoming, show actions on the right */}
                     {!isOutgoing && (
-                      <div className="opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 shrink-0 select-none">
+                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
                         {msg.type !== 'call_history' && (
                           <button
                             type="button"
@@ -787,7 +790,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               navigator.clipboard.writeText(msg.text);
                               alert("Copied message to clipboard!");
                             }}
-                            className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#2B2B2B] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
                             title="Copy message text"
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -800,7 +803,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               onDeleteMessage(msg.id);
                             }
                           }}
-                          className="p-1 rounded-lg text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
                           title="Delete message"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

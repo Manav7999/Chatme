@@ -148,7 +148,7 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     )}
                   </div>
                 </div>
-                {/* Delete button shown on hover */}
+                {/* Delete button */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -157,10 +157,10 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                       onDeleteChat(chat.id);
                     }
                   }}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#EF4444] hover:text-[#FFFFFF] cursor-pointer shadow-lg z-10"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-[#EF4444] hover:text-[#FFFFFF] cursor-pointer shadow-lg z-10"
                   title="Delete Conversation"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             );
