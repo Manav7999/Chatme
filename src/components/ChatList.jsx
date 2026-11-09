@@ -48,6 +48,10 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
               alert("Copied your ChatMe Profile Link!\nSend it to another person so they can start a real chat with you.");
             }}
             className="w-9 h-9 rounded-xl bg-transparent border border-[#FCC105] text-[#FCC105] flex items-center justify-center hover:bg-[#FCC105]/10 transition-colors duration-200 hover:scale-105 cursor-pointer"
+            style={{
+              borderColor: 'var(--theme-accent, #FCC105)',
+              color: 'var(--theme-accent, #FCC105)'
+            }}
             title="Copy Chat Invite Link"
           >
             <Share2 className="w-4 h-4" />
@@ -55,6 +59,10 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
           <button
             onClick={onNewChat}
             className="w-9 h-9 rounded-xl bg-[#FCC105] text-[#000000] flex items-center justify-center hover:bg-[#FFD34D] transition-colors duration-200 shadow-lg shadow-[#FCC105]/10 hover:scale-105 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--theme-accent, #FCC105)',
+              color: 'var(--theme-accent-text, #000000)'
+            }}
             title="New Conversation"
           >
             <Plus className="w-5 h-5" />
@@ -94,12 +102,19 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     ? 'bg-[rgba(252,193,5,0.14)] border-l-4 border-[#FCC105]'
                     : 'hover:bg-[#1A1A1A] border-l-4 border-transparent'
                 }`}
+                style={isSelected ? {
+                  backgroundColor: 'rgba(var(--theme-accent-rgb, 252, 193, 5), 0.16)',
+                  borderLeftColor: 'var(--theme-accent, #FCC105)'
+                } : {}}
               >
                 {/* Avatar with yellow border if online/active */}
                 <div className="relative">
-                  <div className={`w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden border ${
-                    isSelected ? 'border-[#FCC105]' : 'border-[#2B2B2B] group-hover:border-[#8A8A8A]'
-                  } transition-colors duration-200`}>
+                  <div 
+                    className={`w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden border ${
+                      isSelected ? 'border-[#FCC105]' : 'border-[#2B2B2B] group-hover:border-[#8A8A8A]'
+                    } transition-colors duration-200`}
+                    style={isSelected ? { borderColor: 'var(--theme-accent, #FCC105)' } : {}}
+                  >
                     <img
                       src={chat.avatarUrl}
                       alt={chat.name}
@@ -142,7 +157,13 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     
                     {/* Unread Counter Badge */}
                     {chat.unreadCount > 0 && (
-                      <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-[#FCC105] text-[#000000] text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
+                      <span 
+                        className="flex-shrink-0 min-w-[18px] h-[18px] bg-[#FCC105] text-[#000000] text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-pulse"
+                        style={{
+                          backgroundColor: 'var(--theme-accent, #FCC105)',
+                          color: 'var(--theme-accent-text, #000000)'
+                        }}
+                      >
                         {chat.unreadCount}
                       </span>
                     )}
@@ -181,7 +202,7 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
       {/* Footer Info */}
       <div className="p-4 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center justify-between text-xs text-[#8A8A8A]">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-[#FCC105]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#FCC105]" style={{ color: 'var(--theme-accent, #FCC105)' }} />
           <span>System: Active</span>
         </div>
         <span className="text-[10px] bg-[#1A1A1A] px-2 py-0.5 rounded-full border border-[#2B2B2B]">

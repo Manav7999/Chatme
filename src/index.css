@@ -356,8 +356,143 @@ body {
 
 /* Subtle chat doodle wallpaper pattern */
 .chat-wallpaper-doodles {
-  background-image: radial-gradient(#FCC105 0.75px, transparent 0.75px), radial-gradient(#FCC105 0.75px, transparent 0.75px);
+  background-image: radial-gradient(var(--theme-accent, #FCC105) 0.75px, transparent 0.75px), radial-gradient(var(--theme-accent, #FCC105) 0.75px, transparent 0.75px);
   background-size: 24px 24px;
   background-position: 0 0, 12px 12px;
   opacity: 0.06;
+}
+
+/* =========================================================================
+   DYNAMIC THEME ACCENT OVERRIDES
+   Harmonizes selectors, buttons, active tabs, and highlights across the app
+   ========================================================================= */
+
+[data-custom-accent="true"] .text-\[\#FCC105\],
+[data-theme="custom"] .text-\[\#FCC105\],
+:root:not([data-theme="dark"]) .text-\[\#FCC105\] {
+  color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .bg-\[\#FCC105\],
+[data-theme="custom"] .bg-\[\#FCC105\],
+:root:not([data-theme="dark"]) .bg-\[\#FCC105\] {
+  background-color: var(--theme-accent, #FCC105) !important;
+  color: var(--theme-accent-text, #000000) !important;
+}
+
+[data-custom-accent="true"] .bg-\[\#FCC105\] *,
+[data-theme="custom"] .bg-\[\#FCC105\] *,
+:root:not([data-theme="dark"]) .bg-\[\#FCC105\] * {
+  color: var(--theme-accent-text, #000000) !important;
+}
+
+[data-custom-accent="true"] .border-\[\#FCC105\],
+[data-theme="custom"] .border-\[\#FCC105\],
+:root:not([data-theme="dark"]) .border-\[\#FCC105\] {
+  border-color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .bg-\[\#FCC105\]\/10,
+[data-theme="custom"] .bg-\[\#FCC105\]\/10,
+:root:not([data-theme="dark"]) .bg-\[\#FCC105\]\/10 {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.12) !important;
+}
+
+[data-custom-accent="true"] .bg-\[\#FCC105\]\/15,
+[data-theme="custom"] .bg-\[\#FCC105\]\/15,
+:root:not([data-theme="dark"]) .bg-\[\#FCC105\]\/15 {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.18) !important;
+}
+
+[data-custom-accent="true"] .bg-\[\#FCC105\]\/20,
+[data-theme="custom"] .bg-\[\#FCC105\]\/20,
+:root:not([data-theme="dark"]) .bg-\[\#FCC105\]\/20 {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.24) !important;
+}
+
+[data-custom-accent="true"] .border-\[\#FCC105\]\/20,
+[data-custom-accent="true"] .border-\[\#FCC105\]\/30,
+[data-custom-accent="true"] .border-\[\#FCC105\]\/40,
+[data-custom-accent="true"] .border-\[\#FCC105\]\/50,
+[data-theme="custom"] .border-\[\#FCC105\]\/20,
+[data-theme="custom"] .border-\[\#FCC105\]\/30,
+[data-theme="custom"] .border-\[\#FCC105\]\/40,
+[data-theme="custom"] .border-\[\#FCC105\]\/50 {
+  border-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.35) !important;
+}
+
+[data-custom-accent="true"] .bg-\[rgba\(252\,193\,5\,0\.14\)\],
+[data-theme="custom"] .bg-\[rgba\(252\,193\,5\,0\.14\)\],
+:root:not([data-theme="dark"]) .bg-\[rgba\(252\,193\,5\,0\.14\)\] {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.16) !important;
+}
+
+[data-custom-accent="true"] .bg-\[rgba\(252\,193\,5\,0\.12\)\],
+[data-theme="custom"] .bg-\[rgba\(252\,193\,5\,0\.12\)\],
+:root:not([data-theme="dark"]) .bg-\[rgba\(252\,193\,5\,0\.12\)\] {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.14) !important;
+}
+
+[data-custom-accent="true"] .hover\:bg-\[\#FFD34D\]:hover,
+[data-theme="custom"] .hover\:bg-\[\#FFD34D\]:hover,
+:root:not([data-theme="dark"]) .hover\:bg-\[\#FFD34D\]:hover {
+  background-color: var(--theme-accent-hover, #FFD34D) !important;
+}
+
+[data-custom-accent="true"] .hover\:text-\[\#FCC105\]:hover,
+[data-theme="custom"] .hover\:text-\[\#FCC105\]:hover,
+:root:not([data-theme="dark"]) .hover\:text-\[\#FCC105\]:hover {
+  color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .hover\:border-\[\#FCC105\]:hover,
+[data-custom-accent="true"] .hover\:border-\[\#FCC105\]\/30:hover,
+[data-custom-accent="true"] .hover\:border-\[\#FCC105\]\/50:hover,
+[data-custom-accent="true"] .group:hover .group-hover\:border-\[\#FCC105\],
+[data-theme="custom"] .hover\:border-\[\#FCC105\]:hover,
+[data-theme="custom"] .group:hover .group-hover\:border-\[\#FCC105\] {
+  border-color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .hover\:bg-\[\#FCC105\]:hover,
+[data-theme="custom"] .hover\:bg-\[\#FCC105\]:hover {
+  background-color: var(--theme-accent, #FCC105) !important;
+  color: var(--theme-accent-text, #000000) !important;
+}
+
+[data-custom-accent="true"] .hover\:bg-\[\#FCC105\]\/10:hover,
+[data-theme="custom"] .hover\:bg-\[\#FCC105\]\/10:hover {
+  background-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.15) !important;
+}
+
+[data-custom-accent="true"] .focus\:border-\[\#FCC105\]:focus,
+[data-theme="custom"] .focus\:border-\[\#FCC105\]:focus {
+  border-color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .focus\:ring-\[\#FCC105\]:focus,
+[data-theme="custom"] .focus\:ring-\[\#FCC105\]:focus {
+  --tw-ring-color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] .shadow-\[\#FCC105\]\/10,
+[data-custom-accent="true"] .shadow-\[\#FCC105\]\/15,
+[data-theme="custom"] .shadow-\[\#FCC105\]\/10,
+[data-theme="custom"] .shadow-\[\#FCC105\]\/15 {
+  --tw-shadow-color: rgba(var(--theme-accent-rgb, 252, 193, 5), 0.25) !important;
+}
+
+[data-custom-accent="true"] .text-glow,
+[data-theme="custom"] .text-glow {
+  text-shadow: 0 0 10px rgba(var(--theme-accent-rgb, 252, 193, 5), 0.5) !important;
+}
+
+[data-custom-accent="true"] .focus-yellow:focus,
+[data-theme="custom"] .focus-yellow:focus {
+  outline-color: var(--theme-accent, #FCC105) !important;
+}
+
+[data-custom-accent="true"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="custom"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent, #FCC105) !important;
 }

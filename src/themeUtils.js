@@ -670,7 +670,6 @@ export function applyThemeToDocument(settings = 'dark') {
     root.style.removeProperty('--theme-surface-secondary');
     root.style.removeProperty('--theme-border');
     root.style.removeProperty('--theme-hover-bg');
-    root.style.removeProperty('--theme-accent');
   } else if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark');
     root.classList.remove('light');
@@ -680,7 +679,6 @@ export function applyThemeToDocument(settings = 'dark') {
     root.style.removeProperty('--theme-surface-secondary');
     root.style.removeProperty('--theme-border');
     root.style.removeProperty('--theme-hover-bg');
-    root.style.removeProperty('--theme-accent');
   } else {
     // Custom theme or named dark preset (navy, emerald, violet, crimson, slate, amber)
     root.setAttribute('data-theme', 'custom');
@@ -697,7 +695,42 @@ export function applyThemeToDocument(settings = 'dark') {
     root.style.setProperty('--theme-surface-secondary', palette.surfaceSecondary);
     root.style.setProperty('--theme-border', palette.border);
     root.style.setProperty('--theme-hover-bg', palette.surfaceSecondary);
-    root.style.setProperty('--theme-accent', palette.accent);
+  }
+
+  // Resolve and apply adaptive theme accent across the entire app
+  let activeAccent = '#FCC105';
+  if (typeof settings === 'object' && settings) {
+    if (theme !== 'dark' && theme !== 'custom' && preset?.accent) {
+      activeAccent = preset.accent;
+    } else if (settings.accentColor && settings.accentColor.toUpperCase() !== '#FCC105') {
+      activeAccent = settings.accentColor;
+    } else if (settings.bubbleStyle?.outgoingBg && settings.bubbleStyle.outgoingBg.toUpperCase() !== '#FCC105') {
+      activeAccent = settings.bubbleStyle.outgoingBg;
+    } else if (theme === 'custom') {
+      activeAccent = palette.accent || deriveHarmoniousAccentFromColor(appThemeColor);
+    } else {
+      activeAccent = palette.accent || '#FCC105';
+    }
+  } else if (palette?.accent) {
+    activeAccent = palette.accent;
+  }
+
+  const [ar, ag, ab] = hexToRgb(activeAccent);
+  const [ah, as, al] = rgbToHsl(ar, ag, ab);
+  const hoverRgb = hslToRgb(ah, as, Math.min(0.85, al + 0.12));
+  const hoverHex = rgbToHex(hoverRgb[0], hoverRgb[1], hoverRgb[2]);
+  const accentText = getReadableTextColor(activeAccent);
+
+  root.style.setProperty('--theme-accent', activeAccent);
+  root.style.setProperty('--theme-accent-rgb', `${ar}, ${ag}, ${ab}`);
+  root.style.setProperty('--theme-accent-hover', hoverHex);
+  root.style.setProperty('--theme-accent-text', accentText);
+
+  const isCustomAccent = activeAccent.toUpperCase() !== '#FCC105';
+  if (isCustomAccent || theme !== 'dark') {
+    root.setAttribute('data-custom-accent', 'true');
+  } else {
+    root.removeAttribute('data-custom-accent');
   }
 
   // Handle Text Color (Match with app theme or custom color)

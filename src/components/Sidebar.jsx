@@ -16,7 +16,10 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
         <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:scale-105 transition-transform duration-200 cursor-pointer">
           <img src="/chatmeappicon.png" alt="ChatMe" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
         </div>
-        <span className="text-[10px] font-display font-bold text-[#FCC105] tracking-wider mt-1.5 hidden md:inline">
+        <span 
+          className="text-[10px] font-display font-bold text-[#FCC105] tracking-wider mt-1.5 hidden md:inline"
+          style={{ color: 'var(--theme-accent, #FCC105)' }}
+        >
           CHATME
         </span>
       </div>
@@ -35,11 +38,18 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
                   ? 'text-[#FCC105] bg-[#FCC105]/10' 
                   : 'text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111]'
               }`}
+              style={isActive ? {
+                color: 'var(--theme-accent, #FCC105)',
+                backgroundColor: 'rgba(var(--theme-accent-rgb, 252, 193, 5), 0.12)'
+              } : {}}
               title={item.label}
             >
               {/* Active Indicator Bar */}
               {isActive && (
-                <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-[#FCC105] rounded-r-md" />
+                <div 
+                  className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-[#FCC105] rounded-r-md" 
+                  style={{ backgroundColor: 'var(--theme-accent, #FCC105)' }}
+                />
               )}
               
               <Icon className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-200 group-hover:scale-105" />

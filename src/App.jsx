@@ -712,7 +712,7 @@ export default function App() {
           bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
         };
         setSettings(merged);
-        applyThemeToDocument(merged.theme);
+        applyThemeToDocument(merged);
       } catch (e) {
         console.warn('Failed parsing saved settings:', e);
       }
