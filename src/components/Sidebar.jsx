@@ -72,12 +72,12 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
             title={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
           >
             {theme === 'light' ? (
-              <Moon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-12 text-[#FCC105]" />
+              <Sun className="w-5 h-5 transition-transform duration-200 group-hover:rotate-45" style={{ color: 'var(--theme-accent, #FCC105)' }} />
             ) : (
-              <Sun className="w-5 h-5 transition-transform duration-200 group-hover:rotate-45 text-[#FCC105]" />
+              <Moon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-12" style={{ color: 'var(--theme-accent, #FCC105)' }} />
             )}
             <span className="text-[9px] mt-1 font-medium hidden md:inline">
-              {theme === 'light' ? 'Dark' : 'Light'}
+              {theme === 'light' ? 'Light' : 'Dark'}
             </span>
           </button>
         )}

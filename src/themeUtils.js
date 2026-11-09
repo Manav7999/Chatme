@@ -650,15 +650,22 @@ export function applyThemeToDocument(settings = 'dark') {
   const root = document.documentElement;
 
   // Handle both string theme and object settings
-  const theme = typeof settings === 'string' ? settings : (settings?.theme || 'dark');
+  const rawTheme = typeof settings === 'string' ? settings : (settings?.theme || 'dark');
   const appThemeColor = typeof settings === 'object' ? (settings?.appThemeColor || '#000000') : '#000000';
   const textColorMode = typeof settings === 'object' ? (settings?.textColorMode || 'match') : 'match';
   const textColor = typeof settings === 'object' ? (settings?.textColor || 'auto') : 'auto';
 
+  // Guard: If user has an active wallpaper image or dark custom background, NEVER allow it to force white light theme
+  const hasCustomWallpaper = typeof settings === 'object' && settings?.chatBackground && (
+    settings.chatBackground.imageUrl || 
+    (settings.chatBackground.color && settings.chatBackground.color !== '#FFFFFF' && settings.chatBackground.color !== '#F8FAFC')
+  );
+  const theme = (hasCustomWallpaper && rawTheme === 'light') ? 'custom' : rawTheme;
+
   // Find matching preset or derive palette
   const preset = APP_THEME_PRESETS.find(p => p.id === theme);
   const palette = preset || (theme === 'custom' ? deriveAppThemeFromColor(appThemeColor) : APP_THEME_PRESETS[0]);
-  const isDark = palette.isDark;
+  const isDark = hasCustomWallpaper ? true : palette.isDark;
 
   if (theme === 'light') {
     root.setAttribute('data-theme', 'light');

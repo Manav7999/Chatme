@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="bg-[#000000]">
+<html lang="en" class="bg-[#000000]" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/chatmeappicon.png" />
@@ -8,12 +8,65 @@
     <title>ChatMe - Premium Secure Messaging</title>
     <meta name="description" content="ChatMe is a premium, minimal, secure dark-themed messaging workspace powered by React and Tailwind CSS." />
     <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
     
     <!-- iOS / Safari Web App Support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ChatMe" />
     <link rel="apple-touch-icon" href="/chatmeappicon.png" />
+
+    <!-- Synchronous anti-flicker pre-render theme bootstrap -->
+    <style>
+      :root {
+        color-scheme: dark;
+        background-color: #000000 !important;
+      }
+      html, body {
+        background-color: #000000 !important;
+        color-scheme: dark;
+        color: #FFFFFF;
+      }
+    </style>
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('chatme_settings');
+          var theme = 'dark';
+          var accent = '#FCC105';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed) {
+              if (parsed.chatBackground && (parsed.chatBackground.imageUrl || parsed.chatBackground.color)) {
+                theme = (parsed.theme === 'light') ? 'custom' : (parsed.theme || 'custom');
+              } else if (parsed.theme === 'light') {
+                theme = 'light';
+              } else {
+                theme = parsed.theme || 'dark';
+              }
+              if (parsed.accentColor && parsed.accentColor.toUpperCase() !== '#FCC105') {
+                accent = parsed.accentColor;
+              } else if (parsed.bubbleStyle && parsed.bubbleStyle.outgoingBg && parsed.bubbleStyle.outgoingBg.toUpperCase() !== '#FCC105') {
+                accent = parsed.bubbleStyle.outgoingBg;
+              }
+            }
+          }
+          var root = document.documentElement;
+          root.setAttribute('data-theme', theme);
+          if (theme === 'light') {
+            root.classList.add('light');
+          } else {
+            root.classList.remove('light');
+          }
+          if (accent && accent.toUpperCase() !== '#FCC105') {
+            root.setAttribute('data-custom-accent', 'true');
+            root.style.setProperty('--theme-accent', accent);
+          }
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body class="bg-[#000000]">
     <div id="root"></div>

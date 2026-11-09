@@ -118,6 +118,8 @@ export default function ProfileSettings({
         imageUrl: compressedDataUrl
       }));
 
+      // When setting a device photo wallpaper, ensure theme is custom/dark and never light
+      setTheme('custom');
       setAccentColor(extractedAccent);
       setBubbleStyle(prev => ({
         ...prev,
@@ -159,6 +161,7 @@ export default function ProfileSettings({
     }
     const derived = deriveHarmoniousAccentFromColor(color);
     const autoText = getReadableTextColor(derived);
+    setTheme('custom');
     setChatBackground(prev => ({
       ...prev,
       type: 'color',
@@ -176,6 +179,7 @@ export default function ProfileSettings({
   const handleGradientChange = (g) => {
     const derived = g.accent || derivePaletteFromGradient(g.name || g.gradient);
     const autoText = getReadableTextColor(derived);
+    setTheme('custom');
     setChatBackground(prev => ({
       ...prev,
       type: 'gradient',
@@ -315,9 +319,11 @@ export default function ProfileSettings({
   const handleSave = (e) => {
     if (e) e.preventDefault();
     onUpdateUser({ name, avatarUrl, isOnline });
+    const isCustomWallpaperActive = chatBackground.type === 'image' && chatBackground.imageUrl;
+    const finalTheme = (isCustomWallpaperActive && theme === 'light') ? 'custom' : (theme || 'dark');
     const updatedSettings = {
       ...settings,
-      theme,
+      theme: finalTheme,
       appThemeColor,
       textColorMode,
       textColor,

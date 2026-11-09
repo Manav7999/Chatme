@@ -77,9 +77,15 @@ export default function App() {
       const saved = typeof window !== 'undefined' ? localStorage.getItem('chatme_settings') : null;
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Normalize theme: never allow light theme if user has custom wallpaper or image
+        let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
+        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
+          resolvedTheme = 'custom';
+        }
         return {
           ...DEFAULT_THEME_SETTINGS,
           ...parsed,
+          theme: resolvedTheme,
           appThemeColor: parsed.appThemeColor || DEFAULT_THEME_SETTINGS.appThemeColor,
           textColorMode: parsed.textColorMode || DEFAULT_THEME_SETTINGS.textColorMode,
           textColor: parsed.textColor || DEFAULT_THEME_SETTINGS.textColor,
@@ -95,7 +101,12 @@ export default function App() {
   });
 
   const handleToggleTheme = () => {
-    const nextTheme = settings.theme === 'light' ? 'dark' : 'light';
+    let nextTheme;
+    if (settings.theme === 'light') {
+      nextTheme = (settings.chatBackground?.type === 'image' && settings.chatBackground?.imageUrl) ? 'custom' : 'dark';
+    } else {
+      nextTheme = 'light';
+    }
     const updated = { ...settings, theme: nextTheme };
     setSettings(updated);
     saveToLocalStorage(chats, currentUser, updated);
@@ -103,12 +114,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (isLoggedIn && !isVerifyingToken) {
-      applyThemeToDocument(settings);
-    } else {
-      applyThemeToDocument('dark');
-    }
-  }, [settings, isLoggedIn, isVerifyingToken]);
+    // Immediately apply user settings (custom wallpaper, accent, theme) without flashing to bare dark or light
+    applyThemeToDocument(settings);
+  }, [settings]);
 
   // Auto-harmonize theme when custom image wallpaper is active
   useEffect(() => {
@@ -705,9 +713,18 @@ export default function App() {
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
+        let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
+        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
+          resolvedTheme = 'custom';
+        }
         const merged = {
           ...DEFAULT_THEME_SETTINGS,
           ...parsed,
+          theme: resolvedTheme,
+          appThemeColor: parsed.appThemeColor || DEFAULT_THEME_SETTINGS.appThemeColor,
+          textColorMode: parsed.textColorMode || DEFAULT_THEME_SETTINGS.textColorMode,
+          textColor: parsed.textColor || DEFAULT_THEME_SETTINGS.textColor,
+          accentColor: parsed.accentColor || parsed.bubbleStyle?.outgoingBg || DEFAULT_THEME_SETTINGS.accentColor,
           chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
           bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
         };
@@ -2256,12 +2273,12 @@ export default function App() {
             title={settings.theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
           >
             {settings.theme === 'light' ? (
-              <Moon className="w-5.5 h-5.5 text-[#FCC105]" />
+              <Sun className="w-5.5 h-5.5" style={{ color: 'var(--theme-accent, #FCC105)' }} />
             ) : (
-              <Sun className="w-5.5 h-5.5 text-[#FCC105]" />
+              <Moon className="w-5.5 h-5.5" style={{ color: 'var(--theme-accent, #FCC105)' }} />
             )}
             <span className="text-[9px] font-medium mt-1">
-              {settings.theme === 'light' ? 'Dark' : 'Light'}
+              {settings.theme === 'light' ? 'Light' : 'Dark'}
             </span>
           </button>
 
