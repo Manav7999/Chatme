@@ -157,7 +157,9 @@ export function getReadableTextColor(hex) {
   const cleanHex = hex.replace('#', '');
   if (cleanHex.length < 3) return '#FFFFFF';
 
-  let r = 0, g = 0, b = 0;
+  let r;
+  let g;
+  let b;
   if (cleanHex.length === 3) {
     r = parseInt(cleanHex[0] + cleanHex[0], 16) || 0;
     g = parseInt(cleanHex[1] + cleanHex[1], 16) || 0;

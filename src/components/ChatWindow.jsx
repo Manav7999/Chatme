@@ -474,7 +474,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
 
         // Background calculation
-        let chatBgStyle = {};
+        let chatBgStyle;
         if (chatBackground.type === 'color' && chatBackground.color) {
           chatBgStyle = { backgroundColor: chatBackground.color };
         } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {

@@ -200,7 +200,7 @@ export default function ProfileSettings({
     : (theme === 'light' ? '#0F172A' : '#FFFFFF');
 
   // Preview container background
-  let previewBgStyle = {};
+  let previewBgStyle;
   if (chatBackground.type === 'color' && chatBackground.color) {
     previewBgStyle = { backgroundColor: chatBackground.color };
   } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {

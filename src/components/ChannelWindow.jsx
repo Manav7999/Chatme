@@ -202,7 +202,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
         const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
 
-        let chatBgStyle = {};
+        let chatBgStyle;
         if (chatBackground.type === 'color' && chatBackground.color) {
           chatBgStyle = { backgroundColor: chatBackground.color };
         } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
