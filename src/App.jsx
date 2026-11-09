@@ -13,8 +13,9 @@ import {
 import { 
   Sparkles, Users, MessageSquare, Compass, Bell, Check, Hash,
   ArrowRight, ShieldCheck, HelpCircle, Laptop, Settings, Lock,
-  X, Mic, Phone, Video, RefreshCw, AlertCircle
+  X, Mic, Phone, Video, RefreshCw, AlertCircle, Sun, Moon
 } from 'lucide-react';
+import { DEFAULT_THEME_SETTINGS, applyThemeToDocument } from './themeUtils.js';
 
 // Default Scaffold Data
 const initialChats = [];
@@ -71,11 +72,35 @@ export default function App() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   
-  const [settings, setSettings] = useState({
-    simulationSpeed: 'fast',
-    soundEnabled: true,
-    notificationsEnabled: false
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('chatme_settings') : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_THEME_SETTINGS,
+          ...parsed,
+          chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
+          bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
+        };
+      }
+    } catch (e) {
+      console.warn('Failed to parse settings:', e);
+    }
+    return DEFAULT_THEME_SETTINGS;
   });
+
+  const handleToggleTheme = () => {
+    const nextTheme = settings.theme === 'light' ? 'dark' : 'light';
+    const updated = { ...settings, theme: nextTheme };
+    setSettings(updated);
+    saveToLocalStorage(chats, currentUser, updated);
+    applyThemeToDocument(nextTheme);
+  };
+
+  useEffect(() => {
+    applyThemeToDocument(settings.theme || 'dark');
+  }, [settings.theme]);
   
   const [notificationPermission, setNotificationPermission] = useState(() => {
     return typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
@@ -637,7 +662,21 @@ export default function App() {
     } else {
       setIsLoadingChats(true);
     }
-    if (savedSettings) setSettings(JSON.parse(savedSettings));
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        const merged = {
+          ...DEFAULT_THEME_SETTINGS,
+          ...parsed,
+          chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
+          bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
+        };
+        setSettings(merged);
+        applyThemeToDocument(merged.theme);
+      } catch (e) {
+        console.warn('Failed parsing saved settings:', e);
+      }
+    }
 
     // Auto-verify JWT token
     if (savedToken) {
@@ -1650,11 +1689,8 @@ export default function App() {
     localStorage.removeItem('chatme_jwt');
     setChats(initialChats);
     setActiveChatId(null);
-    setSettings({
-      simulationSpeed: 'fast',
-      soundEnabled: true,
-      notificationsEnabled: false
-    });
+    setSettings(DEFAULT_THEME_SETTINGS);
+    applyThemeToDocument('dark');
     setCurrentUser({
       name: 'Developer Agent',
       avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=user',
@@ -1881,7 +1917,7 @@ export default function App() {
   const activeChat = chats.find(c => c.id === activeChatId);
 
   return (
-    <div className="flex w-full max-w-full h-screen bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans">
+    <div className="flex w-full max-w-full h-screen bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans transition-colors duration-200" data-theme={settings.theme || 'dark'}>
       
       {/* 1. Left Vertical Nav Sidebar */}
       <Sidebar 
@@ -1889,6 +1925,8 @@ export default function App() {
         setActiveTab={setActiveTab} 
         onOpenSettings={() => setIsSettingsOpen(true)}
         currentUser={currentUser}
+        theme={settings.theme || 'dark'}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* 2. Main Tab View Panels */}
@@ -1920,6 +1958,7 @@ export default function App() {
               onStartCall={startCall}
               isEncrypted={!!activeChat && hasSharedKey(activeChat.id)}
               isLoadingHistory={isLoadingHistory}
+              settings={settings}
             />
           )}
         </div>
@@ -2043,6 +2082,7 @@ export default function App() {
               onBack={() => setActiveChannelId(null)}
               isMobile={isMobile}
               onDeleteMessage={(msgId) => handleDeleteMessage(msgId, true)}
+              settings={settings}
             />
           )}
         </div>
@@ -2169,6 +2209,22 @@ export default function App() {
             <span className="text-[9px] font-medium mt-1">Alerts</span>
           </button>
 
+          {/* Quick Theme Toggle */}
+          <button
+            onClick={handleToggleTheme}
+            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer text-[#8A8A8A] hover:text-[#FCC105]"
+            title={settings.theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
+          >
+            {settings.theme === 'light' ? (
+              <Moon className="w-5.5 h-5.5 text-[#FCC105]" />
+            ) : (
+              <Sun className="w-5.5 h-5.5 text-[#FCC105]" />
+            )}
+            <span className="text-[9px] font-medium mt-1">
+              {settings.theme === 'light' ? 'Dark' : 'Light'}
+            </span>
+          </button>
+
           {/* Settings Tab */}
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -2205,7 +2261,7 @@ export default function App() {
         const isVideoRinging = activeCall.type === 'video' && activeCall.status === 'ringing';
 
         return (
-          <div className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-xl flex flex-col items-center justify-center p-0 select-none animate-fade-in">
+          <div className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-xl flex flex-col items-center justify-center p-0 select-none animate-fade-in dark-call-screen keep-dark">
             {/* Dedicated Remote Audio Player */}
             <audio ref={remoteAudioRef} autoPlay playsInline />
             

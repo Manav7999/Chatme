@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Hash, Users, ChevronLeft, Smile, Paperclip, FileText, Image, Copy, Trash2, X, Download, Video, Film, Maximize2 } from 'lucide-react';
+import { BUBBLE_SHAPES, getReadableTextColor } from '../themeUtils.js';
 
-export default function ChannelWindow({ channel, currentUser, onSendMessage, onSendMedia, onDeleteMessage, onBack, isMobile }) {
+export default function ChannelWindow({ channel, currentUser, onSendMessage, onSendMedia, onDeleteMessage, onBack, isMobile, settings }) {
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -195,70 +196,128 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-4 bg-[#000000]">
-        {(!channel.messages || channel.messages.length === 0) ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center select-none">
-            <div className="w-14 h-14 rounded-full bg-[#111111] border border-[#2B2B2B] flex items-center justify-center mb-4">
-              <Hash className="w-6 h-6 text-[#FCC105] opacity-60" />
-            </div>
-            <p className="text-sm font-bold text-white">Welcome to {channel.name}!</p>
-            <p className="text-xs text-[#8A8A8A] mt-1">Be the first to send a message in this channel.</p>
-          </div>
-        ) : (
-          channel.messages.map((msg) => {
-            const isOwn = msg.sender === currentUser?.id;
-            return (
-              <div key={msg.id} className={`flex w-full gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'} chat-fade-in`}>
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-[#2B2B2B] shrink-0">
-                  <img src={msg.senderAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${msg.sender}`} alt={msg.senderName} className="w-full h-full object-cover bg-[#1A1A1A]" />
-                </div>
-                {/* Bubble */}
-                <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                  {!isOwn && (
-                    <span className="text-[10px] font-bold text-[#FCC105] mb-1 ml-1">{msg.senderName}</span>
-                  )}
-                  <div className="flex items-center gap-2 max-w-full group/msg">
-                    {/* If own message, show actions on the left */}
-                    {isOwn && (
-                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
-                        {msg.type !== 'call_history' && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(msg.text);
-                              alert("Copied message to clipboard!");
-                            }}
-                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
-                            title="Copy message text"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this message?")) {
-                              onDeleteMessage(msg.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
-                          title="Delete message"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
+      {(() => {
+        const theme = settings?.theme || 'dark';
+        const chatBackground = settings?.chatBackground || { type: 'default' };
+        const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
+        const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
 
-                    <div className={`rounded-2xl text-sm transition-all ${
-                      msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
-                        ? 'p-0 bg-transparent border-0'
-                        : `px-4 py-2.5 border shadow-sm ${
-                            isOwn
-                              ? 'bg-[#FCC105] text-[#000000] border-[#FCC105] rounded-tr-none'
-                              : 'bg-[#1A1A1A] text-[#FFFFFF] border-[#2B2B2B] rounded-tl-none'
-                          }`
-                    }`}>
+        let chatBgStyle = {};
+        if (chatBackground.type === 'color' && chatBackground.color) {
+          chatBgStyle = { backgroundColor: chatBackground.color };
+        } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
+          chatBgStyle = { backgroundImage: chatBackground.gradient };
+        } else {
+          chatBgStyle = { backgroundColor: theme === 'light' ? '#F8FAFC' : '#000000' };
+        }
+
+        return (
+          <div 
+            className="flex-1 overflow-y-auto p-3 md:p-5 space-y-4 relative"
+            style={chatBgStyle}
+          >
+            {/* Custom Image Wallpaper from Device Storage */}
+            {chatBackground.type === 'image' && chatBackground.imageUrl && (
+              <div 
+                className="absolute inset-0 pointer-events-none bg-cover bg-center transition-all duration-300"
+                style={{
+                  backgroundImage: `url(${chatBackground.imageUrl})`,
+                  opacity: chatBackground.imageOpacity ?? 0.85,
+                  filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
+                  zIndex: 0
+                }}
+              />
+            )}
+
+            {/* Subtle Doodle pattern overlay if enabled */}
+            {chatBackground.pattern && (
+              <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles z-0" />
+            )}
+
+            <div className="relative z-10 space-y-4">
+              {(!channel.messages || channel.messages.length === 0) ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center select-none">
+                  <div className="w-14 h-14 rounded-full bg-[#111111] border border-[#2B2B2B] flex items-center justify-center mb-4">
+                    <Hash className="w-6 h-6 text-[#FCC105] opacity-60" />
+                  </div>
+                  <p className="text-sm font-bold text-white">Welcome to {channel.name}!</p>
+                  <p className="text-xs text-[#8A8A8A] mt-1">Be the first to send a message in this channel.</p>
+                </div>
+              ) : (
+                channel.messages.map((msg) => {
+                  const isOwn = msg.sender === currentUser?.id;
+                  const isLight = theme === 'light';
+
+                  const outgoingBg = bubbleStyle.outgoingBg || '#FCC105';
+                  const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
+
+                  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
+                  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
+
+                  const bubbleBg = isOwn ? outgoingBg : incomingBg;
+                  const bubbleText = isOwn ? outgoingText : incomingText;
+                  const bubbleBorder = isOwn ? outgoingBg : (isLight ? '#E2E8F0' : '#2B2B2B');
+                  const shapeClass = isOwn ? currentShape.outgoingClass : currentShape.incomingClass;
+
+                  return (
+                    <div key={msg.id} className={`flex w-full gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'} chat-fade-in`}>
+                      {/* Avatar */}
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-[#2B2B2B] shrink-0">
+                        <img src={msg.senderAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${msg.sender}`} alt={msg.senderName} className="w-full h-full object-cover bg-[#1A1A1A]" />
+                      </div>
+                      {/* Bubble */}
+                      <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                        {!isOwn && (
+                          <span className="text-[10px] font-bold text-[#FCC105] mb-1 ml-1">{msg.senderName}</span>
+                        )}
+                        <div className="flex items-center gap-2 max-w-full group/msg">
+                          {/* If own message, show actions on the left */}
+                          {isOwn && (
+                            <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
+                              {msg.type !== 'call_history' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(msg.text);
+                                    alert("Copied message to clipboard!");
+                                  }}
+                                  className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
+                                  title="Copy message text"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this message?")) {
+                                    onDeleteMessage(msg.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
+                                title="Delete message"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          <div 
+                            style={
+                              msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
+                                ? {}
+                                : {
+                                    backgroundColor: bubbleBg,
+                                    color: bubbleText,
+                                    borderColor: bubbleBorder,
+                                  }
+                            }
+                            className={`text-sm transition-all ${shapeClass} ${
+                              msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
+                                ? 'p-0 bg-transparent border-0'
+                                : 'px-4 py-2.5 border shadow-sm'
+                            }`}
+                          >
                       {/* Render Video Message */}
                       {msg.type === 'video' && (
                         <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-black max-w-[320px] relative shadow-lg">
@@ -450,7 +509,14 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] font-semibold mt-1" style={{ color: isOwn ? '#4A3900' : '#8A8A8A' }}>
+                  <span 
+                    className="text-[10px] font-semibold mt-1" 
+                    style={{ 
+                      color: isOwn 
+                        ? (outgoingText === '#000000' ? '#4A3900' : 'rgba(255, 255, 255, 0.75)') 
+                        : (isLight ? '#64748B' : '#8A8A8A') 
+                    }}
+                  >
                     {msg.time}
                   </span>
                 </div>
@@ -458,8 +524,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             );
           })
         )}
-        <div ref={messagesEndRef} />
-      </div>
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Hidden file input */}
       <input 
@@ -600,7 +669,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
       {/* Media Preview Lightbox (Images & Videos) */}
       {previewMedia && (
         <div 
-          className="fixed inset-0 bg-[#000000]/95 backdrop-blur-md flex flex-col items-center justify-center z-50 p-4 transition-opacity duration-300 chat-fade-in"
+          className="fixed inset-0 bg-[#000000]/95 backdrop-blur-md flex flex-col items-center justify-center z-50 p-4 transition-opacity duration-300 chat-fade-in dark-call-screen keep-dark"
           onClick={() => setPreviewMedia(null)}
         >
           {/* Top Bar with filename, download, and close button */}

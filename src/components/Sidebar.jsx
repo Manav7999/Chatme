@@ -1,7 +1,7 @@
 import React from 'react';
-import { MessageSquare, Users, Settings, Bell, Compass, LogOut } from 'lucide-react';
+import { MessageSquare, Users, Settings, Bell, Compass, Sun, Moon } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, currentUser }) {
+export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, currentUser, theme = 'dark', onToggleTheme }) {
   const navItems = [
     { id: 'chats', icon: MessageSquare, label: 'Chats' },
     { id: 'contacts', icon: Users, label: 'Contacts' },
@@ -10,7 +10,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
   ];
 
   return (
-    <aside className="hidden md:flex w-20 bg-[#0A0A0A] border-r border-[#2B2B2B] flex-col items-center py-6 justify-between h-full select-none">
+    <aside className="hidden md:flex w-20 bg-[#0A0A0A] border-r border-[#2B2B2B] flex-col items-center py-6 justify-between h-full select-none shrink-0 transition-colors duration-200">
       {/* Brand Logo */}
       <div className="flex flex-col items-center gap-1">
         <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center hover:scale-105 transition-transform duration-200 cursor-pointer">
@@ -52,19 +52,38 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
       </nav>
 
       {/* Profile & Settings Trigger */}
-      <div className="flex flex-col items-center gap-5 w-full px-2">
+      <div className="flex flex-col items-center gap-4 w-full px-2">
+        
+        {/* Quick Theme Toggle Button */}
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            className="relative group flex flex-col items-center justify-center py-2.5 w-full rounded-xl transition-all duration-300 text-[#8A8A8A] hover:text-[#FCC105] hover:bg-[#111111] cursor-pointer"
+            title={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          >
+            {theme === 'light' ? (
+              <Moon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-12 text-[#FCC105]" />
+            ) : (
+              <Sun className="w-5 h-5 transition-transform duration-200 group-hover:rotate-45 text-[#FCC105]" />
+            )}
+            <span className="text-[9px] mt-1 font-medium hidden md:inline">
+              {theme === 'light' ? 'Dark' : 'Light'}
+            </span>
+          </button>
+        )}
+
         <button
           onClick={onOpenSettings}
-          className={`relative group flex flex-col items-center justify-center py-3 w-full rounded-xl transition-all duration-300 text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] cursor-pointer`}
+          className="relative group flex flex-col items-center justify-center py-2.5 w-full rounded-xl transition-all duration-300 text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] cursor-pointer"
           title="Settings"
         >
-          <Settings className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-200 group-hover:rotate-45" />
-          <span className="text-[9px] mt-1.5 font-medium hidden md:inline">
+          <Settings className="w-5 h-5 transition-transform duration-200 group-hover:rotate-45" />
+          <span className="text-[9px] mt-1 font-medium hidden md:inline">
             Settings
           </span>
         </button>
 
-        <div className="relative cursor-pointer group" onClick={onOpenSettings}>
+        <div className="relative cursor-pointer group" onClick={onOpenSettings} title="Profile Settings">
           <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden border border-[#2B2B2B] group-hover:border-[#FCC105] transition-colors duration-300">
             <img 
               src={currentUser.avatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=user"} 

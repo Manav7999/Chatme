@@ -38,10 +38,32 @@
   font-family: var(--font-sans);
 }
 
+/* Light Theme Variables and Rules */
+:root[data-theme="light"],
+html.light,
+body.light {
+  color-scheme: light;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --primary: #FCC105;
+  --primary-hover: #FFD34D;
+  --primary-dark: #C99600;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --success: #16A34A;
+  --error: #DC2626;
+
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #000000;
+  background-color: var(--background);
   overflow: hidden;
   overflow-x: hidden;
   height: 100vh;
@@ -49,6 +71,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: pan-y;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -59,14 +82,14 @@ body {
   touch-action: pan-y;
 }
 
-/* Custom Scrollbar for premium dark feel */
+/* Custom Scrollbar for Dark Feel */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -76,6 +99,127 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #FCC105;
+}
+
+/* Scrollbar for Light Theme */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #FCC105;
+}
+
+/* =========================================================================
+   LIGHT THEME OVERRIDES (Comprehensive, high-contrast, crystal-clear readability)
+   ========================================================================= */
+
+/* Background overrides in light theme */
+[data-theme="light"] .bg-\[\#000000\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #F8FAFC !important;
+}
+
+[data-theme="light"] .bg-\[\#0A0A0A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] .bg-\[\#111111\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] .bg-\[\#1A1A1A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #F1F5F9 !important;
+}
+
+[data-theme="light"] .bg-\[\#1F1F1F\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .bg-black:not(.keep-dark):not(.dark-call-screen *):not(video) {
+  background-color: #F8FAFC !important;
+}
+
+/* Border overrides in light theme */
+[data-theme="light"] .border-\[\#2B2B2B\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .border-\[\#333333\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: #CBD5E1 !important;
+}
+
+/* Primary text overrides in light theme */
+[data-theme="light"] .text-\[\#FFFFFF\]:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]) {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-white:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]) {
+  color: #0F172A !important;
+}
+
+/* Secondary & Muted text in light theme */
+[data-theme="light"] .text-\[\#8A8A8A\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .text-\[\#E0E0E0\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: #1E293B !important;
+}
+
+/* Input Fields and Placeholders in light theme */
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder,
+[data-theme="light"] .placeholder-\[\#8A8A8A\]::placeholder {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] input:not(.keep-dark),
+[data-theme="light"] textarea:not(.keep-dark) {
+  color: #0F172A !important;
+}
+
+/* Hover States in light theme */
+[data-theme="light"] .hover\:bg-\[\#111111\]:hover:not(.keep-dark) {
+  background-color: #F1F5F9 !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#1A1A1A\]:hover:not(.keep-dark) {
+  background-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .hover\:text-\[\#FFFFFF\]:hover:not(.keep-dark):not(.keep-white) {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .hover\:text-white:hover:not(.keep-dark):not(.keep-white) {
+  color: #0F172A !important;
+}
+
+/* Modals backdrop */
+[data-theme="light"] .bg-\[\#000000\]\/80,
+[data-theme="light"] .bg-\[\#000000\]\/90 {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+}
+
+/* Preserve White text on colored accent buttons (Red, Green) */
+[data-theme="light"] .bg-\[\#EF4444\] *,
+[data-theme="light"] .bg-\[\#22C55E\] *,
+[data-theme="light"] button.bg-\[\#EF4444\],
+[data-theme="light"] button.bg-\[\#22C55E\],
+[data-theme="light"] .keep-white {
+  color: #FFFFFF !important;
+}
+
+/* Preserve Black text on Signature Yellow buttons */
+[data-theme="light"] .bg-\[\#FCC105\] *,
+[data-theme="light"] button.bg-\[\#FCC105\] {
+  color: #000000 !important;
+}
+
+/* Preserve Dark Call Screen Experience during active audio/video calls */
+.dark-call-screen,
+.dark-call-screen * {
+  color-scheme: dark;
 }
 
 /* Custom styles for animations and premium highlights */
@@ -118,3 +262,10 @@ body {
   animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Subtle chat doodle wallpaper pattern */
+.chat-wallpaper-doodles {
+  background-image: radial-gradient(#FCC105 0.75px, transparent 0.75px), radial-gradient(#FCC105 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  opacity: 0.06;
+}
