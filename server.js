@@ -33,6 +33,11 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(express.static(path.join(__dirname, 'dist')));
 
 
+// Health check endpoint for cron jobs / uptime monitors (keeps Render free tier awake)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // API: list available channels with live member counts
 app.get('/api/channels', (req, res) => {
   const list = [];
