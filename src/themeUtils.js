@@ -1,7 +1,10 @@
 // Theme & Customization Configuration and Helpers for ChatMe
 
 export const DEFAULT_THEME_SETTINGS = {
-  theme: 'dark', // 'dark' | 'light'
+  theme: 'dark', // 'dark' | 'light' | 'navy' | 'emerald' | 'violet' | 'crimson' | 'slate' | 'amber' | 'custom'
+  appThemeColor: '#000000', // Base custom color when theme === 'custom'
+  textColorMode: 'match', // 'match' (auto-match with app theme) | 'custom'
+  textColor: 'auto', // 'auto' | '#FFFFFF' | custom hex
   simulationSpeed: 'fast',
   soundEnabled: true,
   notificationsEnabled: false,
@@ -23,6 +26,119 @@ export const DEFAULT_THEME_SETTINGS = {
     incomingText: '',
   }
 };
+
+// Main App Theme Presets (Excluding Splash Screen)
+export const APP_THEME_PRESETS = [
+  {
+    id: 'dark',
+    name: 'Default Black',
+    description: 'Signature pitch black with ChatMe Gold accent',
+    bg: '#000000',
+    surface: '#0A0A0A',
+    surfaceSecondary: '#141414',
+    border: '#262626',
+    accent: '#FCC105',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'light',
+    name: 'Clean White',
+    description: 'Crisp, high-contrast bright theme',
+    bg: '#F8FAFC',
+    surface: '#FFFFFF',
+    surfaceSecondary: '#F1F5F9',
+    border: '#E2E8F0',
+    accent: '#2563EB',
+    defaultTextColor: '#0F172A',
+    isDark: false
+  },
+  {
+    id: 'navy',
+    name: 'Midnight Navy',
+    description: 'Deep oceanic blue with cyan highlights',
+    bg: '#080E1E',
+    surface: '#0F1A36',
+    surfaceSecondary: '#17274E',
+    border: '#22386A',
+    accent: '#38BDF8',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'emerald',
+    name: 'Cyber Emerald',
+    description: 'Deep matrix green with mint glow',
+    bg: '#021C15',
+    surface: '#053327',
+    surfaceSecondary: '#0B4D3C',
+    border: '#106B54',
+    accent: '#34D399',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'violet',
+    name: 'Royal Amethyst',
+    description: 'Rich galaxy purple with lavender highlights',
+    bg: '#110822',
+    surface: '#1E0F38',
+    surfaceSecondary: '#2C1752',
+    border: '#432378',
+    accent: '#C084FC',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'crimson',
+    name: 'Crimson Velvet',
+    description: 'Deep velvet wine with rose highlights',
+    bg: '#1A0409',
+    surface: '#2E0A12',
+    surfaceSecondary: '#47121E',
+    border: '#661C2C',
+    accent: '#FB7185',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'slate',
+    name: 'Nordic Titanium',
+    description: 'Modern executive dark slate with sapphire glow',
+    bg: '#0A0E17',
+    surface: '#131B2B',
+    surfaceSecondary: '#1C283E',
+    border: '#2E3F5E',
+    accent: '#60A5FA',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'amber',
+    name: 'Charcoal Gold',
+    description: 'Warm dark charcoal with radiant amber accents',
+    bg: '#12110F',
+    surface: '#1F1C18',
+    surfaceSecondary: '#2F2B24',
+    border: '#474136',
+    accent: '#F59E0B',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  }
+];
+
+// App Text Color Presets (Auto-matching & curated colors)
+export const TEXT_COLOR_PRESETS = [
+  { id: 'match', name: 'Match with App Theme (Auto)', color: 'auto', description: 'Automatically optimal readability & contrast' },
+  { id: 'white', name: 'Crisp White', color: '#FFFFFF', description: 'High contrast pure white' },
+  { id: 'charcoal', name: 'Deep Obsidian', color: '#0F172A', description: 'Deep slate charcoal' },
+  { id: 'cream', name: 'Warm Ivory', color: '#FEFCE8', description: 'Soft gentle warm cream' },
+  { id: 'cyan', name: 'Ice Cyan', color: '#E0F2FE', description: 'Futuristic cool ice blue' },
+  { id: 'mint', name: 'Soft Mint', color: '#ECFDF5', description: 'Fresh calming mint tint' },
+  { id: 'amber', name: 'Golden Sand', color: '#FEF3C7', description: 'Warm amber gold tone' },
+  { id: 'lavender', name: 'Soft Lilac', color: '#F3E8FF', description: 'Delicate pastel purple' },
+  { id: 'rose', name: 'Rose Quartz', color: '#FFE4E6', description: 'Soft pastel rose blush' }
+];
 
 // Available Bubble Shapes
 export const BUBBLE_SHAPES = [
@@ -427,17 +543,188 @@ export function compressWallpaperImage(file, maxWidth = 1600, maxHeight = 1200, 
 }
 
 /**
- * Apply theme attribute to document element and body
+ * Computes custom app theme palette from any base color hex
  */
-export function applyThemeToDocument(theme = 'dark') {
-  if (typeof document === 'undefined') return;
-  const isLight = theme === 'light';
-  document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
-  if (isLight) {
-    document.documentElement.classList.add('light');
-    document.body.classList.add('light');
+export function deriveAppThemeFromColor(baseHex) {
+  if (!baseHex) return APP_THEME_PRESETS[0];
+  const [r, g, b] = hexToRgb(baseHex);
+  const [h, s, l] = rgbToHsl(r, g, b);
+  const isDark = l < 0.52;
+
+  if (isDark) {
+    // Dark theme based on user color
+    const surface = rgbToHex(
+      Math.min(255, r + 16),
+      Math.min(255, g + 16),
+      Math.min(255, b + 16)
+    );
+    const surfaceSecondary = rgbToHex(
+      Math.min(255, r + 28),
+      Math.min(255, g + 28),
+      Math.min(255, b + 28)
+    );
+    const border = rgbToHex(
+      Math.min(255, r + 45),
+      Math.min(255, g + 45),
+      Math.min(255, b + 45)
+    );
+    const accent = deriveHarmoniousAccentFromColor(baseHex);
+
+    return {
+      id: 'custom',
+      name: 'Custom Theme',
+      bg: baseHex,
+      surface,
+      surfaceSecondary,
+      border,
+      accent,
+      defaultTextColor: '#FFFFFF',
+      isDark: true
+    };
   } else {
-    document.documentElement.classList.remove('light');
+    // Light theme based on user color
+    const surface = '#FFFFFF';
+    const surfaceSecondary = rgbToHex(
+      Math.max(0, r - 12),
+      Math.max(0, g - 12),
+      Math.max(0, b - 12)
+    );
+    const border = rgbToHex(
+      Math.max(0, r - 30),
+      Math.max(0, g - 30),
+      Math.max(0, b - 30)
+    );
+    const accent = deriveHarmoniousAccentFromColor(baseHex);
+
+    return {
+      id: 'custom',
+      name: 'Custom Theme',
+      bg: baseHex,
+      surface,
+      surfaceSecondary,
+      border,
+      accent,
+      defaultTextColor: '#0F172A',
+      isDark: false
+    };
+  }
+}
+
+/**
+ * Derive full text palette (primary, secondary, muted)
+ */
+export function deriveTextPalette(color, isThemeDark = true) {
+  if (!color || color === 'auto' || color === 'match') {
+    if (isThemeDark) {
+      return {
+        primary: '#FFFFFF',
+        secondary: '#D1D5DB',
+        muted: '#8A8A8A',
+        isAuto: true
+      };
+    } else {
+      return {
+        primary: '#0F172A',
+        secondary: '#334155',
+        muted: '#64748B',
+        isAuto: true
+      };
+    }
+  }
+
+  const [r, g, b] = hexToRgb(color);
+  return {
+    primary: color,
+    secondary: `rgba(${r}, ${g}, ${b}, 0.80)`,
+    muted: `rgba(${r}, ${g}, ${b}, 0.55)`,
+    isAuto: false
+  };
+}
+
+/**
+ * Apply theme attribute and CSS custom properties to document element and body
+ * EXCLUDES splash screen and keep-dark components.
+ */
+export function applyThemeToDocument(settings = 'dark') {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+
+  // Handle both string theme and object settings
+  const theme = typeof settings === 'string' ? settings : (settings?.theme || 'dark');
+  const appThemeColor = typeof settings === 'object' ? (settings?.appThemeColor || '#000000') : '#000000';
+  const textColorMode = typeof settings === 'object' ? (settings?.textColorMode || 'match') : 'match';
+  const textColor = typeof settings === 'object' ? (settings?.textColor || 'auto') : 'auto';
+
+  // Find matching preset or derive palette
+  const preset = APP_THEME_PRESETS.find(p => p.id === theme);
+  const palette = preset || (theme === 'custom' ? deriveAppThemeFromColor(appThemeColor) : APP_THEME_PRESETS[0]);
+  const isDark = palette.isDark;
+
+  if (theme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    root.classList.add('light');
+    document.body.classList.add('light');
+    // Clear custom theme variables
+    root.style.removeProperty('--theme-bg');
+    root.style.removeProperty('--theme-surface');
+    root.style.removeProperty('--theme-surface-secondary');
+    root.style.removeProperty('--theme-border');
+    root.style.removeProperty('--theme-hover-bg');
+    root.style.removeProperty('--theme-accent');
+  } else if (theme === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+    root.classList.remove('light');
     document.body.classList.remove('light');
+    root.style.removeProperty('--theme-bg');
+    root.style.removeProperty('--theme-surface');
+    root.style.removeProperty('--theme-surface-secondary');
+    root.style.removeProperty('--theme-border');
+    root.style.removeProperty('--theme-hover-bg');
+    root.style.removeProperty('--theme-accent');
+  } else {
+    // Custom theme or named dark preset (navy, emerald, violet, crimson, slate, amber)
+    root.setAttribute('data-theme', 'custom');
+    if (isDark) {
+      root.classList.remove('light');
+      document.body.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      document.body.classList.add('light');
+    }
+
+    root.style.setProperty('--theme-bg', palette.bg);
+    root.style.setProperty('--theme-surface', palette.surface);
+    root.style.setProperty('--theme-surface-secondary', palette.surfaceSecondary);
+    root.style.setProperty('--theme-border', palette.border);
+    root.style.setProperty('--theme-hover-bg', palette.surfaceSecondary);
+    root.style.setProperty('--theme-accent', palette.accent);
+  }
+
+  // Handle Text Color (Match with app theme or custom color)
+  const isTextMatch = textColorMode === 'match' || !textColor || textColor === 'auto';
+  const textPal = deriveTextPalette(
+    isTextMatch ? 'auto' : textColor,
+    isDark
+  );
+
+  if (!isTextMatch && textColor && textColor !== 'auto') {
+    root.setAttribute('data-custom-text', 'true');
+    root.style.setProperty('--theme-text-primary', textPal.primary);
+    root.style.setProperty('--theme-text-secondary', textPal.secondary);
+    root.style.setProperty('--theme-text-muted', textPal.muted);
+  } else {
+    if (theme !== 'dark' && theme !== 'light') {
+      // In custom theme with auto text: set harmonious contrast text
+      root.setAttribute('data-custom-text', 'true');
+      root.style.setProperty('--theme-text-primary', textPal.primary);
+      root.style.setProperty('--theme-text-secondary', textPal.secondary);
+      root.style.setProperty('--theme-text-muted', textPal.muted);
+    } else {
+      // In standard dark / light with auto text: let native high-contrast rules shine
+      root.removeAttribute('data-custom-text');
+      root.style.removeProperty('--theme-text-primary');
+      root.style.removeProperty('--theme-text-secondary');
+      root.style.removeProperty('--theme-text-muted');
+    }
   }
 }

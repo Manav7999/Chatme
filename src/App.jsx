@@ -80,6 +80,9 @@ export default function App() {
         return {
           ...DEFAULT_THEME_SETTINGS,
           ...parsed,
+          appThemeColor: parsed.appThemeColor || DEFAULT_THEME_SETTINGS.appThemeColor,
+          textColorMode: parsed.textColorMode || DEFAULT_THEME_SETTINGS.textColorMode,
+          textColor: parsed.textColor || DEFAULT_THEME_SETTINGS.textColor,
           accentColor: parsed.accentColor || parsed.bubbleStyle?.outgoingBg || DEFAULT_THEME_SETTINGS.accentColor,
           chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
           bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
@@ -96,12 +99,16 @@ export default function App() {
     const updated = { ...settings, theme: nextTheme };
     setSettings(updated);
     saveToLocalStorage(chats, currentUser, updated);
-    applyThemeToDocument(nextTheme);
+    applyThemeToDocument(updated);
   };
 
   useEffect(() => {
-    applyThemeToDocument(settings.theme || 'dark');
-  }, [settings.theme]);
+    if (isLoggedIn && !isVerifyingToken) {
+      applyThemeToDocument(settings);
+    } else {
+      applyThemeToDocument('dark');
+    }
+  }, [settings, isLoggedIn, isVerifyingToken]);
 
   // Auto-harmonize theme when custom image wallpaper is active
   useEffect(() => {
@@ -1777,15 +1784,15 @@ export default function App() {
   // Render Splash Loading Screen
   if (isVerifyingToken) {
     return (
-      <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none">
-        <div className="flex flex-col items-center text-center">
+      <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none keep-dark" data-theme="dark">
+        <div className="flex flex-col items-center text-center keep-dark">
           <div className="w-16 h-16 flex items-center justify-center">
             <img src="/chatmeappicon.png" alt="ChatMe" className="w-16 h-16 object-contain animate-pulse" />
           </div>
-          <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight animate-pulse">
+          <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight animate-pulse keep-white">
             CHAT<span className="text-[#FCC105]">ME</span>
           </h1>
-          <div className="mt-4 flex items-center gap-2 text-xs text-[#8A8A8A] font-medium tracking-wider uppercase">
+          <div className="mt-4 flex items-center gap-2 text-xs text-[#8A8A8A] font-medium tracking-wider uppercase keep-dark">
             <span className="w-1.5 h-1.5 bg-[#FCC105] rounded-full animate-ping" />
             Connecting Securely...
           </div>
@@ -1805,9 +1812,9 @@ export default function App() {
       'https://api.dicebear.com/7.x/bottts/svg?seed=robby'
     ];
     return (
-      <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none">
+      <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none keep-dark" data-theme="dark">
         {/* Splash Card */}
-        <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+        <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl keep-dark">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#FCC105]" />
           
           <div className="flex flex-col items-center text-center">

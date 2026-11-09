@@ -201,6 +201,98 @@ body {
   background-color: rgba(15, 23, 42, 0.6) !important;
 }
 
+/* =========================================================================
+   CUSTOM APP THEME OVERRIDES (Excluding Splash Screen & Keep-Dark elements)
+   ========================================================================= */
+
+/* Background overrides in custom theme */
+[data-theme="custom"] .bg-\[\#000000\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: var(--theme-bg, #000000) !important;
+}
+
+[data-theme="custom"] .bg-\[\#0A0A0A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: var(--theme-surface, #0A0A0A) !important;
+}
+
+[data-theme="custom"] .bg-\[\#111111\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: var(--theme-surface, #111111) !important;
+}
+
+[data-theme="custom"] .bg-\[\#1A1A1A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: var(--theme-surface-secondary, #1A1A1A) !important;
+}
+
+[data-theme="custom"] .bg-\[\#1F1F1F\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: var(--theme-surface-secondary, #1F1F1F) !important;
+}
+
+[data-theme="custom"] .bg-black:not(.keep-dark):not(.dark-call-screen *):not(video) {
+  background-color: var(--theme-bg, #000000) !important;
+}
+
+/* Border overrides in custom theme */
+[data-theme="custom"] .border-\[\#2B2B2B\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: var(--theme-border, #2B2B2B) !important;
+}
+
+[data-theme="custom"] .border-\[\#333333\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: var(--theme-border, #333333) !important;
+}
+
+/* Hover background states in custom theme */
+[data-theme="custom"] .hover\:bg-\[\#111111\]:hover:not(.keep-dark) {
+  background-color: var(--theme-hover-bg, #1A1A1A) !important;
+}
+
+[data-theme="custom"] .hover\:bg-\[\#1A1A1A\]:hover:not(.keep-dark) {
+  background-color: var(--theme-hover-bg, #1A1A1A) !important;
+}
+
+/* Modals backdrop in custom theme */
+[data-theme="custom"] .bg-\[\#000000\]\/80,
+[data-theme="custom"] .bg-\[\#000000\]\/90 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Scrollbar in custom theme */
+[data-theme="custom"] ::-webkit-scrollbar-thumb {
+  background: var(--theme-border, #2B2B2B);
+}
+
+/* =========================================================================
+   TEXT COLOR OVERRIDES (Match with App Theme or Custom Chosen Text Color)
+   Excluding Splash Screen & keep-white / keep-dark / alert elements
+   ========================================================================= */
+
+[data-custom-text="true"] .text-\[\#FFFFFF\]:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]),
+[data-custom-text="true"] .text-white:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]) {
+  color: var(--theme-text-primary) !important;
+}
+
+[data-custom-text="true"] .text-\[\#8A8A8A\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: var(--theme-text-muted) !important;
+}
+
+[data-custom-text="true"] .text-\[\#E0E0E0\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: var(--theme-text-secondary) !important;
+}
+
+[data-custom-text="true"] input::placeholder,
+[data-custom-text="true"] textarea::placeholder,
+[data-custom-text="true"] .placeholder-\[\#8A8A8A\]::placeholder {
+  color: var(--theme-text-muted) !important;
+}
+
+[data-custom-text="true"] input:not(.keep-dark),
+[data-custom-text="true"] textarea:not(.keep-dark) {
+  color: var(--theme-text-primary) !important;
+}
+
+[data-custom-text="true"] .hover\:text-\[\#FFFFFF\]:hover:not(.keep-dark):not(.keep-white),
+[data-custom-text="true"] .hover\:text-white:hover:not(.keep-dark):not(.keep-white) {
+  color: var(--theme-text-primary) !important;
+}
+
 /* Preserve White text on colored accent buttons (Red, Green) */
 [data-theme="light"] .bg-\[\#EF4444\] *,
 [data-theme="light"] .bg-\[\#22C55E\] *,
