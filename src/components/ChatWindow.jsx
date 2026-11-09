@@ -493,9 +493,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               {/* Custom Image Wallpaper from Device Storage */}
               {chatBackground.type === 'image' && chatBackground.imageUrl && (
                 <div 
-                  className="w-full h-full bg-cover bg-center transition-all duration-300"
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-300"
                   style={{
                     backgroundImage: `url(${chatBackground.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
                     opacity: chatBackground.imageOpacity ?? 0.85,
                     filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
                   }}
