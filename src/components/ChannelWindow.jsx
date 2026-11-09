@@ -159,6 +159,30 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const theme = settings?.theme || 'dark';
+  const chatBackground = settings?.chatBackground || { type: 'default' };
+  const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
+  const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
+  const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
+  const isLight = theme === 'light';
+
+  const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
+  const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
+  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
+  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
+
+  // Background calculation
+  let chatBgStyle;
+  if (chatBackground.type === 'color' && chatBackground.color) {
+    chatBgStyle = { backgroundColor: chatBackground.color };
+  } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
+    chatBgStyle = { backgroundImage: chatBackground.gradient };
+  } else {
+    chatBgStyle = { backgroundColor: isLight ? '#F8FAFC' : '#000000' };
+  }
+
   return (
     <div className="flex-1 bg-[#000000] flex flex-col h-full min-w-0 w-full max-w-full relative">
       {/* Channel Header */}
@@ -168,13 +192,20 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             <button
               type="button"
               onClick={onBack}
-              className="p-1 rounded-lg text-[#FCC105] hover:bg-[#1A1A1A] cursor-pointer mr-0.5 shrink-0"
+              className="p-1 rounded-lg hover:bg-[#1A1A1A] cursor-pointer mr-0.5 shrink-0"
+              style={{ color: effectiveAccent }}
             >
               <ChevronLeft className="w-5.5 h-5.5" />
             </button>
           )}
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-[#FCC105]/10 border border-[#FCC105]/30 flex items-center justify-center shrink-0">
-            <Hash className="w-4.5 h-4.5 text-[#FCC105]" />
+          <div 
+            className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl border flex items-center justify-center shrink-0"
+            style={{ 
+              backgroundColor: `${effectiveAccent}15`, 
+              borderColor: `${effectiveAccent}35` 
+            }}
+          >
+            <Hash className="w-4.5 h-4.5" style={{ color: effectiveAccent }} />
           </div>
           <div className="min-w-0">
             <h2 className="text-xs sm:text-base font-bold text-white leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px]">{channel.name}</h2>
@@ -184,35 +215,26 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             </span>
           </div>
         </div>
-        <div className="text-[9px] md:text-[10px] text-[#FCC105] bg-[#FCC105]/10 border border-[#FCC105]/20 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full font-bold uppercase tracking-wider shrink-0 hidden xs:block">
+        <div 
+          className="text-[9px] md:text-[10px] px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border font-bold uppercase tracking-wider shrink-0 hidden xs:block"
+          style={{ 
+            color: effectiveAccent, 
+            borderColor: `${effectiveAccent}30`, 
+            backgroundColor: `${effectiveAccent}15` 
+          }}
+        >
           Group Channel
         </div>
       </div>
 
       {/* Description Banner */}
       <div className="px-4 py-2 bg-[#0A0A0A] border-b border-[#2B2B2B]/50 text-[11px] text-[#8A8A8A] flex items-center gap-1.5">
-        <Hash className="w-3 h-3 text-[#FCC105]" />
+        <Hash className="w-3 h-3" style={{ color: effectiveAccent }} />
         {channel.description}
       </div>
 
       {/* Messages Area */}
-      {(() => {
-        const theme = settings?.theme || 'dark';
-        const chatBackground = settings?.chatBackground || { type: 'default' };
-        const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
-        const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
-
-        let chatBgStyle;
-        if (chatBackground.type === 'color' && chatBackground.color) {
-          chatBgStyle = { backgroundColor: chatBackground.color };
-        } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
-          chatBgStyle = { backgroundImage: chatBackground.gradient };
-        } else {
-          chatBgStyle = { backgroundColor: theme === 'light' ? '#F8FAFC' : '#000000' };
-        }
-
-        return (
-          <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
+      <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
             {/* FIXED WALLPAPER LAYER (Stationary, never moves or scrolls on mobile or desktop) */}
             <div 
               className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
@@ -252,14 +274,6 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               ) : (
                 channel.messages.map((msg) => {
                   const isOwn = msg.sender === currentUser?.id;
-                  const isLight = theme === 'light';
-
-                  const outgoingBg = bubbleStyle.outgoingBg || '#FCC105';
-                  const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-
-                  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
-                  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
-
                   const bubbleBg = isOwn ? outgoingBg : incomingBg;
                   const bubbleText = isOwn ? outgoingText : incomingText;
                   const bubbleBorder = isOwn ? outgoingBg : (isLight ? '#E2E8F0' : '#2B2B2B');
@@ -274,7 +288,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                       {/* Bubble */}
                       <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                         {!isOwn && (
-                          <span className="text-[10px] font-bold text-[#FCC105] mb-1 ml-1">{msg.senderName}</span>
+                          <span className="text-[10px] font-bold mb-1 ml-1" style={{ color: effectiveAccent }}>{msg.senderName}</span>
                         )}
                         <div className="flex items-center gap-2 max-w-full group/msg">
                           {/* If own message, show actions on the left */}
@@ -533,8 +547,6 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               <div ref={messagesEndRef} />
             </div>
           </div>
-        );
-      })()}
 
       {/* Hidden file input */}
       <input 
@@ -558,9 +570,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <Image className="w-4 h-4 text-[#FCC105]" />
+            <Image className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Image
           </button>
           <button
@@ -571,9 +583,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <Film className="w-4 h-4 text-[#FCC105]" />
+            <Film className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Video
           </button>
           <button
@@ -584,9 +596,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-[#FCC105]" />
+            <FileText className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Document
           </button>
         </div>
@@ -613,8 +625,12 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         className="p-3 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center select-none z-10 w-full max-w-full gap-2.5 md:gap-2.5"
       >
         {/* Main Input Box (unified rectangular design on mobile, standard pill on desktop) */}
-        <div className="flex-1 flex items-center bg-[#111111] border border-[#2B2B2B] focus-within:border-[#FCC105] focus-within:ring-1 focus-within:ring-[#FCC105] transition-all duration-200
-          rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0"
+        <div 
+          className="flex-1 flex items-center bg-[#111111] border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0"
+          style={{
+            borderColor: isInputFocused ? effectiveAccent : (isLight ? '#E2E8F0' : '#2B2B2B'),
+            boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}` : 'none'
+          }}
         >
           <button
             type="button"
@@ -622,9 +638,8 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowEmojiPicker(!showEmojiPicker);
               setShowAttachMenu(false);
             }}
-            className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0 ${
-              showEmojiPicker ? 'text-[#FCC105]' : ''
-            }`}
+            className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
+            style={{ color: showEmojiPicker ? effectiveAccent : undefined }}
             title="Emojis"
           >
             <Smile className="w-5 h-5" />
@@ -635,6 +650,8 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             placeholder={`Message ${channel.name}...`}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             className="flex-1 bg-transparent border-0 text-white placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0"
           />
 
@@ -645,9 +662,8 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowAttachMenu(!showAttachMenu);
               setShowEmojiPicker(false);
             }}
-            className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0 ${
-              showAttachMenu ? 'text-[#FCC105]' : ''
-            }`}
+            className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
+            style={{ color: showAttachMenu ? effectiveAccent : undefined }}
             title="Attachments"
           >
             <Paperclip className="w-5 h-5" />
@@ -656,7 +672,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
           {/* Attached Send Button (Mobile only) */}
           <button
             type="submit"
-            className="md:hidden self-stretch px-4 bg-[#FCC105] text-[#000000] flex items-center justify-center hover:bg-[#FFD34D] transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-[#2B2B2B]"
+            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-[#2B2B2B]"
+            style={{ 
+              backgroundColor: effectiveAccent, 
+              color: getReadableTextColor(effectiveAccent) 
+            }}
             title="Send message"
           >
             <Send className="w-4 h-4 fill-current" />
@@ -666,7 +686,12 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         {/* Standalone Send Button (Desktop only) */}
         <button
           type="submit"
-          className="hidden md:flex w-10 h-10 rounded-full bg-[#FCC105] text-[#000000] items-center justify-center hover:bg-[#FFD34D] transition-all duration-200 hover:scale-105 shadow-lg shadow-[#FCC105]/15 cursor-pointer shrink-0 focus:outline-none"
+          className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none"
+          style={{ 
+            backgroundColor: effectiveAccent, 
+            color: getReadableTextColor(effectiveAccent),
+            boxShadow: `0 8px 20px ${effectiveAccent}35`
+          }}
           title="Send message"
         >
           <Send className="w-4.5 h-4.5 fill-current" />
@@ -685,9 +710,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
           >
             <div className="flex items-center gap-2 min-w-0">
               {previewMedia.type === 'video' ? (
-                <Video className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <Video className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
               ) : (
-                <Image className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <Image className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
               )}
               <span className="text-xs font-semibold text-white truncate max-w-[180px] sm:max-w-md">
                 {previewMedia.name}
@@ -698,7 +723,12 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               <button
                 type="button"
                 onClick={() => downloadFileToDevice(previewMedia.url, previewMedia.name)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FCC105] text-black font-bold text-xs hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/20"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg"
+                style={{ 
+                  backgroundColor: effectiveAccent, 
+                  color: getReadableTextColor(effectiveAccent),
+                  boxShadow: `0 8px 20px ${effectiveAccent}30`
+                }}
                 title="Save file to your device"
               >
                 <Download className="w-3.5 h-3.5" />

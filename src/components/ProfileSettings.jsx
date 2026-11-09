@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   X, User, Shield, Volume2, Sparkles, AlertCircle, 
   Moon, Sun, RotateCcw, Bell, Palette, Image as ImageIcon, 
-  Trash2, Check, Sliders, MessageSquare, Paintbrush, UploadCloud
+  Trash2, Check, Sliders, MessageSquare, Paintbrush, UploadCloud,
+  Phone, Video, Send, Smile
 } from 'lucide-react';
 import { 
   BUBBLE_SHAPES, 
@@ -12,7 +13,10 @@ import {
   BACKGROUND_GRADIENT_PRESETS,
   getReadableTextColor,
   compressWallpaperImage,
-  applyThemeToDocument
+  applyThemeToDocument,
+  deriveHarmoniousAccentFromColor,
+  derivePaletteFromGradient,
+  extractPaletteFromImage
 } from '../themeUtils.js';
 
 export default function ProfileSettings({ 
@@ -61,6 +65,10 @@ export default function ProfileSettings({
     incomingText: settings.bubbleStyle?.incomingText || '',
   }));
 
+  const [accentColor, setAccentColor] = useState(
+    settings.accentColor || settings.bubbleStyle?.outgoingBg || '#FCC105'
+  );
+
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
 
@@ -92,10 +100,22 @@ export default function ProfileSettings({
     try {
       setIsUploadingImage(true);
       const compressedDataUrl = await compressWallpaperImage(file, 1600, 1200, 0.82);
+      
+      // Auto-extract signature vibrant accent from uploaded image
+      const extractedAccent = await extractPaletteFromImage(compressedDataUrl);
+      const autoText = getReadableTextColor(extractedAccent);
+
       setChatBackground(prev => ({
         ...prev,
         type: 'image',
         imageUrl: compressedDataUrl
+      }));
+
+      setAccentColor(extractedAccent);
+      setBubbleStyle(prev => ({
+        ...prev,
+        outgoingBg: extractedAccent,
+        outgoingText: autoText
       }));
     } catch (err) {
       console.error('Wallpaper processing failed:', err);
@@ -111,6 +131,56 @@ export default function ProfileSettings({
       type: 'default',
       imageUrl: ''
     }));
+    setAccentColor('#FCC105');
+    setBubbleStyle(prev => ({
+      ...prev,
+      outgoingBg: '#FCC105',
+      outgoingText: '#000000'
+    }));
+  };
+
+  const handleBackgroundColorChange = (color) => {
+    if (!color) {
+      setChatBackground(prev => ({ ...prev, type: 'default', color: '' }));
+      setAccentColor('#FCC105');
+      setBubbleStyle(prev => ({
+        ...prev,
+        outgoingBg: '#FCC105',
+        outgoingText: '#000000'
+      }));
+      return;
+    }
+    const derived = deriveHarmoniousAccentFromColor(color);
+    const autoText = getReadableTextColor(derived);
+    setChatBackground(prev => ({
+      ...prev,
+      type: 'color',
+      color: color,
+      gradient: ''
+    }));
+    setAccentColor(derived);
+    setBubbleStyle(prev => ({
+      ...prev,
+      outgoingBg: derived,
+      outgoingText: autoText
+    }));
+  };
+
+  const handleGradientChange = (g) => {
+    const derived = g.accent || derivePaletteFromGradient(g.name || g.gradient);
+    const autoText = getReadableTextColor(derived);
+    setChatBackground(prev => ({
+      ...prev,
+      type: 'gradient',
+      gradient: g.gradient,
+      color: ''
+    }));
+    setAccentColor(derived);
+    setBubbleStyle(prev => ({
+      ...prev,
+      outgoingBg: derived,
+      outgoingText: autoText
+    }));
   };
 
   const handleToggleTheme = (newTheme) => {
@@ -120,6 +190,7 @@ export default function ProfileSettings({
 
   const handleOutgoingBgChange = (color) => {
     const autoText = getReadableTextColor(color);
+    setAccentColor(color);
     setBubbleStyle(prev => ({
       ...prev,
       outgoingBg: color,
@@ -172,6 +243,7 @@ export default function ProfileSettings({
     const updatedSettings = {
       ...settings,
       theme,
+      accentColor,
       chatBackground,
       bubbleStyle,
       simulationSpeed,
@@ -189,7 +261,7 @@ export default function ProfileSettings({
 
   // Preview styling calculations
   const selectedShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
-  const previewOutgoingBg = bubbleStyle.outgoingBg || '#FCC105';
+  const previewOutgoingBg = bubbleStyle.outgoingBg || accentColor || '#FCC105';
   const previewOutgoingText = bubbleStyle.outgoingText || getReadableTextColor(previewOutgoingBg);
 
   const previewIncomingBg = bubbleStyle.incomingBg 
@@ -372,14 +444,16 @@ export default function ProfileSettings({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-2">
-                    <MessageSquare className="w-3.5 h-3.5 text-[#FCC105]" />
+                    <MessageSquare className="w-3.5 h-3.5" style={{ color: accentColor }} />
                     Live Chat Appearance Preview
                   </label>
-                  <span className="text-[10px] text-[#8A8A8A]">Updates instantly with selections below</span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-semibold flex items-center gap-1">
+                    ✨ Adaptive Theme Accents
+                  </span>
                 </div>
 
                 <div 
-                  className="rounded-2xl border border-[#2B2B2B] p-4 relative overflow-hidden transition-all duration-300 min-h-[170px] flex flex-col justify-center gap-3.5 shadow-inner"
+                  className="rounded-2xl border border-[#2B2B2B] p-3.5 relative overflow-hidden transition-all duration-300 min-h-[220px] flex flex-col justify-between gap-3 shadow-inner"
                   style={previewBgStyle}
                 >
                   {/* Image overlay with blur & opacity if set */}
@@ -399,41 +473,106 @@ export default function ProfileSettings({
                     <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles" />
                   )}
 
+                  {/* Mini Chat Header Preview (Shows call/video icons & avatar adapting to wallpaper) */}
+                  <div className="flex items-center justify-between pb-2.5 border-b border-white/10 relative z-10 select-none">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border-2" style={{ borderColor: accentColor }}>
+                        <img 
+                          src="https://api.dicebear.com/7.x/bottts/svg?seed=previewUser" 
+                          alt="Contact" 
+                          className="w-full h-full object-cover bg-black/40"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-white block leading-none">Alex Morgan</span>
+                          <span 
+                            className="text-[8px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider"
+                            style={{ 
+                              color: accentColor, 
+                              borderColor: `${accentColor}40`, 
+                              backgroundColor: `${accentColor}15` 
+                            }}
+                          >
+                            Member
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-semibold mt-0.5 block" style={{ color: accentColor }}>
+                          Typing...
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <div 
+                        className="p-1.5 rounded-lg bg-black/30 border border-white/10"
+                        style={{ color: accentColor }}
+                        title="Voice Call Icon"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </div>
+                      <div 
+                        className="p-1.5 rounded-lg bg-black/30 border border-white/10"
+                        style={{ color: accentColor }}
+                        title="Video Call Icon"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Incoming sample message */}
-                  <div className="flex items-start gap-2.5 max-w-[80%] relative z-10 animate-fadeIn">
-                    <img 
-                      src="https://api.dicebear.com/7.x/bottts/svg?seed=previewUser" 
-                      alt="Contact" 
-                      className="w-7 h-7 rounded-full border border-white/20 shrink-0 bg-black/40"
-                    />
+                  <div className="flex items-start gap-2 max-w-[85%] relative z-10 animate-fadeIn">
                     <div
                       style={{
                         backgroundColor: previewIncomingBg,
                         color: previewIncomingText,
                         borderColor: theme === 'light' ? '#E2E8F0' : '#2B2B2B'
                       }}
-                      className={`px-3.5 py-2.5 text-xs border shadow-md font-medium transition-all ${selectedShape.incomingClass}`}
+                      className={`px-3 py-2 text-xs border shadow-md font-medium transition-all ${selectedShape.incomingClass}`}
                     >
-                      <p className="leading-relaxed">Hey there! How do you like this chat theme & wallpaper? ✨</p>
-                      <span className="text-[9px] opacity-70 mt-1 block">10:42 AM</span>
+                      <p className="leading-relaxed">Buttons, call icons, and bubbles adapt to this wallpaper! ✨</p>
+                      <span className="text-[8px] opacity-70 mt-0.5 block">10:42 AM</span>
                     </div>
                   </div>
 
                   {/* Outgoing sample message */}
-                  <div className="flex items-end justify-end max-w-[80%] self-end relative z-10 animate-fadeIn">
+                  <div className="flex items-end justify-end max-w-[85%] self-end relative z-10 animate-fadeIn">
                     <div
                       style={{
                         backgroundColor: previewOutgoingBg,
                         color: previewOutgoingText,
                         borderColor: previewOutgoingBg
                       }}
-                      className={`px-3.5 py-2.5 text-xs border shadow-md font-medium transition-all ${selectedShape.outgoingClass}`}
+                      className={`px-3 py-2 text-xs border shadow-md font-medium transition-all ${selectedShape.outgoingClass}`}
                     >
-                      <p className="leading-relaxed">It looks incredible! Crisp, clean and perfectly readable 🚀</p>
-                      <div className="flex items-center justify-end gap-1 mt-1 text-[9px] opacity-80">
+                      <p className="leading-relaxed">Looks stunning & perfectly harmonious! 🚀</p>
+                      <div className="flex items-center justify-end gap-1 mt-0.5 text-[8px] opacity-80">
                         <span>10:43 AM</span>
                         <span>✓✓</span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Mini Type Bar Preview */}
+                  <div className="pt-2 border-t border-white/10 flex items-center gap-2 relative z-10 select-none">
+                    <div 
+                      className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/50 bg-black/50 border flex items-center justify-between"
+                      style={{ borderColor: accentColor }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Smile className="w-3.5 h-3.5 text-white/50" />
+                        <span className="text-[11px]">Type message...</span>
+                      </div>
+                    </div>
+                    <div 
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-lg cursor-pointer"
+                      style={{ 
+                        backgroundColor: accentColor, 
+                        color: getReadableTextColor(accentColor) 
+                      }}
+                    >
+                      <Send className="w-3.5 h-3.5 fill-current" />
                     </div>
                   </div>
                 </div>
@@ -443,22 +582,15 @@ export default function ProfileSettings({
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-2">
-                    <ImageIcon className="w-3.5 h-3.5 text-[#FCC105]" />
+                    <ImageIcon className="w-3.5 h-3.5" style={{ color: accentColor }} />
                     Chat Page Wallpaper & Background
                   </label>
                   {chatBackground.type !== 'default' && (
                     <button
                       type="button"
-                      onClick={() => setChatBackground({
-                        type: 'default',
-                        color: '#000000',
-                        gradient: '',
-                        imageUrl: '',
-                        imageOpacity: 0.85,
-                        imageBlur: 0,
-                        pattern: false
-                      })}
-                      className="text-[11px] text-[#FCC105] hover:underline cursor-pointer flex items-center gap-1"
+                      onClick={() => handleBackgroundColorChange('')}
+                      className="text-[11px] hover:underline cursor-pointer flex items-center gap-1 font-semibold"
+                      style={{ color: accentColor }}
                     >
                       <RotateCcw className="w-3 h-3" />
                       Reset to Default
@@ -471,16 +603,22 @@ export default function ProfileSettings({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold text-[#FFFFFF] flex items-center gap-1.5">
-                        <UploadCloud className="w-4 h-4 text-[#FCC105]" />
+                        <UploadCloud className="w-4 h-4" style={{ color: accentColor }} />
                         Set Background Image From Device Storage
                       </p>
                       <p className="text-[11px] text-[#8A8A8A] mt-0.5">
-                        Pick any photo or wallpaper saved on your computer or phone
+                        Pick any photo or wallpaper saved on your computer or phone (auto-matches theme colors)
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <label className="py-2 px-3.5 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-bold hover:bg-[#FFD34D] transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-[#FCC105]/10">
+                      <label 
+                        className="py-2 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
+                        style={{ 
+                          backgroundColor: accentColor, 
+                          color: getReadableTextColor(accentColor) 
+                        }}
+                      >
                         <ImageIcon className="w-3.5 h-3.5" />
                         <span>{isUploadingImage ? 'Processing...' : 'Choose Device Photo'}</span>
                         <input
@@ -521,7 +659,8 @@ export default function ProfileSettings({
                           step="0.05"
                           value={chatBackground.imageOpacity ?? 0.85}
                           onChange={(e) => setChatBackground(prev => ({ ...prev, imageOpacity: parseFloat(e.target.value) }))}
-                          className="w-full accent-[#FCC105] cursor-pointer"
+                          className="w-full cursor-pointer"
+                          style={{ accentColor: accentColor }}
                         />
                       </div>
 
@@ -538,7 +677,8 @@ export default function ProfileSettings({
                           step="1"
                           value={chatBackground.imageBlur ?? 0}
                           onChange={(e) => setChatBackground(prev => ({ ...prev, imageBlur: parseInt(e.target.value) }))}
-                          className="w-full accent-[#FCC105] cursor-pointer"
+                          className="w-full cursor-pointer"
+                          style={{ accentColor: accentColor }}
                         />
                       </div>
                     </div>
@@ -549,25 +689,20 @@ export default function ProfileSettings({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#FFFFFF] flex items-center gap-1.5">
-                      <Paintbrush className="w-3.5 h-3.5 text-[#FCC105]" />
+                      <Paintbrush className="w-3.5 h-3.5" style={{ color: accentColor }} />
                       Custom Background Colors
                     </span>
                     
                     {/* Native Hex Color Picker */}
-                    <label className="flex items-center gap-1.5 text-xs text-[#FCC105] font-semibold cursor-pointer hover:underline">
+                    <label 
+                      className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer hover:underline"
+                      style={{ color: accentColor }}
+                    >
                       <span>Custom Color:</span>
                       <input
                         type="color"
                         value={chatBackground.color || '#000000'}
-                        onChange={(e) => setChatBackground({
-                          type: 'color',
-                          color: e.target.value,
-                          gradient: '',
-                          imageUrl: chatBackground.imageUrl,
-                          imageOpacity: chatBackground.imageOpacity,
-                          imageBlur: chatBackground.imageBlur,
-                          pattern: chatBackground.pattern
-                        })}
+                        onChange={(e) => handleBackgroundColorChange(e.target.value)}
                         className="w-6 h-6 rounded cursor-pointer border border-[#2B2B2B] bg-transparent p-0"
                       />
                     </label>
@@ -581,20 +716,17 @@ export default function ProfileSettings({
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => {
-                            if (!item.color) {
-                              setChatBackground(prev => ({ ...prev, type: 'default', color: '' }));
-                            } else {
-                              setChatBackground(prev => ({ ...prev, type: 'color', color: item.color, gradient: '' }));
-                            }
-                          }}
+                          onClick={() => handleBackgroundColorChange(item.color)}
                           className={`w-7 h-7 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-center relative hover:scale-110 ${
-                            isSelected ? 'border-[#FCC105] scale-110' : 'border-[#2B2B2B] hover:border-[#8A8A8A]'
+                            isSelected ? 'scale-110' : 'border-[#2B2B2B] hover:border-[#8A8A8A]'
                           }`}
-                          style={{ backgroundColor: item.color || (theme === 'light' ? '#F8FAFC' : '#000000') }}
+                          style={{ 
+                            backgroundColor: item.color || (theme === 'light' ? '#F8FAFC' : '#000000'),
+                            borderColor: isSelected ? accentColor : undefined
+                          }}
                           title={item.name}
                         >
-                          {isSelected && <span className="text-xs font-bold text-[#FCC105]">✓</span>}
+                          {isSelected && <span className="text-xs font-bold" style={{ color: accentColor }}>✓</span>}
                         </button>
                       );
                     })}
@@ -611,17 +743,16 @@ export default function ProfileSettings({
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => setChatBackground(prev => ({
-                            ...prev,
-                            type: 'gradient',
-                            gradient: g.gradient,
-                            color: ''
-                          }))}
+                          onClick={() => handleGradientChange(g)}
                           className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
                             isSelected
-                              ? 'border-[#FCC105] bg-[#1A1A1A] text-[#FCC105]'
+                              ? 'bg-[#1A1A1A]'
                               : 'border-[#2B2B2B] hover:border-[#8A8A8A] text-[#8A8A8A]'
                           }`}
+                          style={{
+                            borderColor: isSelected ? accentColor : undefined,
+                            color: isSelected ? accentColor : undefined
+                          }}
                         >
                           <span 
                             className="w-5 h-5 rounded-md shrink-0 border border-white/20"

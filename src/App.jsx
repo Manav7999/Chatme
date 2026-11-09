@@ -15,7 +15,7 @@ import {
   ArrowRight, ShieldCheck, HelpCircle, Laptop, Settings, Lock,
   X, Mic, Phone, Video, RefreshCw, AlertCircle, Sun, Moon
 } from 'lucide-react';
-import { DEFAULT_THEME_SETTINGS, applyThemeToDocument } from './themeUtils.js';
+import { DEFAULT_THEME_SETTINGS, applyThemeToDocument, extractPaletteFromImage, getReadableTextColor } from './themeUtils.js';
 
 // Default Scaffold Data
 const initialChats = [];
@@ -80,6 +80,7 @@ export default function App() {
         return {
           ...DEFAULT_THEME_SETTINGS,
           ...parsed,
+          accentColor: parsed.accentColor || parsed.bubbleStyle?.outgoingBg || DEFAULT_THEME_SETTINGS.accentColor,
           chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
           bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
         };
@@ -101,6 +102,38 @@ export default function App() {
   useEffect(() => {
     applyThemeToDocument(settings.theme || 'dark');
   }, [settings.theme]);
+
+  // Auto-harmonize theme when custom image wallpaper is active
+  useEffect(() => {
+    if (
+      settings?.chatBackground?.type === 'image' && 
+      settings?.chatBackground?.imageUrl && 
+      (!settings?.accentColor || settings?.accentColor === '#FCC105')
+    ) {
+      extractPaletteFromImage(settings.chatBackground.imageUrl).then(extracted => {
+        if (extracted && extracted !== '#FCC105') {
+          const autoText = getReadableTextColor(extracted);
+          setSettings(prev => {
+            const updated = {
+              ...prev,
+              accentColor: extracted,
+              bubbleStyle: {
+                ...prev.bubbleStyle,
+                outgoingBg: extracted,
+                outgoingText: autoText
+              }
+            };
+            try {
+              localStorage.setItem('chatme_settings', JSON.stringify(updated));
+            } catch (err) {
+              console.warn('Failed to save adaptive settings:', err);
+            }
+            return updated;
+          });
+        }
+      });
+    }
+  }, [settings?.chatBackground?.imageUrl]);
   
   const [notificationPermission, setNotificationPermission] = useState(() => {
     return typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';

@@ -298,6 +298,30 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
     setIsRecording(false);
   };
 
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const theme = settings?.theme || 'dark';
+  const chatBackground = settings?.chatBackground || { type: 'default' };
+  const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
+  const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
+  const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
+  const isLight = theme === 'light';
+
+  const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
+  const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
+  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
+  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
+
+  // Background calculation
+  let chatBgStyle;
+  if (chatBackground.type === 'color' && chatBackground.color) {
+    chatBgStyle = { backgroundColor: chatBackground.color };
+  } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
+    chatBgStyle = { backgroundImage: chatBackground.gradient };
+  } else {
+    chatBgStyle = { backgroundColor: isLight ? '#F8FAFC' : '#000000' };
+  }
+
   if (!chat) {
     return (
       <div className="flex-1 bg-[#000000] flex flex-col items-center justify-center text-center p-8 select-none">
@@ -364,13 +388,13 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#1A1A1A] cursor-pointer mr-0.5 flex items-center justify-center shrink-0"
               title="Back to conversations"
             >
-              <ChevronLeft className="w-5.5 h-5.5 text-[#FCC105]" />
+              <ChevronLeft className="w-5.5 h-5.5" style={{ color: effectiveAccent }} />
             </button>
           )}
           
           {/* Contact Avatar */}
           <div className="relative shrink-0">
-            <div className="w-8 h-8 md:w-11 md:h-11 rounded-full overflow-hidden border border-[#FCC105]">
+            <div className="w-8 h-8 md:w-11 md:h-11 rounded-full overflow-hidden border-2" style={{ borderColor: effectiveAccent }}>
               <img
                 src={chat.avatarUrl}
                 alt={chat.name}
@@ -387,7 +411,14 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               <h2 className="text-xs sm:text-base font-bold text-[#FFFFFF] leading-tight truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[200px]">
                 {chat.name}
               </h2>
-              <span className="text-[7px] md:text-[8px] bg-[#FCC105]/10 text-[#FCC105] px-1.5 py-0.5 rounded border border-[#FCC105]/20 font-bold uppercase tracking-wider scale-90 shrink-0 select-none hidden xs:inline-block">
+              <span 
+                className="text-[7px] md:text-[8px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider scale-90 shrink-0 select-none hidden xs:inline-block"
+                style={{ 
+                  color: effectiveAccent, 
+                  borderColor: `${effectiveAccent}40`, 
+                  backgroundColor: `${effectiveAccent}15` 
+                }}
+              >
                 Member
               </span>
               {isEncrypted && (
@@ -398,7 +429,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             </div>
             <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5">
               {chat.isTyping ? (
-                <span className="text-[#FCC105] font-medium animate-pulse">Typing...</span>
+                <span className="font-medium animate-pulse" style={{ color: effectiveAccent }}>Typing...</span>
               ) : chat.isOnline ? (
                 <>
                   <span className="w-1 h-1 bg-[#22C55E] rounded-full" />
@@ -411,18 +442,20 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           </div>
         </div>
 
-        {/* Header Action Buttons */}
+        {/* Header Action Buttons (Harmonized to Wallpaper & Theme) */}
         <div className="flex items-center gap-1 sm:gap-2 text-[#8A8A8A] shrink-0">
           <button 
             onClick={() => onStartCall('audio')}
-            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-[#111111] transition-all cursor-pointer text-[#FCC105]"
+            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-[#111111] transition-all cursor-pointer"
+            style={{ color: effectiveAccent }}
             title="Voice Call"
           >
             <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <button 
             onClick={() => onStartCall('video')}
-            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-[#111111] transition-all cursor-pointer text-[#FCC105]"
+            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-[#111111] transition-all cursor-pointer"
+            style={{ color: effectiveAccent }}
             title="Video Call"
           >
             <Video className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -435,9 +468,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               <button 
                 type="button"
                 onClick={handleCopyConversation} 
-                className="w-full px-4 py-2.5 text-left text-xs text-[#FCC105] hover:bg-[#FCC105]/15 flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-xs hover:bg-white/5 flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
+                style={{ color: effectiveAccent }}
               >
-                <Copy className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <Copy className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
                 <span>Copy Conversation</span>
               </button>
               <button 
@@ -466,25 +500,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         </div>
       </div>
 
-      {/* Theme and Customization computation */}
-      {(() => {
-        const theme = settings?.theme || 'dark';
-        const chatBackground = settings?.chatBackground || { type: 'default' };
-        const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
-        const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
-
-        // Background calculation
-        let chatBgStyle;
-        if (chatBackground.type === 'color' && chatBackground.color) {
-          chatBgStyle = { backgroundColor: chatBackground.color };
-        } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
-          chatBgStyle = { backgroundImage: chatBackground.gradient };
-        } else {
-          chatBgStyle = { backgroundColor: theme === 'light' ? '#F8FAFC' : '#000000' };
-        }
-
-        return (
-          <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
+      <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
             {/* FIXED WALLPAPER LAYER (Stationary, never moves or scrolls on mobile or desktop) */}
             <div 
               className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
@@ -525,14 +541,6 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               ) : (
                 chat.messages.map((msg) => {
                   const isOutgoing = msg.sender === 'user';
-                  const isLight = theme === 'light';
-
-                  const outgoingBg = bubbleStyle.outgoingBg || '#FCC105';
-                  const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-
-                  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
-                  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
-
                   const bubbleBg = isOutgoing ? outgoingBg : incomingBg;
                   const bubbleText = isOutgoing ? outgoingText : incomingText;
                   const bubbleBorder = isOutgoing ? outgoingBg : (isLight ? '#E2E8F0' : '#2B2B2B');
@@ -922,9 +930,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           <div className="flex w-full justify-start chat-fade-in">
             <div className="flex flex-col items-start max-w-[70%]">
               <div className="rounded-2xl px-4 py-3 bg-[#1A1A1A] border border-[#2B2B2B] rounded-tl-none flex items-center gap-1.5 shadow-sm">
-                <span className="w-2 h-2 bg-[#FCC105] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-[#FCC105] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-[#FCC105] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: effectiveAccent, animationDelay: '0ms' }} />
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: effectiveAccent, animationDelay: '150ms' }} />
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: effectiveAccent, animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -933,8 +941,6 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               <div ref={messagesEndRef} />
             </div>
           </div>
-        );
-      })()}
 
       {/* Hidden file input */}
       <input 
@@ -958,9 +964,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <Image className="w-4 h-4 text-[#FCC105]" />
+            <Image className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Image
           </button>
           <button
@@ -971,9 +977,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <Film className="w-4 h-4 text-[#FCC105]" />
+            <Film className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Video
           </button>
           <button
@@ -984,9 +990,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-[#FCC105]" />
+            <FileText className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Document
           </button>
           <button
@@ -994,9 +1000,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               setShowAttachMenu(false);
               startRecording();
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] hover:text-[#FCC105] transition-all text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
           >
-            <Mic className="w-4 h-4 text-[#FCC105]" />
+            <Mic className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Record Voice Note
           </button>
         </div>
@@ -1037,7 +1043,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button
               type="button"
               onClick={() => stopRecording(true)}
-              className="px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold bg-[#FCC105] text-[#000000] rounded-xl hover:bg-[#FFD34D] transition-all cursor-pointer"
+              className="px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md"
+              style={{ 
+                backgroundColor: effectiveAccent, 
+                color: getReadableTextColor(effectiveAccent) 
+              }}
             >
               Send
             </button>
@@ -1049,8 +1059,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           className="p-3 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center select-none z-10 w-full max-w-full gap-2.5 md:gap-2.5"
         >
           {/* Main Input Box (unified rectangular design on mobile, standard pill on desktop) */}
-          <div className="flex-1 flex items-center bg-[#111111] border border-[#2B2B2B] focus-within:border-[#FCC105] focus-within:ring-1 focus-within:ring-[#FCC105] transition-all duration-200
-            rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0"
+          <div 
+            className="flex-1 flex items-center bg-[#111111] border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0"
+            style={{
+              borderColor: isInputFocused ? effectiveAccent : (isLight ? '#E2E8F0' : '#2B2B2B'),
+              boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}` : 'none'
+            }}
           >
             {/* Emoji selector trigger */}
             <button
@@ -1059,9 +1073,8 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowEmojiPicker(!showEmojiPicker);
                 setShowAttachMenu(false);
               }}
-              className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0 ${
-                showEmojiPicker ? 'text-[#FCC105]' : ''
-              }`}
+              className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
+              style={{ color: showEmojiPicker ? effectiveAccent : undefined }}
               title="Emojis"
             >
               <Smile className="w-5 h-5" />
@@ -1073,6 +1086,8 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               placeholder="Type your message here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               className="flex-1 bg-transparent border-0 text-[#FFFFFF] placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0"
             />
 
@@ -1083,9 +1098,8 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowAttachMenu(!showAttachMenu);
                 setShowEmojiPicker(false);
               }}
-              className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0 ${
-                showAttachMenu ? 'text-[#FCC105]' : ''
-              }`}
+              className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
+              style={{ color: showAttachMenu ? effectiveAccent : undefined }}
               title="Attachments"
             >
               <Paperclip className="w-5 h-5" />
@@ -1094,7 +1108,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             {/* Attached Send Button (Mobile only) */}
             <button
               type="submit"
-              className="md:hidden self-stretch px-4 bg-[#FCC105] text-[#000000] flex items-center justify-center hover:bg-[#FFD34D] transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-[#2B2B2B]"
+              className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-[#2B2B2B]"
+              style={{ 
+                backgroundColor: effectiveAccent, 
+                color: getReadableTextColor(effectiveAccent) 
+              }}
               title="Send message"
             >
               <Send className="w-4 h-4 fill-current" />
@@ -1104,7 +1122,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           {/* Standalone Send Button (Desktop only) */}
           <button
             type="submit"
-            className="hidden md:flex w-10 h-10 rounded-full bg-[#FCC105] text-[#000000] items-center justify-center hover:bg-[#FFD34D] transition-all duration-200 hover:scale-105 shadow-lg shadow-[#FCC105]/15 cursor-pointer shrink-0 focus:outline-none"
+            className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none"
+            style={{ 
+              backgroundColor: effectiveAccent, 
+              color: getReadableTextColor(effectiveAccent),
+              boxShadow: `0 8px 20px ${effectiveAccent}35`
+            }}
             title="Send message"
           >
             <Send className="w-4.5 h-4.5 fill-current" />
@@ -1124,9 +1147,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           >
             <div className="flex items-center gap-2 min-w-0">
               {previewMedia.type === 'video' ? (
-                <Video className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <Video className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
               ) : (
-                <Image className="w-4 h-4 text-[#FCC105] shrink-0" />
+                <Image className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
               )}
               <span className="text-xs font-semibold text-white truncate max-w-[180px] sm:max-w-md">
                 {previewMedia.name}
@@ -1137,7 +1160,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
               <button
                 type="button"
                 onClick={() => downloadFileToDevice(previewMedia.url, previewMedia.name)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FCC105] text-black font-bold text-xs hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/20"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg"
+                style={{ 
+                  backgroundColor: effectiveAccent, 
+                  color: getReadableTextColor(effectiveAccent),
+                  boxShadow: `0 8px 20px ${effectiveAccent}30`
+                }}
                 title="Save file to your device"
               >
                 <Download className="w-3.5 h-3.5" />
