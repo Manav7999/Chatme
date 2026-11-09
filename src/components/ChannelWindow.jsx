@@ -212,29 +212,32 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         }
 
         return (
-          <div 
-            className="flex-1 overflow-y-auto p-3 md:p-5 space-y-4 relative"
-            style={chatBgStyle}
-          >
-            {/* Custom Image Wallpaper from Device Storage */}
-            {chatBackground.type === 'image' && chatBackground.imageUrl && (
-              <div 
-                className="absolute inset-0 pointer-events-none bg-cover bg-center transition-all duration-300"
-                style={{
-                  backgroundImage: `url(${chatBackground.imageUrl})`,
-                  opacity: chatBackground.imageOpacity ?? 0.85,
-                  filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
-                  zIndex: 0
-                }}
-              />
-            )}
+          <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
+            {/* FIXED WALLPAPER LAYER (Stationary, never moves or scrolls on mobile or desktop) */}
+            <div 
+              className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
+              style={chatBgStyle}
+            >
+              {/* Custom Image Wallpaper from Device Storage */}
+              {chatBackground.type === 'image' && chatBackground.imageUrl && (
+                <div 
+                  className="w-full h-full bg-cover bg-center transition-all duration-300"
+                  style={{
+                    backgroundImage: `url(${chatBackground.imageUrl})`,
+                    opacity: chatBackground.imageOpacity ?? 0.85,
+                    filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
+                  }}
+                />
+              )}
 
-            {/* Subtle Doodle pattern overlay if enabled */}
-            {chatBackground.pattern && (
-              <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles z-0" />
-            )}
+              {/* Subtle Doodle pattern overlay if enabled */}
+              {chatBackground.pattern && (
+                <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles" />
+              )}
+            </div>
 
-            <div className="relative z-10 space-y-4">
+            {/* SCROLLABLE MESSAGES VIEWPORT (Scrolls smoothly above the fixed wallpaper) */}
+            <div className="flex-1 overflow-y-auto overscroll-y-contain p-3 md:p-5 space-y-4 relative z-10 bg-transparent">
               {(!channel.messages || channel.messages.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center select-none">
                   <div className="w-14 h-14 rounded-full bg-[#111111] border border-[#2B2B2B] flex items-center justify-center mb-4">
