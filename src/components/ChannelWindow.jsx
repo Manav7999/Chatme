@@ -184,15 +184,43 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
   }
 
   return (
-    <div className="flex-1 bg-[#000000] flex flex-col h-full min-w-0 w-full max-w-full relative">
-      {/* Channel Header */}
-      <div className="h-16 md:h-20 border-b border-[#2B2B2B] px-3 md:px-5 flex items-center justify-between bg-[#0A0A0A] select-none z-10">
+    <div className="flex-1 bg-[#000000] flex flex-col h-full min-w-0 w-full max-w-full relative overflow-hidden">
+      {/* FIXED WALLPAPER LAYER (Stationary full-bleed, extends behind Header, Messages & Input Bar!) */}
+      <div 
+        className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
+        style={chatBgStyle}
+      >
+        {/* Custom Image Wallpaper from Device Storage */}
+        {chatBackground.type === 'image' && chatBackground.imageUrl && (
+          <div 
+            className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-300"
+            style={{
+              backgroundImage: `url(${chatBackground.imageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              opacity: chatBackground.imageOpacity ?? 0.85,
+              filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
+            }}
+          />
+        )}
+
+        {/* Subtle Doodle pattern overlay if enabled */}
+        {chatBackground.pattern && (
+          <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles" />
+        )}
+      </div>
+
+      {/* Channel Header with Frosted Glass Transparency Effect */}
+      <div className={`h-16 md:h-20 border-b px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md shrink-0 transition-all duration-200 ${
+        isLight ? 'bg-white/60 border-black/10 shadow-sm' : 'bg-black/40 border-white/10 shadow-sm'
+      }`}>
         <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
           {isMobile && (
             <button
               type="button"
               onClick={onBack}
-              className="p-1 rounded-lg hover:bg-[#1A1A1A] cursor-pointer mr-0.5 shrink-0"
+              className="p-1 rounded-lg hover:bg-white/10 cursor-pointer mr-0.5 shrink-0"
               style={{ color: effectiveAccent }}
             >
               <ChevronLeft className="w-5.5 h-5.5" />
@@ -208,7 +236,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             <Hash className="w-4.5 h-4.5" style={{ color: effectiveAccent }} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-xs sm:text-base font-bold text-white leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px]">{channel.name}</h2>
+            <h2 className={`text-xs sm:text-base font-bold leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px] ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>{channel.name}</h2>
             <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5">
               <Users className="w-3 h-3" />
               {channel.memberCount || 0} online
@@ -227,42 +257,16 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         </div>
       </div>
 
-      {/* Description Banner */}
-      <div className="px-4 py-2 bg-[#0A0A0A] border-b border-[#2B2B2B]/50 text-[11px] text-[#8A8A8A] flex items-center gap-1.5">
+      {/* Description Banner with Glassmorphism Transparency */}
+      <div className={`px-4 py-2 border-b text-[11px] flex items-center gap-1.5 select-none z-20 backdrop-blur-md shrink-0 ${
+        isLight ? 'bg-white/50 border-black/10 text-slate-700' : 'bg-black/30 border-white/10 text-[#8A8A8A]'
+      }`}>
         <Hash className="w-3 h-3" style={{ color: effectiveAccent }} />
         {channel.description}
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 relative overflow-hidden flex flex-col min-h-0">
-            {/* FIXED WALLPAPER LAYER (Stationary, never moves or scrolls on mobile or desktop) */}
-            <div 
-              className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
-              style={chatBgStyle}
-            >
-              {/* Custom Image Wallpaper from Device Storage */}
-              {chatBackground.type === 'image' && chatBackground.imageUrl && (
-                <div 
-                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-300"
-                  style={{
-                    backgroundImage: `url(${chatBackground.imageUrl})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    opacity: chatBackground.imageOpacity ?? 0.85,
-                    filter: chatBackground.imageBlur ? `blur(${chatBackground.imageBlur}px)` : 'none',
-                  }}
-                />
-              )}
-
-              {/* Subtle Doodle pattern overlay if enabled */}
-              {chatBackground.pattern && (
-                <div className="absolute inset-0 pointer-events-none chat-wallpaper-doodles" />
-              )}
-            </div>
-
-            {/* SCROLLABLE MESSAGES VIEWPORT (Scrolls smoothly above the fixed wallpaper) */}
-            <div className="flex-1 overflow-y-auto overscroll-y-contain p-3 md:p-5 space-y-4 relative z-10 bg-transparent">
+      <div className="flex-1 overflow-y-auto overscroll-y-contain p-3 md:p-5 space-y-4 relative z-10 bg-transparent min-h-0">
               {(!channel.messages || channel.messages.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center select-none">
                   <div className="w-14 h-14 rounded-full bg-[#111111] border border-[#2B2B2B] flex items-center justify-center mb-4">
@@ -544,9 +548,8 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             );
           })
         )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
+        <div ref={messagesEndRef} />
+      </div>
 
       {/* Hidden file input */}
       <input 
@@ -558,8 +561,10 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
 
       {/* Attachments Overlay Menu */}
       {showAttachMenu && (
-        <div className="absolute bottom-20 left-3 right-3 sm:left-5 sm:right-auto bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-20 sm:w-48 chat-fade-in select-none">
-          <div className="px-3 py-1.5 text-[10px] font-bold text-[#8A8A8A] tracking-wider uppercase border-b border-[#2B2B2B]/50 mb-1 select-none">
+        <div className={`absolute bottom-20 left-3 right-3 sm:left-5 sm:right-auto border rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-30 sm:w-48 chat-fade-in select-none backdrop-blur-xl ${
+          isLight ? 'bg-white/90 border-black/10' : 'bg-[#111111]/90 border-white/10'
+        }`}>
+          <div className="px-3 py-1.5 text-[10px] font-bold text-[#8A8A8A] tracking-wider uppercase border-b border-white/10 mb-1 select-none">
             File Sharing
           </div>
           <button
@@ -570,7 +575,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all text-left cursor-pointer ${
+              isLight ? 'text-slate-900 hover:bg-black/5' : 'text-white hover:bg-white/10'
+            }`}
           >
             <Image className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Image
@@ -583,7 +590,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all text-left cursor-pointer ${
+              isLight ? 'text-slate-900 hover:bg-black/5' : 'text-white hover:bg-white/10'
+            }`}
           >
             <Film className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Video
@@ -596,7 +605,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                 fileInputRef.current.click();
               }
             }}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFFFFF] hover:bg-[#1A1A1A] transition-all text-left cursor-pointer"
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all text-left cursor-pointer ${
+              isLight ? 'text-slate-900 hover:bg-black/5' : 'text-white hover:bg-white/10'
+            }`}
           >
             <FileText className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
             Upload Document
@@ -606,12 +617,16 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
 
       {/* Emoji Picker */}
       {showEmojiPicker && (
-        <div className="absolute bottom-20 left-3 right-3 sm:left-5 sm:right-auto bg-[#111111] border border-[#2B2B2B] rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 z-20 sm:w-64 chat-fade-in select-none">
+        <div className={`absolute bottom-20 left-3 right-3 sm:left-5 sm:right-auto border rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 z-30 sm:w-64 chat-fade-in select-none backdrop-blur-xl ${
+          isLight ? 'bg-white/90 border-black/10' : 'bg-[#111111]/90 border-white/10'
+        }`}>
           {emojis.map((emoji, idx) => (
             <button
               key={idx}
               onClick={() => setInputText(prev => prev + emoji)}
-              className="text-2xl hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-[#1A1A1A] cursor-pointer"
+              className={`text-2xl hover:scale-125 transition-transform p-1.5 rounded-lg cursor-pointer ${
+                isLight ? 'hover:bg-black/5' : 'hover:bg-white/10'
+              }`}
             >
               {emoji}
             </button>
@@ -619,17 +634,21 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         </div>
       )}
 
-      {/* Input Panel */}
+      {/* Input Panel with Frosted Glass Transparency */}
       <form
         onSubmit={handleSend}
-        className="p-3 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center select-none z-10 w-full max-w-full gap-2.5 md:gap-2.5"
+        className={`p-3 border-t flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-2.5 backdrop-blur-md shrink-0 transition-all duration-200 ${
+          isLight ? 'bg-white/60 border-black/10' : 'bg-black/40 border-white/10'
+        }`}
       >
-        {/* Main Input Box (unified rectangular design on mobile, standard pill on desktop) */}
+        {/* Main Input Box (frosted translucent pill/box) */}
         <div 
-          className="flex-1 flex items-center bg-[#111111] border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0"
+          className={`flex-1 flex items-center border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0 backdrop-blur-sm ${
+            isLight ? 'bg-white/70' : 'bg-black/50'
+          }`}
           style={{
-            borderColor: isInputFocused ? effectiveAccent : (isLight ? '#E2E8F0' : '#2B2B2B'),
-            boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}` : 'none'
+            borderColor: isInputFocused ? effectiveAccent : (isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'),
+            boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}, 0 0 15px ${effectiveAccent}35` : 'none'
           }}
         >
           <button
@@ -652,7 +671,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             onChange={(e) => setInputText(e.target.value)}
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            className="flex-1 bg-transparent border-0 text-white placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0"
+            className={`flex-1 bg-transparent border-0 placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0 ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}
           />
 
           {/* Attachment menu trigger */}
@@ -672,7 +693,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
           {/* Attached Send Button (Mobile only) */}
           <button
             type="submit"
-            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-[#2B2B2B]"
+            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-white/10"
             style={{ 
               backgroundColor: effectiveAccent, 
               color: getReadableTextColor(effectiveAccent) 
@@ -686,11 +707,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         {/* Standalone Send Button (Desktop only) */}
         <button
           type="submit"
-          className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none"
+          className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none shadow-lg"
           style={{ 
             backgroundColor: effectiveAccent, 
             color: getReadableTextColor(effectiveAccent),
-            boxShadow: `0 8px 20px ${effectiveAccent}35`
+            boxShadow: `0 4px 15px ${effectiveAccent}40`
           }}
           title="Send message"
         >
