@@ -1,8 +1,8 @@
 // Theme & Customization Configuration and Helpers for ChatMe
 
 export const DEFAULT_THEME_SETTINGS = {
-  theme: 'dark', // 'dark' | 'light' | 'navy' | 'emerald' | 'violet' | 'crimson' | 'slate' | 'amber' | 'custom'
-  appThemeColor: '#000000', // Base custom color when theme === 'custom'
+  theme: 'neo-brutalist', // 'neo-brutalist' | 'neo-cyber' | 'dark' | 'light' | 'navy' | 'emerald' | ...
+  appThemeColor: '#F5F1E8', // Base custom color when theme === 'custom'
   textColorMode: 'match', // 'match' (auto-match with app theme) | 'custom'
   textColor: 'auto', // 'auto' | '#FFFFFF' | custom hex
   simulationSpeed: 'fast',
@@ -11,7 +11,7 @@ export const DEFAULT_THEME_SETTINGS = {
   accentColor: '#FCC105', // Adaptive accent color: drives buttons, icons, and highlights
   chatBackground: {
     type: 'default', // 'default' | 'color' | 'image' | 'gradient'
-    color: '#000000',
+    color: '#F5F1E8',
     gradient: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 50%, #09090b 100%)',
     imageUrl: '',
     imageOpacity: 0.85,
@@ -19,16 +19,40 @@ export const DEFAULT_THEME_SETTINGS = {
     pattern: false
   },
   bubbleStyle: {
-    shape: 'modern', // 'modern' | 'pill' | 'sharp' | 'tail' | 'cyber'
+    shape: 'brutalist', // 'brutalist' | 'modern' | 'pill' | 'sharp' | 'tail' | 'cyber'
     outgoingBg: '#FCC105',
     outgoingText: '#000000',
-    incomingBg: '', // empty string means auto-adapt by theme
-    incomingText: '',
+    incomingBg: '#FFFFFF', // Clean tactile white
+    incomingText: '#000000',
   }
 };
 
 // Main App Theme Presets (Excluding Splash Screen)
 export const APP_THEME_PRESETS = [
+  {
+    id: 'neo-brutalist',
+    name: 'Neo-Brutalist Tactile',
+    description: 'Raw tactile paper canvas with bold black borders and 3D offset mechanical shadows',
+    bg: '#F5F1E8',
+    surface: '#FFFFFF',
+    surfaceSecondary: '#FFFDF5',
+    border: '#000000',
+    accent: '#FCC105',
+    defaultTextColor: '#000000',
+    isDark: false
+  },
+  {
+    id: 'neo-cyber',
+    name: 'Neo-Cyber Dark',
+    description: 'Stark dark canvas with tactile yellow borders and hard offset drop shadows',
+    bg: '#0C0D11',
+    surface: '#16171F',
+    surfaceSecondary: '#1F212C',
+    border: '#FCC105',
+    accent: '#FCC105',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
   {
     id: 'dark',
     name: 'Default Black',
@@ -143,11 +167,18 @@ export const TEXT_COLOR_PRESETS = [
 // Available Bubble Shapes
 export const BUBBLE_SHAPES = [
   {
+    id: 'brutalist',
+    name: 'Neo-Brutalist Tactile',
+    description: 'Crisp bold outline with physical 3D offset drop-shadow',
+    outgoingClass: 'rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] font-medium',
+    incomingClass: 'rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] font-medium'
+  },
+  {
     id: 'modern',
     name: 'Modern Notch',
     description: 'Sleek rounded curves with subtle message notch',
-    outgoingClass: 'rounded-2xl rounded-tr-xs',
-    incomingClass: 'rounded-2xl rounded-tl-xs'
+    outgoingClass: 'rounded-2xl rounded-tr-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]',
+    incomingClass: 'rounded-2xl rounded-tl-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]'
   },
   {
     id: 'pill',
@@ -666,6 +697,9 @@ export function applyThemeToDocument(settings = 'dark') {
   const preset = APP_THEME_PRESETS.find(p => p.id === theme);
   const palette = preset || (theme === 'custom' ? deriveAppThemeFromColor(appThemeColor) : APP_THEME_PRESETS[0]);
   const isDark = hasCustomWallpaper ? true : palette.isDark;
+
+  // Set specific theme identifier on root
+  root.setAttribute('data-app-theme', theme);
 
   if (theme === 'light') {
     root.setAttribute('data-theme', 'light');

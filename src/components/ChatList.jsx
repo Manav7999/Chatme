@@ -28,16 +28,18 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
   );
 
   return (
-    <div className="w-full md:w-96 bg-[#111111] border-r border-[#2B2B2B] flex flex-col h-full select-none">
+    <div className="w-full md:w-96 bg-[#111111] border-r-2 border-black flex flex-col h-full select-none">
       {/* Header */}
       <div className="p-4 pb-2 md:p-5 md:pb-3 flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-bold text-[#FFFFFF] tracking-tight">
+          <h1 className="text-xl md:text-2xl font-display font-black text-[#FFFFFF] tracking-tight uppercase">
             Messages
           </h1>
-          <p className="text-xs text-[#8A8A8A] mt-0.5">
-            {chats.filter(c => c.unreadCount > 0).length} unread conversations
-          </p>
+          <div className="inline-block mt-1">
+            <span className="tactile-badge px-2 py-0.5 rounded-md text-[9px] bg-[#FCC105] text-black">
+              {chats.filter(c => c.unreadCount > 0).length} Unread Chats
+            </span>
+          </div>
         </div>
         <div className="flex gap-2">
           {/* Copy Invite Link */}
@@ -47,25 +49,21 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
               navigator.clipboard.writeText(inviteLink);
               alert("Copied your ChatMe Profile Link!\nSend it to another person so they can start a real chat with you.");
             }}
-            className="w-9 h-9 rounded-xl bg-transparent border border-[#FCC105] text-[#FCC105] flex items-center justify-center hover:bg-[#FCC105]/10 transition-colors duration-200 hover:scale-105 cursor-pointer"
-            style={{
-              borderColor: 'var(--theme-accent, #FCC105)',
-              color: 'var(--theme-accent, #FCC105)'
-            }}
+            className="tactile-btn w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center hover:bg-[#FFFDF5]"
             title="Copy Chat Invite Link"
           >
             <Share2 className="w-4 h-4" />
           </button>
           <button
             onClick={onNewChat}
-            className="w-9 h-9 rounded-xl bg-[#FCC105] text-[#000000] flex items-center justify-center hover:bg-[#FFD34D] transition-colors duration-200 shadow-lg shadow-[#FCC105]/10 hover:scale-105 cursor-pointer"
+            className="tactile-btn w-9 h-9 rounded-xl bg-[#FCC105] text-black flex items-center justify-center hover:bg-[#FFD34D]"
             style={{
               backgroundColor: 'var(--theme-accent, #FCC105)',
               color: 'var(--theme-accent-text, #000000)'
             }}
             title="New Conversation"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
       </div>
@@ -78,14 +76,14 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all duration-200"
+            className="tactile-input w-full bg-[#1A1A1A] text-[#FFFFFF] placeholder-[#8A8A8A] pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none"
           />
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#8A8A8A]" />
         </div>
       </div>
 
       {/* Chat List Items */}
-      <div className="flex-1 overflow-y-auto px-2 space-y-1 pb-4">
+      <div className="flex-1 overflow-y-auto px-2.5 space-y-2 pb-4">
         {isLoading ? (
           <ChatListSkeleton />
         ) : filteredChats.length > 0 ? (
@@ -97,52 +95,49 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
               <div
                 key={chat.id}
                 onClick={() => onSelectChat(chat.id)}
-                className={`relative group flex items-center gap-3.5 p-3.5 rounded-xl cursor-pointer transition-all duration-200 ${
+                className={`relative group flex items-center gap-3.5 p-3 rounded-xl cursor-pointer transition-all duration-150 ${
                   isSelected
-                    ? 'bg-[rgba(252,193,5,0.14)] border-l-4 border-[#FCC105]'
-                    : 'hover:bg-[#1A1A1A] border-l-4 border-transparent'
+                    ? 'border-2 border-black bg-[#FCC105]/20 shadow-[3.5px_3.5px_0px_#000000] -translate-y-0.5'
+                    : 'border-2 border-transparent hover:border-black/50 hover:bg-black/5 hover:shadow-[2.5px_2.5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
                 }`}
                 style={isSelected ? {
-                  backgroundColor: 'rgba(var(--theme-accent-rgb, 252, 193, 5), 0.16)',
-                  borderLeftColor: 'var(--theme-accent, #FCC105)'
+                  backgroundColor: 'rgba(var(--theme-accent-rgb, 252, 193, 5), 0.22)',
+                  borderColor: '#000000'
                 } : {}}
               >
-                {/* Avatar with yellow border if online/active */}
+                {/* Avatar with bold tactile border */}
                 <div className="relative">
                   <div 
-                    className={`w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden border ${
-                      isSelected ? 'border-[#FCC105]' : 'border-[#2B2B2B] group-hover:border-[#8A8A8A]'
-                    } transition-colors duration-200`}
-                    style={isSelected ? { borderColor: 'var(--theme-accent, #FCC105)' } : {}}
+                    className="w-11 h-11 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-black shadow-[2px_2px_0px_#000000] transition-colors duration-150"
                   >
                     <img
                       src={chat.avatarUrl}
                       alt={chat.name}
-                      className="w-full h-full object-cover bg-[#1A1A1A]"
+                      className="w-full h-full object-cover bg-white"
                     />
                   </div>
                   {chat.isOnline && (
-                    <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-[#22C55E] border-2 border-[#111111] rounded-full" />
+                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#22C55E] border-2 border-black rounded-full shadow-[1px_1px_0px_#000000]" />
                   )}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-[#FFFFFF] truncate">
+                    <h2 className="text-sm font-bold text-[#FFFFFF] truncate">
                       {chat.name}
                     </h2>
-                    <span className="text-[10px] text-[#8A8A8A]">
+                    <span className="text-[10px] font-semibold text-[#8A8A8A]">
                       {lastMsg ? lastMsg.time : ''}
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between mt-1">
                     <p className={`text-xs truncate pr-2 ${
-                      chat.unreadCount > 0 ? 'text-[#FFFFFF] font-medium' : 'text-[#8A8A8A]'
+                      chat.unreadCount > 0 ? 'text-[#FFFFFF] font-bold' : 'text-[#8A8A8A]'
                     }`}>
                       {chat.isTyping ? (
-                        <span className="text-[#FCC105] font-medium flex items-center gap-1">
+                        <span className="text-[#FCC105] font-bold flex items-center gap-1">
                           <span className="flex gap-0.5">
                             <span className="w-1.5 h-1.5 bg-[#FCC105] rounded-full animate-bounce delay-75" />
                             <span className="w-1.5 h-1.5 bg-[#FCC105] rounded-full animate-bounce delay-150" />
@@ -158,7 +153,7 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     {/* Unread Counter Badge */}
                     {chat.unreadCount > 0 && (
                       <span 
-                        className="flex-shrink-0 min-w-[18px] h-[18px] bg-[#FCC105] text-[#000000] text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-pulse"
+                        className="tactile-badge min-w-[20px] h-[20px] bg-[#FCC105] text-[#000000] text-[10px] rounded-full flex items-center justify-center px-1 shrink-0"
                         style={{
                           backgroundColor: 'var(--theme-accent, #FCC105)',
                           color: 'var(--theme-accent-text, #000000)'

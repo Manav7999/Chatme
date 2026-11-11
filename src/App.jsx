@@ -1830,29 +1830,31 @@ export default function App() {
     ];
     return (
       <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center p-4 select-none keep-dark" data-theme="dark">
-        {/* Splash Card */}
-        <div className="w-full max-w-md bg-[#000000] border border-[#2B2B2B] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl keep-dark">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#FCC105]" />
+        {/* Splash Card - Neo-Brutalist Tactile Frame */}
+        <div className="w-full max-w-md bg-[#111111] border-2 border-black rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-[6px_6px_0px_#FCC105] keep-dark">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#FCC105]" />
           
           <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 flex items-center justify-center">
-              <img src="/chatmeappicon.png" alt="ChatMe" className="w-16 h-16 object-contain" />
+            <div className="w-16 h-16 rounded-2xl border-2 border-black bg-[#FCC105] shadow-[3px_3px_0px_#000000] flex items-center justify-center">
+              <img src="/chatmeappicon.png" alt="ChatMe" className="w-10 h-10 object-contain" />
             </div>
-            <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight">
+            <h1 className="text-3xl font-display font-black text-[#FFFFFF] mt-5 tracking-tight uppercase">
               CHAT<span className="text-[#FCC105]">ME</span>
             </h1>
-            <p className="text-sm text-[#8A8A8A] mt-1.5 max-w-[280px]">
+            <p className="text-xs text-[#8A8A8A] font-bold mt-1.5 max-w-[280px]">
               {authMode === 'register' ? 'Create your secure account' : 'Sign in to your account'}
             </p>
           </div>
 
           {/* Mode Toggle */}
-          <div className="flex mt-8 bg-[#111111] border border-[#2B2B2B] rounded-xl p-1">
+          <div className="flex mt-7 bg-black border-2 border-black rounded-xl p-1 shadow-[2px_2px_0px_#000000]">
             <button
               type="button"
               onClick={() => { setAuthMode('login'); setAuthError(''); }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                authMode === 'login' ? 'bg-[#FCC105] text-[#000000]' : 'text-[#8A8A8A] hover:text-white'
+              className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${
+                authMode === 'login' 
+                  ? 'bg-[#FCC105] text-[#000000] border-2 border-black shadow-[2px_2px_0px_#000000]' 
+                  : 'text-[#8A8A8A] hover:text-white'
               }`}
             >
               Sign In
@@ -1860,8 +1862,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => { setAuthMode('register'); setAuthError(''); }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                authMode === 'register' ? 'bg-[#FCC105] text-[#000000]' : 'text-[#8A8A8A] hover:text-white'
+              className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${
+                authMode === 'register' 
+                  ? 'bg-[#FCC105] text-[#000000] border-2 border-black shadow-[2px_2px_0px_#000000]' 
+                  : 'text-[#8A8A8A] hover:text-white'
               }`}
             >
               Create Account
@@ -1871,7 +1875,7 @@ export default function App() {
           <form onSubmit={handleAuthSubmit} className="mt-6 space-y-4">
             {/* Username Input */}
             <div className="space-y-1.5">
-              <label htmlFor="login-name" className="text-xs font-semibold text-[#FFFFFF] block">
+              <label htmlFor="login-name" className="text-xs font-bold text-[#FFFFFF] block uppercase tracking-wide">
                 Username
               </label>
               <input
@@ -1882,13 +1886,13 @@ export default function App() {
                 placeholder="Enter your username"
                 required
                 autoComplete="username"
-                className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all"
+                className="w-full bg-[#1A1A1A] border-2 border-black text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm font-semibold shadow-[2px_2px_0px_#000000] focus:outline-none focus:shadow-[3px_3px_0px_#FCC105] transition-all"
               />
             </div>
 
             {/* Password Input */}
             <div className="space-y-1.5">
-              <label htmlFor="login-password" className="text-xs font-semibold text-[#FFFFFF] block">
+              <label htmlFor="login-password" className="text-xs font-bold text-[#FFFFFF] block uppercase tracking-wide">
                 Password
               </label>
               <input
@@ -1899,22 +1903,22 @@ export default function App() {
                 placeholder={authMode === 'register' ? 'Create a strong password' : 'Enter your password'}
                 required
                 autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
-                className="w-full bg-[#111111] border border-[#2B2B2B] text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#FCC105] focus:ring-1 focus:ring-[#FCC105] transition-all"
+                className="w-full bg-[#1A1A1A] border-2 border-black text-[#FFFFFF] placeholder-[#8A8A8A] px-4 py-3 rounded-xl text-sm font-semibold shadow-[2px_2px_0px_#000000] focus:outline-none focus:shadow-[3px_3px_0px_#FCC105] transition-all"
               />
             </div>
 
             {/* Avatar Selection (only for registration) */}
             {authMode === 'register' && (
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-[#FFFFFF] block">Choose Avatar</span>
-                <div className="flex flex-wrap gap-2 justify-center items-center bg-[#1A1A1A] p-2.5 rounded-xl border border-[#2B2B2B]">
+                <span className="text-xs font-bold text-[#FFFFFF] block uppercase tracking-wide">Choose Avatar</span>
+                <div className="flex flex-wrap gap-2 justify-center items-center bg-[#1A1A1A] p-2.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000]">
                   {avatarOptions.map((url, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => setCurrentUser({ ...currentUser, avatarUrl: url })}
                       className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${
-                        currentUser.avatarUrl === url ? 'border-[#FCC105] scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+                        currentUser.avatarUrl === url ? 'border-[#FCC105] scale-110 shadow-[2px_2px_0px_#000000]' : 'border-black/50 opacity-60 hover:opacity-100'
                       }`}
                     >
                       <img src={url} alt="avatar option" className="w-full h-full bg-[#111111]" />
@@ -1926,7 +1930,7 @@ export default function App() {
 
             {/* Error Message */}
             {authError && (
-              <div className="text-xs text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/20 px-3 py-2 rounded-lg flex items-center gap-2">
+              <div className="text-xs font-bold text-[#EF4444] bg-[#EF4444]/10 border-2 border-[#EF4444] px-3 py-2 rounded-lg flex items-center gap-2 shadow-[2px_2px_0px_#000000]">
                 <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full shrink-0" />
                 {authError}
               </div>
@@ -1936,14 +1940,14 @@ export default function App() {
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full py-3.5 rounded-xl bg-[#FCC105] text-[#000000] font-bold text-sm hover:bg-[#FFD34D] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-lg shadow-[#FCC105]/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="tactile-btn w-full py-3.5 rounded-xl bg-[#FCC105] text-[#000000] font-black uppercase text-sm shadow-[4px_4px_0px_#000000] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {authLoading ? (
                 <span className="w-4 h-4 border-2 border-[#000000]/30 border-t-[#000000] rounded-full animate-spin" />
               ) : (
                 <>
                   {authMode === 'register' ? 'Create Account' : 'Sign In'}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </>
               )}
             </button>
@@ -2025,11 +2029,11 @@ export default function App() {
         <div className="flex-1 bg-[#000000] p-6 pb-24 md:pb-6 overflow-y-auto select-none">
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
-              <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                <Users className="w-6 h-6 text-[#FCC105]" />
+              <h1 className="text-2xl font-display font-black text-white flex items-center gap-2 uppercase tracking-tight">
+                <Users className="w-6 h-6 text-[#FCC105] stroke-[2.5]" />
                 Contacts Directory
               </h1>
-              <p className="text-sm text-[#8A8A8A] mt-1">
+              <p className="text-xs text-[#8A8A8A] font-semibold mt-1">
                 View all team members currently configured inside this sandbox workspace.
               </p>
             </div>
@@ -2038,20 +2042,20 @@ export default function App() {
               {chats.map(contact => (
                 <div 
                   key={contact.id}
-                  className="bg-[#111111] border border-[#2B2B2B] rounded-2xl p-4 flex items-center justify-between hover:border-[#FCC105]/50 transition-colors"
+                  className="tactile-card bg-[#111111] rounded-2xl p-4 flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full overflow-hidden border border-[#2B2B2B]">
-                        <img src={contact.avatarUrl} alt={contact.name} className="w-full h-full object-cover" />
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-black shadow-[2px_2px_0px_#000000]">
+                        <img src={contact.avatarUrl} alt={contact.name} className="w-full h-full object-cover bg-white" />
                       </div>
                       {contact.isOnline && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#22C55E] border-2 border-[#111111] rounded-full" />
+                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#22C55E] border-2 border-black rounded-full shadow-[1px_1px_0px_#000000]" />
                       )}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-white">{contact.name}</h3>
-                      <p className="text-xs text-[#8A8A8A] mt-0.5">{contact.role}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-white truncate">{contact.name}</h3>
+                      <p className="text-xs text-[#8A8A8A] mt-0.5 truncate font-medium">{contact.role}</p>
                     </div>
                   </div>
                   
@@ -2060,7 +2064,7 @@ export default function App() {
                       handleSelectChat(contact.id);
                       setActiveTab('chats');
                     }}
-                    className="py-1.5 px-3.5 rounded-lg bg-[#FCC105] text-[#000000] text-xs font-bold hover:bg-[#FFD34D] transition-colors cursor-pointer"
+                    className="tactile-btn py-1.5 px-4 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-black uppercase shrink-0"
                   >
                     Chat
                   </button>
@@ -2075,15 +2079,15 @@ export default function App() {
         <div className={`flex-1 flex h-full min-w-0 overflow-hidden ${isMobile && !activeChannelId ? 'pb-16' : ''}`}>
           {/* Channel list panel */}
           {(!isMobile || !activeChannelId) && (
-            <div className="w-full md:w-80 bg-[#000000] border-r border-[#2B2B2B] flex flex-col h-full">
-              <div className="p-5 border-b border-[#2B2B2B]">
-                <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                  <Compass className="w-5 h-5 text-[#FCC105]" />
+            <div className="w-full md:w-80 bg-[#000000] border-r-2 border-black flex flex-col h-full">
+              <div className="p-5 border-b-2 border-black">
+                <h1 className="text-xl font-display font-black text-white flex items-center gap-2 uppercase tracking-tight">
+                  <Compass className="w-5 h-5 text-[#FCC105] stroke-[2.5]" />
                   Channels
                 </h1>
-                <p className="text-xs text-[#8A8A8A] mt-1">Join a group channel to chat</p>
+                <p className="text-xs text-[#8A8A8A] font-semibold mt-1">Join a group channel to chat</p>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
                 {channelList.map(ch => {
                   const isJoined = joinedChannels.has(ch.id);
                   const isActive = activeChannelId === ch.id;
@@ -2094,23 +2098,23 @@ export default function App() {
                         setActiveChannelId(ch.id);
                         if (!isJoined) joinChannel(ch.id);
                       }}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                      className={`w-full text-left p-3.5 rounded-xl transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-[#FCC105]/10 border-[#FCC105]/40 text-white'
-                          : 'bg-[#111111] border-[#2B2B2B] hover:border-[#FCC105]/30 hover:bg-[#111111]'
+                          ? 'border-2 border-black bg-[#FCC105]/20 shadow-[3.5px_3.5px_0px_#000000] text-white -translate-y-0.5'
+                          : 'tactile-card bg-[#111111] text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        <div className={`w-9 h-9 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center shrink-0 ${
                           isActive ? 'bg-[#FCC105] text-black' : 'bg-[#1A1A1A] text-[#FCC105]'
                         }`}>
-                          <Hash className="w-4.5 h-4.5" />
+                          <Hash className="w-4.5 h-4.5 stroke-[2.5]" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-white truncate">{ch.name}</span>
                             {isJoined && (
-                              <span className="text-[9px] bg-[#22C55E]/20 text-[#22C55E] px-1.5 py-0.5 rounded-full border border-[#22C55E]/30 font-bold uppercase tracking-wider shrink-0">
+                              <span className="tactile-badge text-[8px] bg-[#22C55E] text-black px-1.5 py-0.5 rounded shrink-0">
                                 Joined
                               </span>
                             )}
@@ -2118,7 +2122,7 @@ export default function App() {
                           <p className="text-[11px] text-[#8A8A8A] truncate mt-0.5">{ch.description}</p>
                           <div className="flex items-center gap-1 mt-1">
                             <Users className="w-3 h-3 text-[#8A8A8A]" />
-                            <span className="text-[10px] text-[#8A8A8A]">{ch.memberCount || 0} online</span>
+                            <span className="text-[10px] text-[#8A8A8A] font-bold">{ch.memberCount || 0} online</span>
                           </div>
                         </div>
                       </div>
@@ -2216,68 +2220,76 @@ export default function App() {
         </div>
       )}
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar - Neo-Brutalist Tactile Dock */}
       {(!isMobile || (activeTab === 'chats' && !activeChatId) || (activeTab === 'discover' && !activeChannelId) || (activeTab !== 'chats' && activeTab !== 'discover')) && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center justify-around z-20 px-2 select-none">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0A0A0A] border-t-2 border-black flex items-center justify-around z-20 px-2 select-none shadow-[0_-3px_0px_#000000]">
           {/* Chats Tab */}
           <button
             onClick={() => {
               setActiveTab('chats');
               setActiveChatId(null);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer ${
-              activeTab === 'chats' ? 'text-[#FCC105]' : 'text-[#8A8A8A]'
+            className={`flex flex-col items-center justify-center p-1.5 px-3 rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'chats' 
+                ? 'tactile-btn bg-[#FCC105] text-black font-black' 
+                : 'text-[#8A8A8A] hover:text-black border-2 border-transparent'
             }`}
           >
-            <MessageSquare className="w-5.5 h-5.5" />
-            <span className="text-[9px] font-medium mt-1">Chats</span>
+            <MessageSquare className="w-5 h-5 stroke-[2.2]" />
+            <span className="text-[8px] font-black uppercase mt-0.5">Chats</span>
           </button>
 
           {/* Contacts Tab */}
           <button
             onClick={() => setActiveTab('contacts')}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer ${
-              activeTab === 'contacts' ? 'text-[#FCC105]' : 'text-[#8A8A8A]'
+            className={`flex flex-col items-center justify-center p-1.5 px-3 rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'contacts' 
+                ? 'tactile-btn bg-[#FCC105] text-black font-black' 
+                : 'text-[#8A8A8A] hover:text-black border-2 border-transparent'
             }`}
           >
-            <Users className="w-5.5 h-5.5" />
-            <span className="text-[9px] font-medium mt-1">Contacts</span>
+            <Users className="w-5 h-5 stroke-[2.2]" />
+            <span className="text-[8px] font-black uppercase mt-0.5">Contacts</span>
           </button>
 
           {/* Discover Tab */}
           <button
             onClick={() => setActiveTab('discover')}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer ${
-              activeTab === 'discover' ? 'text-[#FCC105]' : 'text-[#8A8A8A]'
+            className={`flex flex-col items-center justify-center p-1.5 px-3 rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'discover' 
+                ? 'tactile-btn bg-[#FCC105] text-black font-black' 
+                : 'text-[#8A8A8A] hover:text-black border-2 border-transparent'
             }`}
           >
-            <Compass className="w-5.5 h-5.5" />
-            <span className="text-[9px] font-medium mt-1">Discover</span>
+            <Compass className="w-5 h-5 stroke-[2.2]" />
+            <span className="text-[8px] font-black uppercase mt-0.5">Discover</span>
           </button>
 
           {/* Alerts Tab */}
           <button
             onClick={() => setActiveTab('notifications')}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer ${
-              activeTab === 'notifications' ? 'text-[#FCC105]' : 'text-[#8A8A8A]'
+            className={`flex flex-col items-center justify-center p-1.5 px-3 rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'notifications' 
+                ? 'tactile-btn bg-[#FCC105] text-black font-black' 
+                : 'text-[#8A8A8A] hover:text-black border-2 border-transparent'
             }`}
           >
-            <Bell className="w-5.5 h-5.5" />
-            <span className="text-[9px] font-medium mt-1">Alerts</span>
+            <Bell className="w-5 h-5 stroke-[2.2]" />
+            <span className="text-[8px] font-black uppercase mt-0.5">Alerts</span>
           </button>
 
           {/* Quick Theme Toggle */}
           <button
             onClick={handleToggleTheme}
-            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer text-[#8A8A8A] hover:text-[#FCC105]"
+            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer hover:bg-[#FFFDF5]"
             title={settings.theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
           >
             {settings.theme === 'light' ? (
-              <Sun className="w-5.5 h-5.5" style={{ color: 'var(--theme-accent, #FCC105)' }} />
+              <Sun className="w-4.5 h-4.5 text-black stroke-[2.2]" />
             ) : (
-              <Moon className="w-5.5 h-5.5" style={{ color: 'var(--theme-accent, #FCC105)' }} />
+              <Moon className="w-4.5 h-4.5 text-black stroke-[2.2]" />
             )}
-            <span className="text-[9px] font-medium mt-1">
+            <span className="text-[8px] font-black uppercase mt-0.5">
               {settings.theme === 'light' ? 'Light' : 'Dark'}
             </span>
           </button>
@@ -2285,10 +2297,10 @@ export default function App() {
           {/* Settings Tab */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 cursor-pointer text-[#8A8A8A]"
+            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer hover:bg-[#FFFDF5]"
           >
-            <Settings className="w-5.5 h-5.5" />
-            <span className="text-[9px] font-medium mt-1">Settings</span>
+            <Settings className="w-4.5 h-4.5 text-black stroke-[2.2]" />
+            <span className="text-[8px] font-black uppercase mt-0.5">Settings</span>
           </button>
         </div>
       )}

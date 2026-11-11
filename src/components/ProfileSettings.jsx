@@ -382,71 +382,71 @@ export default function ProfileSettings({
 
   return (
     <div className="fixed inset-0 bg-[#000000]/80 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 select-none animate-fadeIn">
-      {/* Modal Card */}
-      <div className="bg-[#111111] border border-[#2B2B2B] rounded-2xl w-full max-w-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh]">
+      {/* Modal Card - Neo-Brutalist Tactile Frame */}
+      <div className="bg-[#111111] border-[3px] border-black rounded-2xl w-full max-w-2xl shadow-[8px_8px_0px_#000000] relative overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#2B2B2B] flex items-center justify-between shrink-0 bg-[#111111]">
+        <div className="p-4 sm:p-5 border-b-2 border-black flex items-center justify-between shrink-0 bg-[#111111]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#FCC105]/10 border border-[#FCC105]/30 flex items-center justify-center text-[#FCC105]">
-              <Sparkles className="w-4.5 h-4.5" />
+            <div className="w-9 h-9 rounded-xl border-2 border-black bg-[#FCC105] shadow-[2px_2px_0px_#000000] flex items-center justify-center text-black">
+              <Sparkles className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-display font-bold text-[#FFFFFF]">
+              <h2 className="text-base sm:text-lg font-display font-black text-[#FFFFFF] uppercase tracking-tight">
                 ChatMe Customization & Settings
               </h2>
-              <p className="text-[11px] text-[#8A8A8A] hidden sm:block">
-                Themes, chat background wallpaper, bubble design, and user profile
+              <p className="text-[11px] font-semibold text-[#8A8A8A] hidden sm:block">
+                Neo-Brutalist Tactile themes, wallpaper, bubble shapes, and user profile
               </p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#1A1A1A] text-[#8A8A8A] hover:text-[#FFFFFF] cursor-pointer transition-colors"
+            className="tactile-btn p-1.5 rounded-xl bg-white text-black hover:bg-[#FFFDF5] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
-        {/* Tab Navigation Bar */}
-        <div className="flex items-center border-b border-[#2B2B2B] bg-[#0A0A0A] px-3 sm:px-5 shrink-0 overflow-x-auto gap-2">
+        {/* Tab Navigation Bar - Tactile Keys */}
+        <div className="flex items-center border-b-2 border-black bg-[#0A0A0A] px-3 sm:px-5 py-2.5 shrink-0 overflow-x-auto gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('appearance')}
-            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'appearance'
-                ? 'border-[#FCC105] text-[#FCC105]'
-                : 'border-transparent text-[#8A8A8A] hover:text-[#FFFFFF]'
+                ? 'tactile-btn bg-[#FCC105] text-black'
+                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
             }`}
           >
-            <Palette className="w-3.5 h-3.5" />
+            <Palette className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Theme & Chat Style</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'profile'
-                ? 'border-[#FCC105] text-[#FCC105]'
-                : 'border-transparent text-[#8A8A8A] hover:text-[#FFFFFF]'
+                ? 'tactile-btn bg-[#FCC105] text-black'
+                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
             }`}
           >
-            <User className="w-3.5 h-3.5" />
+            <User className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>User Profile</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('system')}
-            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'system'
-                ? 'border-[#FCC105] text-[#FCC105]'
-                : 'border-transparent text-[#8A8A8A] hover:text-[#FFFFFF]'
+                ? 'tactile-btn bg-[#FCC105] text-black'
+                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
             }`}
           >
-            <Shield className="w-3.5 h-3.5" />
+            <Shield className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>System Preferences</span>
           </button>
         </div>
@@ -1401,7 +1401,7 @@ export default function ProfileSettings({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-[#0A0A0A] border-t border-[#2B2B2B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div className="p-4 bg-[#0A0A0A] border-t-2 border-black flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           {/* Logout on the left */}
           {onLogout && (
             <button
@@ -1409,24 +1409,24 @@ export default function ProfileSettings({
               onClick={() => {
                 if (confirm('Sign out of ChatMe?')) onLogout();
               }}
-              className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-[#EF4444]/30 text-[#EF4444] text-xs font-semibold hover:bg-[#EF4444]/10 transition-all cursor-pointer text-center"
+              className="tactile-btn w-full sm:w-auto py-2.5 px-4 rounded-xl bg-[#EF4444] text-white text-xs font-black uppercase text-center"
             >
               Sign Out
             </button>
           )}
 
-          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:ml-auto">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto sm:ml-auto">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto py-2.5 px-5 rounded-xl border border-[#2B2B2B] text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#1A1A1A] text-xs font-semibold transition-all cursor-pointer text-center"
+              className="tactile-btn w-full sm:w-auto py-2.5 px-5 rounded-xl bg-white text-black hover:bg-[#FFFDF5] text-xs font-black uppercase text-center"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-bold hover:bg-[#FFD34D] transition-all cursor-pointer shadow-lg shadow-[#FCC105]/15 text-center flex items-center justify-center gap-2"
+              className="tactile-btn w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-black uppercase shadow-[4px_4px_0px_#000000] hover:shadow-[5px_5px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
             >
               <Check className="w-4 h-4 stroke-[3]" />
               Save Configuration

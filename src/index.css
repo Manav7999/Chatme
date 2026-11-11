@@ -496,3 +496,120 @@ body {
 [data-theme="custom"] ::-webkit-scrollbar-thumb:hover {
   background: var(--theme-accent, #FCC105) !important;
 }
+
+/* =========================================================================
+   NEO-BRUTALIST TACTILE DESIGN SYSTEM
+   Crisp borders, hard offset 3D drop-shadows, tactile mechanical press
+   ========================================================================= */
+
+.tactile-btn {
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.4, 1) !important;
+  cursor: pointer;
+  user-select: none;
+}
+.tactile-btn:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4.5px 4.5px 0px #000000 !important;
+}
+.tactile-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 0px 0px 0px #000000 !important;
+}
+
+.tactile-card {
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.15s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.tactile-card-interactive {
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.4, 1);
+  cursor: pointer;
+}
+.tactile-card-interactive:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4.5px 4.5px 0px #000000 !important;
+}
+.tactile-card-interactive:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000000 !important;
+}
+
+.tactile-badge {
+  border: 2px solid #000000 !important;
+  box-shadow: 1.5px 1.5px 0px #000000 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.tactile-input {
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  transition: all 0.15s ease;
+}
+.tactile-input:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--theme-accent, #FCC105) !important;
+}
+
+/* Specific styling when Neo-Brutalist Tactile theme is active */
+[data-app-theme="neo-brutalist"] {
+  --background: #F5F1E8;
+  --surface: #FFFFFF;
+  --surface-secondary: #FFFDF5;
+  --border: #000000;
+  --text-primary: #000000;
+  --text-secondary: #262626;
+  --text-muted: #525252;
+}
+
+[data-app-theme="neo-brutalist"] .bg-\[\#000000\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #F5F1E8 !important;
+}
+[data-app-theme="neo-brutalist"] .bg-\[\#0A0A0A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #FFFFFF !important;
+}
+[data-app-theme="neo-brutalist"] .bg-\[\#111111\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #FFFFFF !important;
+}
+[data-app-theme="neo-brutalist"] .bg-\[\#1A1A1A\]:not(.keep-dark):not(.dark-call-screen *) {
+  background-color: #FFFDF5 !important;
+}
+[data-app-theme="neo-brutalist"] .border-\[\#2B2B2B\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: #000000 !important;
+  border-width: 2px !important;
+}
+[data-app-theme="neo-brutalist"] .border-\[\#333333\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: #000000 !important;
+  border-width: 2px !important;
+}
+[data-app-theme="neo-brutalist"] .text-\[\#FFFFFF\]:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]),
+[data-app-theme="neo-brutalist"] .text-white:not(.keep-dark):not(.keep-white):not(.dark-call-screen *):not(.bg-\[\#EF4444\] *):not(.bg-\[\#22C55E\] *):not(button.bg-\[\#EF4444\]):not(button.bg-\[\#22C55E\]) {
+  color: #000000 !important;
+}
+[data-app-theme="neo-brutalist"] .text-\[\#8A8A8A\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: #525252 !important;
+}
+[data-app-theme="neo-brutalist"] .text-\[\#E0E0E0\]:not(.keep-dark):not(.dark-call-screen *) {
+  color: #262626 !important;
+}
+
+/* Neo-Brutalist Cyber Dark Theme */
+[data-app-theme="neo-cyber"] {
+  --background: #0C0D11;
+  --surface: #16171F;
+  --surface-secondary: #1F212C;
+  --border: #FCC105;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E5E7EB;
+  --text-muted: #9CA3AF;
+}
+[data-app-theme="neo-cyber"] .border-\[\#2B2B2B\]:not(.keep-dark):not(.dark-call-screen *) {
+  border-color: rgba(252, 193, 5, 0.5) !important;
+  border-width: 2px !important;
+}

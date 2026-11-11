@@ -403,68 +403,63 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         )}
       </div>
 
-      {/* Chat Window Header with Frosted Glass Transparency Effect */}
-      <div className={`h-16 md:h-20 border-b px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md transition-all duration-200 shrink-0 ${
+      {/* Chat Window Header with Neo-Brutalist Tactile Styling */}
+      <div className={`h-16 md:h-20 border-b-2 border-black px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md transition-all duration-200 shrink-0 ${
         isLight 
-          ? 'bg-white/60 border-black/10 shadow-sm' 
-          : 'bg-black/40 border-white/10 shadow-sm'
+          ? 'bg-white/80 shadow-sm' 
+          : 'bg-black/60 shadow-sm'
       }`}>
-        <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {/* Back Button on Mobile */}
           {isMobile && (
             <button
               type="button"
               onClick={onBack}
-              className="p-1 rounded-lg text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-white/10 cursor-pointer mr-0.5 flex items-center justify-center shrink-0"
+              className="tactile-btn p-1.5 rounded-xl bg-white text-black cursor-pointer mr-0.5 flex items-center justify-center shrink-0"
               title="Back to conversations"
             >
-              <ChevronLeft className="w-5.5 h-5.5" style={{ color: effectiveAccent }} />
+              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
           )}
           
           {/* Contact Avatar */}
           <div className="relative shrink-0">
-            <div className="w-8 h-8 md:w-11 md:h-11 rounded-full overflow-hidden border-2" style={{ borderColor: effectiveAccent }}>
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden border-2 border-black shadow-[2px_2px_0px_#000000]">
               <img
                 src={chat.avatarUrl}
                 alt={chat.name}
-                className="w-full h-full object-cover bg-black/40"
+                className="w-full h-full object-cover bg-white"
               />
             </div>
             {chat.isOnline && (
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#22C55E] border-2 border-black/40 rounded-full" />
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#22C55E] border-2 border-black rounded-full shadow-[1px_1px_0px_#000000]" />
             )}
           </div>
           
           <div className="min-w-0">
-            <div className="flex items-center gap-1 flex-wrap">
-              <h2 className={`text-xs sm:text-base font-bold leading-tight truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[200px] ${
-                isLight ? 'text-slate-900' : 'text-white'
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h2 className={`text-xs sm:text-base font-black leading-tight truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[200px] ${
+                isLight ? 'text-black' : 'text-white'
               }`}>
                 {chat.name}
               </h2>
               <span 
-                className="text-[7px] md:text-[8px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider scale-90 shrink-0 select-none hidden xs:inline-block"
-                style={{ 
-                  color: effectiveAccent, 
-                  borderColor: `${effectiveAccent}40`, 
-                  backgroundColor: `${effectiveAccent}15` 
-                }}
+                className="tactile-badge text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-md bg-[#FCC105] text-black shrink-0 hidden xs:inline-block"
               >
                 Member
               </span>
               {isEncrypted && (
-                <span title="End-to-end encrypted" className="text-[7px] md:text-[8px] bg-[#22C55E]/10 text-[#22C55E] px-1 py-0.5 rounded border border-[#22C55E]/20 font-bold uppercase tracking-wider shrink-0 select-none flex items-center gap-0.5">
+                <span title="End-to-end encrypted" className="tactile-badge text-[7px] md:text-[8px] bg-[#22C55E] text-black px-1.5 py-0.5 rounded-md shrink-0 flex items-center gap-0.5">
                   🔒 <span className="hidden xs:inline">E2EE</span>
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5">
+            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5 font-bold">
               {chat.isTyping ? (
-                <span className="font-medium animate-pulse" style={{ color: effectiveAccent }}>Typing...</span>
+                <span className="animate-pulse text-[#FCC105]">Typing...</span>
               ) : chat.isOnline ? (
                 <>
-                  <span className="w-1 h-1 bg-[#22C55E] rounded-full" />
+                  <span className="w-1.5 h-1.5 bg-[#22C55E] rounded-full border border-black" />
                   Active
                 </>
               ) : (
@@ -474,49 +469,44 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           </div>
         </div>
 
-        {/* Header Action Buttons (Harmonized to Wallpaper & Theme) */}
-        <div className="flex items-center gap-1 sm:gap-2 text-[#8A8A8A] shrink-0">
+        {/* Header Action Buttons (Tactile Mechanical Push Buttons) */}
+        <div className="flex items-center gap-2 text-black shrink-0">
           <button 
             onClick={() => onStartCall('audio')}
-            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-white/10 transition-all cursor-pointer"
-            style={{ color: effectiveAccent }}
+            className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]"
             title="Voice Call"
           >
             <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <button 
             onClick={() => onStartCall('video')}
-            className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-white/10 transition-all cursor-pointer"
-            style={{ color: effectiveAccent }}
+            className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]"
             title="Video Call"
           >
             <Video className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <div className="relative group">
-            <button className="p-1.5 sm:p-2 rounded-lg hover:text-[#FFFFFF] hover:bg-white/10 transition-all cursor-pointer">
+            <button className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]">
               <MoreVertical className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
-            <div className={`hidden group-hover:block absolute right-0 top-8 border rounded-xl shadow-2xl py-2 w-48 z-30 overflow-hidden backdrop-blur-md ${
-              isLight ? 'bg-white/95 border-black/10' : 'bg-[#111111]/95 border-white/15'
-            }`}>
+            <div className="hidden group-hover:block absolute right-0 top-11 border-2 border-black rounded-xl shadow-[5px_5px_0px_#000000] py-2 w-52 z-30 overflow-hidden bg-white text-black font-semibold">
               <button 
                 type="button"
                 onClick={handleCopyConversation} 
-                className="w-full px-4 py-2.5 text-left text-xs hover:bg-white/5 flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
-                style={{ color: effectiveAccent }}
+                className="w-full px-4 py-2.5 text-left text-xs hover:bg-[#FCC105]/20 flex items-center gap-2.5 font-bold transition-colors cursor-pointer"
               >
-                <Copy className="w-4 h-4 shrink-0" style={{ color: effectiveAccent }} />
+                <Copy className="w-4 h-4 shrink-0 text-black" />
                 <span>Copy Conversation</span>
               </button>
               <button 
                 type="button"
                 onClick={onClearChat} 
-                className="w-full px-4 py-2.5 text-left text-xs text-[#E0E0E0] hover:bg-white/10 flex items-center gap-2.5 font-medium transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-xs hover:bg-black/5 flex items-center gap-2.5 font-bold transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4 text-[#8A8A8A] shrink-0" />
+                <X className="w-4 h-4 text-black shrink-0" />
                 <span>Clear Conversation</span>
               </button>
-              <div className="border-t border-white/10 my-1"></div>
+              <div className="border-t-2 border-black my-1"></div>
               <button 
                 type="button"
                 onClick={() => {
@@ -1050,18 +1040,14 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button
               type="button"
               onClick={() => stopRecording(false)}
-              className="px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] rounded-xl hover:bg-[#EF4444]/20 transition-all cursor-pointer"
+              className="tactile-btn px-3 py-1.5 text-xs font-black bg-white text-black rounded-lg uppercase"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={() => stopRecording(true)}
-              className="px-2.5 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md"
-              style={{ 
-                backgroundColor: effectiveAccent, 
-                color: getReadableTextColor(effectiveAccent) 
-              }}
+              className="tactile-btn px-3 py-1.5 text-xs font-black bg-[#FCC105] text-black rounded-lg uppercase"
             >
               Send
             </button>
@@ -1070,19 +1056,13 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
       ) : (
         <form 
           onSubmit={handleSend}
-          className={`p-3 border-t flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-2.5 backdrop-blur-md shrink-0 transition-all duration-200 ${
-            isLight ? 'bg-white/60 border-black/10' : 'bg-black/40 border-white/10'
+          className={`p-3 border-t-2 border-black flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
+            isLight ? 'bg-white/80' : 'bg-black/60'
           }`}
         >
-          {/* Main Input Box (frosted translucent pill/box) */}
+          {/* Main Input Box (Tactile Border & 3D Shadow) */}
           <div 
-            className={`flex-1 flex items-center border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0 backdrop-blur-sm ${
-              isLight ? 'bg-white/70' : 'bg-black/50'
-            }`}
-            style={{
-              borderColor: isInputFocused ? effectiveAccent : (isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'),
-              boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}, 0 0 15px ${effectiveAccent}35` : 'none'
-            }}
+            className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black transition-all duration-150"
           >
             {/* Emoji selector trigger */}
             <button
@@ -1091,24 +1071,21 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowEmojiPicker(!showEmojiPicker);
                 setShowAttachMenu(false);
               }}
-              className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
-              style={{ color: showEmojiPicker ? effectiveAccent : undefined }}
+              className="p-2 pl-3 md:pl-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
               title="Emojis"
             >
-              <Smile className="w-5 h-5" />
+              <Smile className="w-5 h-5 stroke-[2.2]" />
             </button>
 
             {/* Message Input Text Area */}
             <input
               type="text"
-              placeholder="Type your message here..."
+              placeholder="Type a message..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
-              className={`flex-1 bg-transparent border-0 placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0 ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}
+              className="flex-1 bg-transparent border-0 text-black placeholder-neutral-500 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0"
             />
 
             {/* Attachment menu trigger */}
@@ -1118,39 +1095,37 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowAttachMenu(!showAttachMenu);
                 setShowEmojiPicker(false);
               }}
-              className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
-              style={{ color: showAttachMenu ? effectiveAccent : undefined }}
+              className="p-2 pr-3 md:pr-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
               title="Attachments"
             >
-              <Paperclip className="w-5 h-5" />
+              <Paperclip className="w-5 h-5 stroke-[2.2]" />
             </button>
 
             {/* Attached Send Button (Mobile only) */}
             <button
               type="submit"
-              className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-white/10"
+              className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 border-black bg-[#FCC105] text-black active:translate-x-0.5 active:translate-y-0.5"
               style={{ 
                 backgroundColor: effectiveAccent, 
                 color: getReadableTextColor(effectiveAccent) 
               }}
               title="Send message"
             >
-              <Send className="w-4 h-4 fill-current" />
+              <Send className="w-4.5 h-4.5 fill-current stroke-[2]" />
             </button>
           </div>
 
           {/* Standalone Send Button (Desktop only) */}
           <button
             type="submit"
-            className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none shadow-lg"
+            className="hidden md:flex w-11 h-11 rounded-2xl items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none bg-[#FCC105] text-black"
             style={{ 
               backgroundColor: effectiveAccent, 
               color: getReadableTextColor(effectiveAccent),
-              boxShadow: `0 4px 15px ${effectiveAccent}40`
             }}
             title="Send message"
           >
-            <Send className="w-4.5 h-4.5 fill-current" />
+            <Send className="w-5 h-5 fill-current" />
           </button>
         </form>
       )}

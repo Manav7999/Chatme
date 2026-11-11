@@ -211,58 +211,46 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         )}
       </div>
 
-      {/* Channel Header with Frosted Glass Transparency Effect */}
-      <div className={`h-16 md:h-20 border-b px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md shrink-0 transition-all duration-200 ${
-        isLight ? 'bg-white/60 border-black/10 shadow-sm' : 'bg-black/40 border-white/10 shadow-sm'
+      {/* Channel Header with Neo-Brutalist Tactile Styling */}
+      <div className={`h-16 md:h-20 border-b-2 border-black px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md shrink-0 transition-all duration-200 ${
+        isLight ? 'bg-white/80 shadow-sm' : 'bg-black/60 shadow-sm'
       }`}>
-        <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {isMobile && (
             <button
               type="button"
               onClick={onBack}
-              className="p-1 rounded-lg hover:bg-white/10 cursor-pointer mr-0.5 shrink-0"
-              style={{ color: effectiveAccent }}
+              className="tactile-btn p-1.5 rounded-xl bg-white text-black cursor-pointer mr-0.5 shrink-0"
             >
-              <ChevronLeft className="w-5.5 h-5.5" />
+              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
           )}
           <div 
-            className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl border flex items-center justify-center shrink-0"
-            style={{ 
-              backgroundColor: `${effectiveAccent}15`, 
-              borderColor: `${effectiveAccent}35` 
-            }}
+            className="w-9 h-9 md:w-10 md:h-10 rounded-xl border-2 border-black bg-[#FCC105] shadow-[2px_2px_0px_#000000] flex items-center justify-center shrink-0 text-black"
           >
-            <Hash className="w-4.5 h-4.5" style={{ color: effectiveAccent }} />
+            <Hash className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <h2 className={`text-xs sm:text-base font-bold leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px] ${
-              isLight ? 'text-slate-900' : 'text-white'
+            <h2 className={`text-xs sm:text-base font-black leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px] ${
+              isLight ? 'text-black' : 'text-white'
             }`}>{channel.name}</h2>
-            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5">
-              <Users className="w-3 h-3" />
+            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5 font-bold">
+              <Users className="w-3.5 h-3.5 text-black" />
               {channel.memberCount || 0} online
             </span>
           </div>
         </div>
         <div 
-          className="text-[9px] md:text-[10px] px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border font-bold uppercase tracking-wider shrink-0 hidden xs:block"
-          style={{ 
-            color: effectiveAccent, 
-            borderColor: `${effectiveAccent}30`, 
-            backgroundColor: `${effectiveAccent}15` 
-          }}
+          className="tactile-badge text-[8px] md:text-[9px] px-2.5 py-1 rounded-md bg-[#FCC105] text-black shrink-0 hidden xs:block"
         >
           Group Channel
         </div>
       </div>
 
-      {/* Description Banner with Glassmorphism Transparency */}
-      <div className={`px-4 py-2 border-b text-[11px] flex items-center gap-1.5 select-none z-20 backdrop-blur-md shrink-0 ${
-        isLight ? 'bg-white/50 border-black/10 text-slate-700' : 'bg-black/30 border-white/10 text-[#8A8A8A]'
-      }`}>
-        <Hash className="w-3 h-3" style={{ color: effectiveAccent }} />
-        {channel.description}
+      {/* Description Banner with Tactile Strip */}
+      <div className="px-4 py-2 border-b-2 border-black text-xs font-bold flex items-center gap-2 select-none z-20 bg-[#FCC105]/15 text-black shrink-0">
+        <Hash className="w-3.5 h-3.5 stroke-[2.5] text-black" />
+        <span className="truncate">{channel.description}</span>
       </div>
 
       {/* Messages Area */}
@@ -634,22 +622,16 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         </div>
       )}
 
-      {/* Input Panel with Frosted Glass Transparency */}
+      {/* Input Panel with Neo-Brutalist Tactile Styling */}
       <form
         onSubmit={handleSend}
-        className={`p-3 border-t flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-2.5 backdrop-blur-md shrink-0 transition-all duration-200 ${
-          isLight ? 'bg-white/60 border-black/10' : 'bg-black/40 border-white/10'
+        className={`p-3 border-t-2 border-black flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
+          isLight ? 'bg-white/80' : 'bg-black/60'
         }`}
       >
-        {/* Main Input Box (frosted translucent pill/box) */}
+        {/* Main Input Box (Tactile Border & 3D Shadow) */}
         <div 
-          className={`flex-1 flex items-center border transition-all duration-200 rounded-xl md:rounded-2xl overflow-hidden md:overflow-visible md:px-2.5 md:py-1 py-0 px-0 backdrop-blur-sm ${
-            isLight ? 'bg-white/70' : 'bg-black/50'
-          }`}
-          style={{
-            borderColor: isInputFocused ? effectiveAccent : (isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'),
-            boxShadow: isInputFocused ? `0 0 0 1px ${effectiveAccent}, 0 0 15px ${effectiveAccent}35` : 'none'
-          }}
+          className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black transition-all duration-150"
         >
           <button
             type="button"
@@ -657,11 +639,10 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowEmojiPicker(!showEmojiPicker);
               setShowAttachMenu(false);
             }}
-            className={`p-2 pl-3 md:pl-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
-            style={{ color: showEmojiPicker ? effectiveAccent : undefined }}
+            className="p-2 pl-3 md:pl-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
             title="Emojis"
           >
-            <Smile className="w-5 h-5" />
+            <Smile className="w-5 h-5 stroke-[2.2]" />
           </button>
 
           <input
@@ -671,9 +652,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             onChange={(e) => setInputText(e.target.value)}
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            className={`flex-1 bg-transparent border-0 placeholder-[#8A8A8A] px-2 py-2 text-sm focus:outline-none focus:ring-0 min-w-0 ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}
+            className="flex-1 bg-transparent border-0 text-black placeholder-neutral-500 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0"
           />
 
           {/* Attachment menu trigger */}
@@ -683,39 +662,37 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowAttachMenu(!showAttachMenu);
               setShowEmojiPicker(false);
             }}
-            className={`p-2 pr-3 md:pr-2 text-[#8A8A8A] hover:text-white transition-colors cursor-pointer shrink-0`}
-            style={{ color: showAttachMenu ? effectiveAccent : undefined }}
+            className="p-2 pr-3 md:pr-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
             title="Attachments"
           >
-            <Paperclip className="w-5 h-5" />
+            <Paperclip className="w-5 h-5 stroke-[2.2]" />
           </button>
 
           {/* Attached Send Button (Mobile only) */}
           <button
             type="submit"
-            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 focus:outline-none border-l border-white/10"
+            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 border-black bg-[#FCC105] text-black active:translate-x-0.5 active:translate-y-0.5"
             style={{ 
               backgroundColor: effectiveAccent, 
               color: getReadableTextColor(effectiveAccent) 
             }}
             title="Send message"
           >
-            <Send className="w-4 h-4 fill-current" />
+            <Send className="w-4.5 h-4.5 fill-current stroke-[2]" />
           </button>
         </div>
 
         {/* Standalone Send Button (Desktop only) */}
         <button
           type="submit"
-          className="hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer shrink-0 focus:outline-none shadow-lg"
+          className="hidden md:flex w-11 h-11 rounded-2xl items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none bg-[#FCC105] text-black"
           style={{ 
             backgroundColor: effectiveAccent, 
             color: getReadableTextColor(effectiveAccent),
-            boxShadow: `0 4px 15px ${effectiveAccent}40`
           }}
           title="Send message"
         >
-          <Send className="w-4.5 h-4.5 fill-current" />
+          <Send className="w-5 h-5 fill-current" />
         </button>
       </form>
       {/* Media Preview Lightbox (Images & Videos) */}
