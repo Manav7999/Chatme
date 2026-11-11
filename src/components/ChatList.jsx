@@ -49,14 +49,14 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
               navigator.clipboard.writeText(inviteLink);
               alert("Copied your ChatMe Profile Link!\nSend it to another person so they can start a real chat with you.");
             }}
-            className="tactile-btn w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center hover:bg-[#FFFDF5]"
+            className="tactile-btn w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center"
             title="Copy Chat Invite Link"
           >
             <Share2 className="w-4 h-4" />
           </button>
           <button
             onClick={onNewChat}
-            className="tactile-btn w-9 h-9 rounded-xl bg-[#FCC105] text-black flex items-center justify-center hover:bg-[#FFD34D]"
+            className="tactile-btn w-9 h-9 rounded-xl bg-[#FCC105] text-black flex items-center justify-center"
             style={{
               backgroundColor: 'var(--theme-accent, #FCC105)',
               color: 'var(--theme-accent-text, #000000)'
@@ -95,10 +95,10 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
               <div
                 key={chat.id}
                 onClick={() => onSelectChat(chat.id)}
-                className={`relative group flex items-center gap-3.5 p-3 rounded-xl cursor-pointer transition-all duration-150 ${
+                className={`relative group flex items-center gap-3.5 p-3 rounded-xl cursor-pointer transition-colors duration-150 ${
                   isSelected
-                    ? 'border-2 border-black bg-[#FCC105]/20 shadow-[3.5px_3.5px_0px_#000000] -translate-y-0.5'
-                    : 'border-2 border-transparent hover:border-black/50 hover:bg-black/5 hover:shadow-[2.5px_2.5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                    ? 'border-2 border-black bg-[#FCC105]/20 shadow-[3.5px_3.5px_0px_#000000]'
+                    : 'border-2 border-transparent active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
                 }`}
                 style={isSelected ? {
                   backgroundColor: 'rgba(var(--theme-accent-rgb, 252, 193, 5), 0.22)',

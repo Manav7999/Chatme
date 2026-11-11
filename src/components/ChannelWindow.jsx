@@ -612,9 +612,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             <button
               key={idx}
               onClick={() => setInputText(prev => prev + emoji)}
-              className={`text-2xl hover:scale-125 transition-transform p-1.5 rounded-lg cursor-pointer ${
-                isLight ? 'hover:bg-black/5' : 'hover:bg-white/10'
-              }`}
+              className="text-2xl p-1.5 rounded-lg cursor-pointer"
             >
               {emoji}
             </button>
@@ -631,7 +629,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
       >
         {/* Main Input Box (Tactile Border & 3D Shadow) */}
         <div 
-          className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black transition-all duration-150"
+          className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black"
         >
           <button
             type="button"
@@ -639,7 +637,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowEmojiPicker(!showEmojiPicker);
               setShowAttachMenu(false);
             }}
-            className="p-2 pl-3 md:pl-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
+            className="p-2 pl-3 md:pl-2 text-black cursor-pointer shrink-0"
             title="Emojis"
           >
             <Smile className="w-5 h-5 stroke-[2.2]" />
@@ -662,7 +660,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowAttachMenu(!showAttachMenu);
               setShowEmojiPicker(false);
             }}
-            className="p-2 pr-3 md:pr-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
+            className="p-2 pr-3 md:pr-2 text-black cursor-pointer shrink-0"
             title="Attachments"
           >
             <Paperclip className="w-5 h-5 stroke-[2.2]" />

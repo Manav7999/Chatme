@@ -473,20 +473,20 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         <div className="flex items-center gap-2 text-black shrink-0">
           <button 
             onClick={() => onStartCall('audio')}
-            className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]"
+            className="tactile-btn p-2 rounded-xl bg-white text-black"
             title="Voice Call"
           >
             <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <button 
             onClick={() => onStartCall('video')}
-            className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]"
+            className="tactile-btn p-2 rounded-xl bg-white text-black"
             title="Video Call"
           >
             <Video className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <div className="relative group">
-            <button className="tactile-btn p-2 rounded-xl bg-white text-black hover:bg-[#FFFDF5]">
+            <button className="tactile-btn p-2 rounded-xl bg-white text-black">
               <MoreVertical className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
             <div className="hidden group-hover:block absolute right-0 top-11 border-2 border-black rounded-xl shadow-[5px_5px_0px_#000000] py-2 w-52 z-30 overflow-hidden bg-white text-black font-semibold">
@@ -758,7 +758,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                         <div className="flex items-center gap-3 py-1 min-w-[220px]">
                           <button 
                             onClick={() => handlePlayAudio(msg)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 cursor-pointer shrink-0 ${
+                            className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer shrink-0 ${
                               isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105] text-[#000000]'
                             }`}
                           >
@@ -1017,7 +1017,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button
               key={idx}
               onClick={() => handleEmojiClick(emoji)}
-              className="text-2xl hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+              className="text-2xl p-1.5 rounded-lg cursor-pointer"
             >
               {emoji}
             </button>
@@ -1062,7 +1062,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         >
           {/* Main Input Box (Tactile Border & 3D Shadow) */}
           <div 
-            className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black transition-all duration-150"
+            className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black"
           >
             {/* Emoji selector trigger */}
             <button
@@ -1071,7 +1071,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowEmojiPicker(!showEmojiPicker);
                 setShowAttachMenu(false);
               }}
-              className="p-2 pl-3 md:pl-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
+              className="p-2 pl-3 md:pl-2 text-black cursor-pointer shrink-0"
               title="Emojis"
             >
               <Smile className="w-5 h-5 stroke-[2.2]" />
@@ -1095,7 +1095,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowAttachMenu(!showAttachMenu);
                 setShowEmojiPicker(false);
               }}
-              className="p-2 pr-3 md:pr-2 text-black hover:text-[#FCC105] transition-colors cursor-pointer shrink-0 active:scale-110"
+              className="p-2 pr-3 md:pr-2 text-black cursor-pointer shrink-0"
               title="Attachments"
             >
               <Paperclip className="w-5 h-5 stroke-[2.2]" />

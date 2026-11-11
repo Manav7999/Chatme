@@ -505,13 +505,12 @@ body {
 .tactile-btn {
   border: 2px solid #000000 !important;
   box-shadow: 3px 3px 0px #000000 !important;
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.4, 1) !important;
   cursor: pointer;
   user-select: none;
 }
 .tactile-btn:hover {
-  transform: translate(-1.5px, -1.5px);
-  box-shadow: 4.5px 4.5px 0px #000000 !important;
+  transform: none !important;
+  box-shadow: 3px 3px 0px #000000 !important;
 }
 .tactile-btn:active {
   transform: translate(2px, 2px) !important;
@@ -520,22 +519,24 @@ body {
 
 .tactile-card {
   border: 2px solid #000000 !important;
-  box-shadow: 4px 4px 0px #000000 !important;
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.15s cubic-bezier(0.2, 0.8, 0.4, 1);
+  box-shadow: 3.5px 3.5px 0px #000000 !important;
+}
+.tactile-card:hover {
+  transform: none !important;
+  box-shadow: 3.5px 3.5px 0px #000000 !important;
 }
 
 .tactile-card-interactive {
   border: 2px solid #000000 !important;
   box-shadow: 3px 3px 0px #000000 !important;
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.4, 1);
   cursor: pointer;
 }
 .tactile-card-interactive:hover {
-  transform: translate(-1.5px, -1.5px);
-  box-shadow: 4.5px 4.5px 0px #000000 !important;
+  transform: none !important;
+  box-shadow: 3px 3px 0px #000000 !important;
 }
 .tactile-card-interactive:active {
-  transform: translate(2px, 2px);
+  transform: translate(2px, 2px) !important;
   box-shadow: 0px 0px 0px #000000 !important;
 }
 
@@ -550,11 +551,21 @@ body {
 .tactile-input {
   border: 2px solid #000000 !important;
   box-shadow: 3px 3px 0px #000000 !important;
-  transition: all 0.15s ease;
+}
+.tactile-input:hover {
+  transform: none !important;
 }
 .tactile-input:focus {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px var(--theme-accent, #FCC105) !important;
+  transform: none !important;
+  box-shadow: 3px 3px 0px var(--theme-accent, #FCC105) !important;
+}
+
+/* Ensure no hover shifts or scale animations on buttons/cards */
+[data-app-theme="neo-brutalist"] button:hover,
+[data-app-theme="neo-brutalist"] a:hover,
+[data-app-theme="neo-cyber"] button:hover,
+[data-app-theme="neo-cyber"] a:hover {
+  transform: none !important;
 }
 
 /* Specific styling when Neo-Brutalist Tactile theme is active */

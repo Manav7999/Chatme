@@ -2281,7 +2281,7 @@ export default function App() {
           {/* Quick Theme Toggle */}
           <button
             onClick={handleToggleTheme}
-            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer hover:bg-[#FFFDF5]"
+            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer"
             title={settings.theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
           >
             {settings.theme === 'light' ? (
@@ -2297,7 +2297,7 @@ export default function App() {
           {/* Settings Tab */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer hover:bg-[#FFFDF5]"
+            className="tactile-btn flex flex-col items-center justify-center p-1.5 px-2.5 rounded-xl bg-white text-black cursor-pointer"
           >
             <Settings className="w-4.5 h-4.5 text-black stroke-[2.2]" />
             <span className="text-[8px] font-black uppercase mt-0.5">Settings</span>

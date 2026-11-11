@@ -403,7 +403,7 @@ export default function ProfileSettings({
           <button 
             type="button"
             onClick={onClose}
-            className="tactile-btn p-1.5 rounded-xl bg-white text-black hover:bg-[#FFFDF5] cursor-pointer"
+            className="tactile-btn p-1.5 rounded-xl bg-white text-black cursor-pointer"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
           </button>
@@ -414,10 +414,10 @@ export default function ProfileSettings({
           <button
             type="button"
             onClick={() => setActiveTab('appearance')}
-            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'appearance'
                 ? 'tactile-btn bg-[#FCC105] text-black'
-                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
+                : 'border-2 border-transparent text-[#8A8A8A]'
             }`}
           >
             <Palette className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -427,10 +427,10 @@ export default function ProfileSettings({
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'profile'
                 ? 'tactile-btn bg-[#FCC105] text-black'
-                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
+                : 'border-2 border-transparent text-[#8A8A8A]'
             }`}
           >
             <User className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -440,10 +440,10 @@ export default function ProfileSettings({
           <button
             type="button"
             onClick={() => setActiveTab('system')}
-            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 text-xs font-black uppercase rounded-xl flex items-center gap-2 cursor-pointer shrink-0 ${
               activeTab === 'system'
                 ? 'tactile-btn bg-[#FCC105] text-black'
-                : 'border-2 border-transparent text-[#8A8A8A] hover:border-black hover:bg-black/5 hover:text-white'
+                : 'border-2 border-transparent text-[#8A8A8A]'
             }`}
           >
             <Shield className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -1419,14 +1419,14 @@ export default function ProfileSettings({
             <button
               type="button"
               onClick={onClose}
-              className="tactile-btn w-full sm:w-auto py-2.5 px-5 rounded-xl bg-white text-black hover:bg-[#FFFDF5] text-xs font-black uppercase text-center"
+              className="tactile-btn w-full sm:w-auto py-2.5 px-5 rounded-xl bg-white text-black text-xs font-black uppercase text-center"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="tactile-btn w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-black uppercase shadow-[4px_4px_0px_#000000] hover:shadow-[5px_5px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+              className="tactile-btn w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#FCC105] text-[#000000] text-xs font-black uppercase shadow-[4px_4px_0px_#000000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
             >
               <Check className="w-4 h-4 stroke-[3]" />
               Save Configuration
