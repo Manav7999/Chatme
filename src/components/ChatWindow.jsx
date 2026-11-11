@@ -370,17 +370,18 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const theme = settings?.theme || 'dark';
+  const theme = settings?.theme || 'neo-brutalist';
   const chatBackground = settings?.chatBackground || { type: 'default' };
-  const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
+  const bubbleStyle = settings?.bubbleStyle || { shape: 'brutalist', outgoingBg: '#FCC105', incomingBg: '#FFFFFF' };
   const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
-  const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
-  const isLight = theme === 'light';
+  const resolvedShapeId = (bubbleStyle.shape && bubbleStyle.shape !== 'modern') ? bubbleStyle.shape : 'brutalist';
+  const currentShape = BUBBLE_SHAPES.find(s => s.id === resolvedShapeId) || BUBBLE_SHAPES[0];
+  const isLight = theme === 'light' || theme === 'neo-brutalist';
 
   const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
   const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
-  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
+  const incomingBg = bubbleStyle.incomingBg || (theme === 'neo-cyber' ? '#16171F' : '#FFFFFF');
+  const incomingText = bubbleStyle.incomingText || getReadableTextColor(incomingBg);
 
   // Background calculation
   let chatBgStyle;
@@ -634,18 +635,17 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                                 : {
                                     backgroundColor: bubbleBg,
                                     color: bubbleText,
-                                    borderColor: bubbleBorder,
                                   }
                             }
-                            className={`text-sm transition-all select-text cursor-pointer ${shapeClass} ${
+                            className={`text-sm select-text cursor-pointer ${shapeClass} ${
                               msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
-                                ? 'p-0 bg-transparent border-0'
-                                : 'px-4 py-3 border shadow-sm'
+                                ? 'p-0 bg-transparent border-0 shadow-none'
+                                : 'px-4 py-3'
                             }`}
                           >
                       {/* Render Video Message */}
                       {msg.type === 'video' && (
-                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-black max-w-[320px] relative shadow-lg">
+                        <div className="mb-2 rounded-xl overflow-hidden border-2 border-black shadow-[3.5px_3.5px_0px_#000000] bg-black max-w-[320px] relative">
                           <video 
                             src={msg.mediaUrl} 
                             controls 
@@ -700,11 +700,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
                       {/* Render Image Message */}
                       {msg.type === 'image' && (
-                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-[#000000]/20 max-w-[280px] relative group shadow-md">
+                        <div className="mb-2 rounded-xl overflow-hidden border-2 border-black shadow-[3.5px_3.5px_0px_#000000] bg-white max-w-[280px] relative group">
                           <img 
                             src={msg.mediaUrl} 
                             alt="attachment" 
-                            className="w-full object-cover max-h-56 cursor-pointer hover:opacity-95 transition-opacity" 
+                            className="w-full object-cover max-h-56 cursor-pointer" 
                             onClick={() => setPreviewMedia({ type: 'image', url: msg.mediaUrl, name: msg.text || 'image.png' })}
                           />
                           
@@ -715,7 +715,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                               e.stopPropagation();
                               handleDownload(e, msg);
                             }}
-                            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-[#FCC105] text-white hover:text-black transition-all cursor-pointer backdrop-blur-sm border border-white/10 shadow-lg"
+                            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black text-white hover:text-[#FCC105] cursor-pointer border-2 border-black shadow-[2px_2px_0px_#000000]"
                             title="Save image to device"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -740,10 +740,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                       {msg.type === 'file' && (
                         <div className="relative mb-1.5">
                           <div 
-                            className={`flex items-center justify-between gap-3 p-3 rounded-xl transition-all ${
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] ${
                               msg.status === 'uploading' ? 'opacity-70' : ''
                             } ${
-                              isOutgoing ? 'bg-[#FCC105]/10 border border-[#FCC105]/20' : 'bg-[#111111] border border-[#2B2B2B]'
+                              isOutgoing ? 'bg-[#FCC105] text-black font-semibold' : 'bg-white text-black font-semibold'
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -852,9 +852,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
                       {/* Render Call History Message */}
                       {msg.type === 'call_history' && (
-                        <div className="flex items-center gap-3.5 py-1 min-w-[200px] select-none">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                            isOutgoing ? 'bg-[#000000] text-[#FCC105]' : 'bg-[#FCC105]/15 text-[#FCC105]'
+                        <div className={`flex items-center gap-3.5 p-3 rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] min-w-[200px] select-none ${
+                          isOutgoing ? 'bg-[#FCC105] text-black font-semibold' : 'bg-white text-black font-semibold'
+                        }`}>
+                          <div className={`w-9 h-9 rounded-xl border-2 border-black shadow-[1.5px_1.5px_0px_#000000] flex items-center justify-center shrink-0 ${
+                            isOutgoing ? 'bg-black text-[#FCC105]' : 'bg-[#FCC105] text-black'
                           }`}>
                             {msg.callType === 'video' ? (
                               <Video className="w-4.5 h-4.5" />
@@ -863,7 +865,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                             )}
                           </div>
                           <div className="text-left flex-1 min-w-0">
-                            <p className={`text-xs font-bold leading-normal ${isOutgoing ? 'text-black font-extrabold' : 'text-white'}`}>
+                            <p className="text-xs font-black leading-normal text-black">
                               {(() => {
                                 const callTypeName = msg.callType === 'video' ? 'Video Call' : 'Voice Call';
                                 if (msg.callStatus === 'completed') {
@@ -875,7 +877,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                                 }
                               })()}
                             </p>
-                            <span className={`text-[10px] font-medium leading-none mt-1 block ${isOutgoing ? 'text-[#4A3900]' : 'text-[#8A8A8A]'}`}>
+                            <span className="text-[10px] font-bold text-neutral-600 leading-none mt-1 block">
                               {msg.callStatus === 'completed' ? `Duration: ${msg.callDuration}` : msg.callDuration}
                             </span>
                           </div>

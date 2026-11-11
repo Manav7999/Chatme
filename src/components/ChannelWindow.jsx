@@ -231,17 +231,18 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
 
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const theme = settings?.theme || 'dark';
+  const theme = settings?.theme || 'neo-brutalist';
   const chatBackground = settings?.chatBackground || { type: 'default' };
-  const bubbleStyle = settings?.bubbleStyle || { shape: 'modern', outgoingBg: '#FCC105', incomingBg: '' };
+  const bubbleStyle = settings?.bubbleStyle || { shape: 'brutalist', outgoingBg: '#FCC105', incomingBg: '#FFFFFF' };
   const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
-  const currentShape = BUBBLE_SHAPES.find(s => s.id === bubbleStyle.shape) || BUBBLE_SHAPES[0];
-  const isLight = theme === 'light';
+  const resolvedShapeId = (bubbleStyle.shape && bubbleStyle.shape !== 'modern') ? bubbleStyle.shape : 'brutalist';
+  const currentShape = BUBBLE_SHAPES.find(s => s.id === resolvedShapeId) || BUBBLE_SHAPES[0];
+  const isLight = theme === 'light' || theme === 'neo-brutalist';
 
   const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
   const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-  const incomingBg = bubbleStyle.incomingBg || (isLight ? '#FFFFFF' : '#1A1A1A');
-  const incomingText = bubbleStyle.incomingText || (bubbleStyle.incomingBg ? getReadableTextColor(incomingBg) : (isLight ? '#0F172A' : '#FFFFFF'));
+  const incomingBg = bubbleStyle.incomingBg || (theme === 'neo-cyber' ? '#16171F' : '#FFFFFF');
+  const incomingText = bubbleStyle.incomingText || getReadableTextColor(incomingBg);
 
   // Background calculation
   let chatBgStyle;
@@ -365,18 +366,17 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                                 : {
                                     backgroundColor: bubbleBg,
                                     color: bubbleText,
-                                    borderColor: bubbleBorder,
                                   }
                             }
-                            className={`text-sm transition-all select-text cursor-pointer ${shapeClass} ${
+                            className={`text-sm select-text cursor-pointer ${shapeClass} ${
                               msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
-                                ? 'p-0 bg-transparent border-0'
-                                : 'px-4 py-2.5 border shadow-sm'
+                                ? 'p-0 bg-transparent border-0 shadow-none'
+                                : 'px-4 py-2.5'
                             }`}
                           >
                       {/* Render Video Message */}
                       {msg.type === 'video' && (
-                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-black max-w-[320px] relative shadow-lg">
+                        <div className="mb-2 rounded-xl overflow-hidden border-2 border-black shadow-[3.5px_3.5px_0px_#000000] bg-black max-w-[320px] relative">
                           <video 
                             src={msg.mediaUrl} 
                             controls 
@@ -431,11 +431,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
 
                       {/* Render Image Message */}
                       {msg.type === 'image' && (
-                        <div className="mb-2 rounded-xl overflow-hidden border border-[#2B2B2B] bg-[#000000]/20 max-w-[280px] relative group shadow-md">
+                        <div className="mb-2 rounded-xl overflow-hidden border-2 border-black shadow-[3.5px_3.5px_0px_#000000] bg-white max-w-[280px] relative group">
                           <img 
                             src={msg.mediaUrl} 
                             alt="attachment" 
-                            className="w-full object-cover max-h-56 cursor-pointer hover:opacity-95 transition-opacity" 
+                            className="w-full object-cover max-h-56 cursor-pointer" 
                             onClick={() => setPreviewMedia({ type: 'image', url: msg.mediaUrl, name: msg.text || 'image.png' })}
                           />
                           
@@ -446,7 +446,7 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                               e.stopPropagation();
                               handleDownload(e, msg);
                             }}
-                            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-[#FCC105] text-white hover:text-black transition-all cursor-pointer backdrop-blur-sm border border-white/10 shadow-lg"
+                            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black text-white hover:text-[#FCC105] cursor-pointer border-2 border-black shadow-[2px_2px_0px_#000000]"
                             title="Save image to device"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -471,10 +471,10 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
                       {msg.type === 'file' && (
                         <div className="relative mb-1.5">
                           <div 
-                            className={`flex items-center justify-between gap-3 p-3 rounded-xl transition-all ${
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] ${
                               msg.status === 'uploading' ? 'opacity-70' : ''
                             } ${
-                              isOwn ? 'bg-[#FCC105]/10 border border-[#FCC105]/20' : 'bg-[#111111] border border-[#2B2B2B]'
+                              isOwn ? 'bg-[#FCC105] text-black font-semibold' : 'bg-white text-black font-semibold'
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0 flex-1">

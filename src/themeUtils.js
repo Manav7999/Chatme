@@ -169,9 +169,9 @@ export const BUBBLE_SHAPES = [
   {
     id: 'brutalist',
     name: 'Neo-Brutalist Tactile',
-    description: 'Crisp bold outline with physical 3D offset drop-shadow',
-    outgoingClass: 'rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] font-medium',
-    incomingClass: 'rounded-xl border-2 border-black shadow-[3.5px_3.5px_0px_#000000] font-medium'
+    description: 'Bold 2.5px black border with 3.5px physical 3D drop-shadow and speech notch',
+    outgoingClass: 'tactile-bubble-outgoing',
+    incomingClass: 'tactile-bubble-incoming'
   },
   {
     id: 'modern',

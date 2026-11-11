@@ -91,7 +91,11 @@ export default function App() {
           textColor: parsed.textColor || DEFAULT_THEME_SETTINGS.textColor,
           accentColor: parsed.accentColor || parsed.bubbleStyle?.outgoingBg || DEFAULT_THEME_SETTINGS.accentColor,
           chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
-          bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
+          bubbleStyle: { 
+            ...DEFAULT_THEME_SETTINGS.bubbleStyle, 
+            ...(parsed.bubbleStyle || {}),
+            shape: (parsed.bubbleStyle?.shape && parsed.bubbleStyle.shape !== 'modern') ? parsed.bubbleStyle.shape : 'brutalist'
+          }
         };
       }
     } catch (e) {
@@ -726,7 +730,11 @@ export default function App() {
           textColor: parsed.textColor || DEFAULT_THEME_SETTINGS.textColor,
           accentColor: parsed.accentColor || parsed.bubbleStyle?.outgoingBg || DEFAULT_THEME_SETTINGS.accentColor,
           chatBackground: { ...DEFAULT_THEME_SETTINGS.chatBackground, ...(parsed.chatBackground || {}) },
-          bubbleStyle: { ...DEFAULT_THEME_SETTINGS.bubbleStyle, ...(parsed.bubbleStyle || {}) }
+          bubbleStyle: { 
+            ...DEFAULT_THEME_SETTINGS.bubbleStyle, 
+            ...(parsed.bubbleStyle || {}),
+            shape: (parsed.bubbleStyle?.shape && parsed.bubbleStyle.shape !== 'modern') ? parsed.bubbleStyle.shape : 'brutalist'
+          }
         };
         setSettings(merged);
         applyThemeToDocument(merged);

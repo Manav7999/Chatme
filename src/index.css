@@ -560,6 +560,30 @@ body {
   box-shadow: 3px 3px 0px var(--theme-accent, #FCC105) !important;
 }
 
+/* Neo-Brutalist Tactile Chat Bubbles */
+.tactile-bubble-outgoing {
+  border: 2.5px solid #000000 !important;
+  box-shadow: 3.5px 3.5px 0px #000000 !important;
+  border-radius: 18px 4px 18px 18px !important;
+  font-weight: 600 !important;
+}
+
+.tactile-bubble-incoming {
+  border: 2.5px solid #000000 !important;
+  box-shadow: 3.5px 3.5px 0px #000000 !important;
+  border-radius: 4px 18px 18px 18px !important;
+  font-weight: 600 !important;
+}
+
+[data-app-theme="neo-cyber"] .tactile-bubble-outgoing {
+  border: 2.5px solid #FCC105 !important;
+  box-shadow: 3.5px 3.5px 0px #FCC105 !important;
+}
+[data-app-theme="neo-cyber"] .tactile-bubble-incoming {
+  border: 2.5px solid #FCC105 !important;
+  box-shadow: 3.5px 3.5px 0px #FCC105 !important;
+}
+
 /* Ensure no hover shifts or scale animations on buttons/cards */
 [data-app-theme="neo-brutalist"] button:hover,
 [data-app-theme="neo-brutalist"] a:hover,

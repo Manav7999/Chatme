@@ -795,9 +795,8 @@ export default function ProfileSettings({
                       style={{
                         backgroundColor: previewIncomingBg,
                         color: previewIncomingText,
-                        borderColor: theme === 'light' ? '#E2E8F0' : '#2B2B2B'
                       }}
-                      className={`px-3 py-2 text-xs border shadow-md font-medium transition-all ${selectedShape.incomingClass}`}
+                      className={`px-3 py-2 text-xs select-text font-semibold ${selectedShape.incomingClass}`}
                     >
                       <p className="leading-relaxed">Buttons, call icons, and bubbles adapt to this wallpaper! ✨</p>
                       <span className="text-[8px] opacity-70 mt-0.5 block">10:42 AM</span>
@@ -810,9 +809,8 @@ export default function ProfileSettings({
                       style={{
                         backgroundColor: previewOutgoingBg,
                         color: previewOutgoingText,
-                        borderColor: previewOutgoingBg
                       }}
-                      className={`px-3 py-2 text-xs border shadow-md font-medium transition-all ${selectedShape.outgoingClass}`}
+                      className={`px-3 py-2 text-xs select-text font-semibold ${selectedShape.outgoingClass}`}
                     >
                       <p className="leading-relaxed">Looks stunning & perfectly harmonious! 🚀</p>
                       <div className="flex items-center justify-end gap-1 mt-0.5 text-[8px] opacity-80">
