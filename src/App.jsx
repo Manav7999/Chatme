@@ -79,7 +79,8 @@ export default function App() {
         const parsed = JSON.parse(saved);
         // Normalize theme: never allow light theme if user has custom wallpaper or image
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
-        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
+        const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
+        if ((resolvedTheme === 'light' || resolvedTheme === 'neo-brutalist') && hasBg) {
           resolvedTheme = 'custom';
         }
         return {
@@ -126,11 +127,10 @@ export default function App() {
   useEffect(() => {
     if (
       settings?.chatBackground?.type === 'image' && 
-      settings?.chatBackground?.imageUrl && 
-      (!settings?.accentColor || settings?.accentColor === '#FCC105')
+      settings?.chatBackground?.imageUrl
     ) {
       extractPaletteFromImage(settings.chatBackground.imageUrl).then(extracted => {
-        if (extracted && extracted !== '#FCC105') {
+        if (extracted && extracted !== settings?.accentColor) {
           const autoText = getReadableTextColor(extracted);
           setSettings(prev => {
             const updated = {
@@ -718,7 +718,8 @@ export default function App() {
       try {
         const parsed = JSON.parse(savedSettings);
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
-        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
+        const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
+        if ((resolvedTheme === 'light' || resolvedTheme === 'neo-brutalist') && hasBg) {
           resolvedTheme = 'custom';
         }
         const merged = {

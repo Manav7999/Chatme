@@ -239,6 +239,12 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
   const currentShape = BUBBLE_SHAPES.find(s => s.id === resolvedShapeId) || BUBBLE_SHAPES[0];
   const isLight = theme === 'light' || theme === 'neo-brutalist';
 
+  const hasCustomWallpaper = Boolean(
+    (chatBackground.type === 'image' && chatBackground.imageUrl) ||
+    (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC') ||
+    chatBackground.type === 'gradient'
+  );
+
   const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
   const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
   const incomingBg = bubbleStyle.incomingBg || (theme === 'neo-cyber' ? '#16171F' : '#FFFFFF');
@@ -250,6 +256,8 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
     chatBgStyle = { backgroundColor: chatBackground.color };
   } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
     chatBgStyle = { backgroundImage: chatBackground.gradient };
+  } else if (chatBackground.type === 'image' && chatBackground.imageUrl) {
+    chatBgStyle = { backgroundColor: '#000000' };
   } else {
     chatBgStyle = { backgroundColor: isLight ? '#F8FAFC' : '#000000' };
   }
@@ -282,45 +290,67 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         )}
       </div>
 
-      {/* Channel Header with Neo-Brutalist Tactile Styling */}
-      <div className={`h-16 md:h-20 border-b-2 border-black px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md shrink-0 transition-all duration-200 ${
-        isLight ? 'bg-white/80 shadow-sm' : 'bg-black/60 shadow-sm'
+      {/* Channel Header with Frosted Glass Transparency & Adaptive Accents */}
+      <div className={`h-16 md:h-20 px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md shrink-0 transition-all duration-200 ${
+        hasCustomWallpaper 
+          ? 'bg-black/40 border-b border-white/15 shadow-md' 
+          : isLight 
+            ? 'bg-white/75 border-b-2 border-black shadow-sm' 
+            : 'bg-black/60 border-b border-white/10 shadow-sm'
       }`}>
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {isMobile && (
             <button
               type="button"
               onClick={onBack}
-              className="tactile-btn p-1.5 rounded-xl bg-white text-black cursor-pointer mr-0.5 shrink-0"
+              className={`tactile-btn p-1.5 rounded-xl cursor-pointer mr-0.5 shrink-0 border-2 shadow-[2px_2px_0px_#000000] ${
+                hasCustomWallpaper ? 'bg-black/50 text-white border-white/30' : 'bg-white text-black border-black'
+              }`}
             >
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
           )}
           <div 
-            className="w-9 h-9 md:w-10 md:h-10 rounded-xl border-2 border-black bg-[#FCC105] shadow-[2px_2px_0px_#000000] flex items-center justify-center shrink-0 text-black"
+            className="w-9 h-9 md:w-10 md:h-10 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center shrink-0"
+            style={{ 
+              backgroundColor: effectiveAccent, 
+              color: getReadableTextColor(effectiveAccent) 
+            }}
           >
             <Hash className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div className="min-w-0">
             <h2 className={`text-xs sm:text-base font-black leading-tight truncate max-w-[85px] xs:max-w-[140px] sm:max-w-[200px] ${
-              isLight ? 'text-black' : 'text-white'
+              hasCustomWallpaper || !isLight ? 'text-white' : 'text-black'
             }`}>{channel.name}</h2>
-            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5 font-bold">
-              <Users className="w-3.5 h-3.5 text-black" />
+            <span 
+              className="text-[10px] flex items-center gap-1 mt-0.5 font-bold"
+              style={{ color: hasCustomWallpaper || !isLight ? 'rgba(255,255,255,0.7)' : '#8A8A8A' }}
+            >
+              <Users className="w-3.5 h-3.5" style={{ color: effectiveAccent }} />
               {channel.memberCount || 0} online
             </span>
           </div>
         </div>
         <div 
-          className="tactile-badge text-[8px] md:text-[9px] px-2.5 py-1 rounded-md bg-[#FCC105] text-black shrink-0 hidden xs:block"
+          className="tactile-badge text-[8px] md:text-[9px] px-2.5 py-1 rounded-md shrink-0 hidden xs:block font-bold uppercase tracking-wider border"
+          style={{ 
+            color: hasCustomWallpaper ? effectiveAccent : '#000000', 
+            borderColor: hasCustomWallpaper ? `${effectiveAccent}80` : '#000000', 
+            backgroundColor: hasCustomWallpaper ? `${effectiveAccent}20` : '#FCC105' 
+          }}
         >
           Group Channel
         </div>
       </div>
 
       {/* Description Banner with Tactile Strip */}
-      <div className="px-4 py-2 border-b-2 border-black text-xs font-bold flex items-center gap-2 select-none z-20 bg-[#FCC105]/15 text-black shrink-0">
-        <Hash className="w-3.5 h-3.5 stroke-[2.5] text-black" />
+      <div className={`px-4 py-2 border-b text-xs font-bold flex items-center gap-2 select-none z-20 shrink-0 backdrop-blur-md ${
+        hasCustomWallpaper 
+          ? 'bg-black/30 border-white/10 text-white/80' 
+          : 'bg-[#FCC105]/15 border-b-2 border-black text-black'
+      }`}>
+        <Hash className="w-3.5 h-3.5 stroke-[2.5]" style={{ color: effectiveAccent }} />
         <span className="truncate">{channel.description}</span>
       </div>
 
@@ -633,16 +663,29 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         </div>
       )}
 
-      {/* Input Panel with Neo-Brutalist Tactile Styling */}
+      {/* Input Panel with Frosted Glass Transparency & Adaptive Accents */}
       <form
         onSubmit={handleSend}
-        className={`p-3 border-t-2 border-black flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
-          isLight ? 'bg-white/80' : 'bg-black/60'
+        className={`p-3 flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
+          hasCustomWallpaper 
+            ? 'bg-black/35 border-t border-white/10' 
+            : isLight 
+              ? 'bg-white/75 border-t-2 border-black' 
+              : 'bg-black/60 border-t border-white/10'
         }`}
       >
-        {/* Main Input Box (Tactile Border & 3D Shadow) */}
+        {/* Main Input Box (Tactile Border & 3D Shadow with Frosted Transparency) */}
         <div 
-          className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black"
+          className="flex-1 flex items-center rounded-2xl md:rounded-full overflow-hidden md:px-2.5 md:py-1 py-0 px-0 transition-all duration-150 backdrop-blur-md"
+          style={{
+            backgroundColor: hasCustomWallpaper ? 'rgba(0, 0, 0, 0.5)' : (isLight ? '#FFFFFF' : 'rgba(20, 20, 20, 0.7)'),
+            borderColor: hasCustomWallpaper ? effectiveAccent : '#000000',
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            boxShadow: hasCustomWallpaper
+              ? (isInputFocused ? `0 0 15px ${effectiveAccent}60, 3px 3px 0px #000000` : `3px 3px 0px #000000`)
+              : '4px 4px 0px #000000'
+          }}
         >
           <button
             type="button"
@@ -650,7 +693,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowEmojiPicker(!showEmojiPicker);
               setShowAttachMenu(false);
             }}
-            className="p-2 pl-3 md:pl-2 text-black cursor-pointer shrink-0"
+            className={`p-2 pl-3 md:pl-2 cursor-pointer shrink-0 transition-colors ${
+              hasCustomWallpaper ? 'text-white/80 hover:text-white' : 'text-black'
+            }`}
             title="Emojis"
           >
             <Smile className="w-5 h-5 stroke-[2.2]" />
@@ -663,7 +708,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
             onChange={(e) => setInputText(e.target.value)}
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            className="flex-1 bg-transparent border-0 text-black placeholder-neutral-500 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0"
+            className={`flex-1 bg-transparent border-0 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0 ${
+              hasCustomWallpaper || !isLight 
+                ? 'text-white placeholder-white/50' 
+                : 'text-black placeholder-neutral-500'
+            }`}
           />
 
           {/* Attachment menu trigger */}
@@ -673,7 +722,9 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
               setShowAttachMenu(!showAttachMenu);
               setShowEmojiPicker(false);
             }}
-            className="p-2 pr-3 md:pr-2 text-black cursor-pointer shrink-0"
+            className={`p-2 pr-3 md:pr-2 cursor-pointer shrink-0 transition-colors ${
+              hasCustomWallpaper ? 'text-white/80 hover:text-white' : 'text-black'
+            }`}
             title="Attachments"
           >
             <Paperclip className="w-5 h-5 stroke-[2.2]" />
@@ -682,10 +733,11 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
           {/* Attached Send Button (Mobile only) */}
           <button
             type="submit"
-            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 border-black bg-[#FCC105] text-black active:translate-x-0.5 active:translate-y-0.5"
+            className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 active:translate-x-0.5 active:translate-y-0.5"
             style={{ 
               backgroundColor: effectiveAccent, 
-              color: getReadableTextColor(effectiveAccent) 
+              color: getReadableTextColor(effectiveAccent),
+              borderColor: hasCustomWallpaper ? effectiveAccent : '#000000'
             }}
             title="Send message"
           >
@@ -696,10 +748,12 @@ export default function ChannelWindow({ channel, currentUser, onSendMessage, onS
         {/* Standalone Send Button (Desktop only) */}
         <button
           type="submit"
-          className="hidden md:flex w-11 h-11 rounded-2xl items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none bg-[#FCC105] text-black"
+          className="hidden md:flex w-11 h-11 rounded-full items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none"
           style={{ 
             backgroundColor: effectiveAccent, 
             color: getReadableTextColor(effectiveAccent),
+            border: '2px solid #000000',
+            boxShadow: `3px 3px 0px #000000, 0 0 14px ${effectiveAccent}50`
           }}
           title="Send message"
         >

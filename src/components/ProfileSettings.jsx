@@ -300,8 +300,12 @@ export default function ProfileSettings({
   const handleSave = (e) => {
     if (e) e.preventDefault();
     onUpdateUser({ name, avatarUrl, isOnline });
-    const isCustomWallpaperActive = chatBackground.type === 'image' && chatBackground.imageUrl;
-    const finalTheme = (isCustomWallpaperActive && theme === 'light') ? 'custom' : (theme || 'dark');
+    const isCustomWallpaperActive = Boolean(
+      (chatBackground.type === 'image' && chatBackground.imageUrl) ||
+      (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC') ||
+      chatBackground.type === 'gradient'
+    );
+    const finalTheme = (isCustomWallpaperActive && (theme === 'light' || theme === 'neo-brutalist')) ? 'custom' : (theme || 'dark');
     const updatedSettings = {
       ...settings,
       theme: finalTheme,

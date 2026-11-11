@@ -1,5 +1,5 @@
 // ChatMe Service Worker — handles background push notifications
-const CACHE_NAME = 'chatme-v12';
+const CACHE_NAME = 'chatme-v13';
 const STATIC_ASSETS = ['/', '/index.html'];
 
 // Install: cache static assets
