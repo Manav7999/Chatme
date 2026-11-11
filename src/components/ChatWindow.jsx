@@ -72,6 +72,76 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
   const fileInputRef = useRef(null);
   const [downloadingStates, setDownloadingStates] = useState({}); // messageId -> progressPercentage
   const [previewMedia, setPreviewMedia] = useState(null); // { type: 'image' | 'video', url: string, name: string }
+  const [activeMsgMenu, setActiveMsgMenu] = useState(null); // { msg, isOutgoing, x, y, isMobileSheet }
+  const msgTouchTimerRef = useRef(null);
+  const msgTouchStartPosRef = useRef({ x: 0, y: 0 });
+  const isMsgLongPressTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (msgTouchTimerRef.current) clearTimeout(msgTouchTimerRef.current);
+    };
+  }, []);
+
+  const handleMsgTouchStart = (msg, isOutgoing, e) => {
+    isMsgLongPressTriggeredRef.current = false;
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    msgTouchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+
+    if (msgTouchTimerRef.current) clearTimeout(msgTouchTimerRef.current);
+    msgTouchTimerRef.current = setTimeout(() => {
+      isMsgLongPressTriggeredRef.current = true;
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(45); } catch (_) {}
+      }
+      setActiveMsgMenu({
+        msg,
+        isOutgoing,
+        isMobileSheet: true,
+        x: touch.clientX,
+        y: touch.clientY
+      });
+    }, 450);
+  };
+
+  const handleMsgTouchMove = (e) => {
+    if (!msgTouchTimerRef.current) return;
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartPosRef.current.y);
+    if (dx > 8 || dy > 8) {
+      clearTimeout(msgTouchTimerRef.current);
+      msgTouchTimerRef.current = null;
+    }
+  };
+
+  const handleMsgTouchEnd = () => {
+    if (msgTouchTimerRef.current) {
+      clearTimeout(msgTouchTimerRef.current);
+      msgTouchTimerRef.current = null;
+    }
+  };
+
+  const handleMsgContextMenu = (e, msg, isOutgoing) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (msgTouchTimerRef.current) clearTimeout(msgTouchTimerRef.current);
+
+    const menuWidth = 190;
+    const menuHeight = 100;
+    const clampedX = Math.min(e.clientX, window.innerWidth - menuWidth - 10);
+    const clampedY = Math.min(e.clientY, window.innerHeight - menuHeight - 10);
+
+    setActiveMsgMenu({
+      msg,
+      isOutgoing,
+      isMobileSheet: false,
+      x: Math.max(10, clampedX),
+      y: Math.max(10, clampedY)
+    });
+  };
 
   const downloadFileToDevice = (mediaUrl, filename) => {
     if (!mediaUrl) return;
@@ -549,41 +619,15 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                       className={`flex w-full ${isOutgoing ? 'justify-end' : 'justify-start'} chat-fade-in`}
                     >
                       <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isOutgoing ? 'items-end' : 'items-start'} group/msg relative`}>
-                        {/* Message Bubble + Actions wrapper */}
+                        {/* Message Bubble wrapper */}
                         <div className="flex items-center gap-2 max-w-full">
-                          {/* If outgoing, show actions on the left */}
-                          {isOutgoing && (
-                            <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
-                              {msg.type !== 'call_history' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(msg.text);
-                                    alert("Copied message to clipboard!");
-                                  }}
-                                  className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
-                                  title="Copy message text"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (window.confirm("Are you sure you want to delete this message?")) {
-                                    onDeleteMessage(msg.id);
-                                  }
-                                }}
-                                className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
-                                title="Delete message"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-
                           {/* Bubble Container */}
                           <div
+                            onContextMenu={(e) => handleMsgContextMenu(e, msg, isOutgoing)}
+                            onTouchStart={(e) => handleMsgTouchStart(msg, isOutgoing, e)}
+                            onTouchMove={handleMsgTouchMove}
+                            onTouchEnd={handleMsgTouchEnd}
+                            onTouchCancel={handleMsgTouchEnd}
                             style={
                               msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
                                 ? {}
@@ -593,7 +637,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                                     borderColor: bubbleBorder,
                                   }
                             }
-                            className={`text-sm transition-all select-text ${shapeClass} ${
+                            className={`text-sm transition-all select-text cursor-pointer ${shapeClass} ${
                               msg.type === 'image' || msg.type === 'file' || msg.type === 'video'
                                 ? 'p-0 bg-transparent border-0'
                                 : 'px-4 py-3 border shadow-sm'
@@ -845,37 +889,6 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                         </p>
                       )}
                     </div>
-
-                    {/* If incoming, show actions on the right */}
-                    {!isOutgoing && (
-                      <div className="opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-all flex items-center gap-1.5 shrink-0 select-none">
-                        {msg.type !== 'call_history' && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(msg.text);
-                              alert("Copied message to clipboard!");
-                            }}
-                            className="p-1.5 rounded-lg bg-[#1F1F1F] text-[#FCC105] border border-[#FCC105]/40 hover:bg-[#FCC105] hover:text-black hover:border-[#FCC105] transition-all cursor-pointer shadow-sm"
-                            title="Copy message text"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this message?")) {
-                              onDeleteMessage(msg.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 hover:bg-[#EF4444] hover:text-white hover:border-[#EF4444] transition-all cursor-pointer shadow-sm"
-                          title="Delete message"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   {/* Message Timestamp & Receipt Container */}
@@ -1129,6 +1142,122 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           </button>
         </form>
       )}
+      {/* Message Context Menu for Desktop (Right-click) */}
+      {activeMsgMenu && !activeMsgMenu.isMobileSheet && (
+        <div 
+          className="fixed inset-0 z-50 bg-transparent"
+          onClick={() => setActiveMsgMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setActiveMsgMenu(null);
+          }}
+        >
+          <div 
+            className="fixed z-50 bg-white text-black border-2 border-black rounded-xl shadow-[4px_4px_0px_#000000] p-1.5 w-48 select-none"
+            style={{ left: activeMsgMenu.x, top: activeMsgMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {activeMsgMenu.msg.type !== 'call_history' && activeMsgMenu.msg.text && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(activeMsgMenu.msg.text);
+                  setActiveMsgMenu(null);
+                  alert("Copied message to clipboard!");
+                }}
+                className="w-full text-left px-3 py-2 text-xs font-black uppercase text-black rounded-lg active:bg-neutral-100 flex items-center gap-2 cursor-pointer transition-colors"
+              >
+                <Copy className="w-4 h-4 stroke-[2.2]" />
+                <span>Copy Text</span>
+              </button>
+            )}
+
+            {onDeleteMessage && (
+              <button
+                type="button"
+                onClick={() => {
+                  const targetId = activeMsgMenu.msg.id;
+                  setActiveMsgMenu(null);
+                  if (window.confirm("Are you sure you want to delete this message?")) {
+                    onDeleteMessage(targetId);
+                  }
+                }}
+                className="w-full text-left px-3 py-2 text-xs font-black uppercase text-[#EF4444] rounded-lg active:bg-red-50 flex items-center gap-2 cursor-pointer transition-colors"
+              >
+                <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                <span>Delete Message</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Message Mobile Action Sheet (Long-press) */}
+      {activeMsgMenu && activeMsgMenu.isMobileSheet && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+          onClick={() => setActiveMsgMenu(null)}
+        >
+          <div 
+            className="w-full sm:max-w-xs bg-white text-black border-t-2 sm:border-2 border-black rounded-t-2xl sm:rounded-2xl p-4 shadow-[0_-4px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b-2 border-black mb-3">
+              <h3 className="font-black text-sm text-black">Message Options</h3>
+              <button
+                type="button"
+                onClick={() => setActiveMsgMenu(null)}
+                className="tactile-btn p-1.5 rounded-lg bg-neutral-100 text-black"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {activeMsgMenu.msg.type !== 'call_history' && activeMsgMenu.msg.text && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(activeMsgMenu.msg.text);
+                    setActiveMsgMenu(null);
+                    alert("Copied message to clipboard!");
+                  }}
+                  className="tactile-btn w-full py-2.5 px-3 rounded-xl bg-white text-black font-black text-xs uppercase flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4 stroke-[2.2]" />
+                  <span>Copy Text</span>
+                </button>
+              )}
+
+              {onDeleteMessage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetId = activeMsgMenu.msg.id;
+                    setActiveMsgMenu(null);
+                    if (window.confirm("Are you sure you want to delete this message?")) {
+                      onDeleteMessage(targetId);
+                    }
+                  }}
+                  className="tactile-btn w-full py-2.5 px-3 rounded-xl bg-[#EF4444] text-white font-black text-xs uppercase flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                  <span>Delete Message</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setActiveMsgMenu(null)}
+                className="tactile-btn w-full py-2 px-3 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs uppercase flex items-center justify-center mt-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Media Preview Lightbox (Images & Videos) */}
       {previewMedia && (
         <div 

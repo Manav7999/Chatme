@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2, Trash2, X } from 'lucide-react';
 
 const ChatListSkeleton = () => (
   // ...
@@ -21,6 +21,74 @@ const ChatListSkeleton = () => (
 
 export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser, isLoading, onDeleteChat }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeContextMenu, setActiveContextMenu] = useState(null); // { chat, x, y, isMobileSheet }
+  const touchTimerRef = useRef(null);
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
+  const isLongPressTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+    };
+  }, []);
+
+  const handleTouchStart = (chat, e) => {
+    isLongPressTriggeredRef.current = false;
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+
+    if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+    touchTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(45); } catch (_) {}
+      }
+      setActiveContextMenu({
+        chat,
+        isMobileSheet: true,
+        x: touch.clientX,
+        y: touch.clientY
+      });
+    }, 450);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchTimerRef.current) return;
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartPosRef.current.y);
+    if (dx > 8 || dy > 8) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  const handleContextMenu = (e, chat) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+
+    const menuWidth = 220;
+    const menuHeight = 120;
+    const clampedX = Math.min(e.clientX, window.innerWidth - menuWidth - 10);
+    const clampedY = Math.min(e.clientY, window.innerHeight - menuHeight - 10);
+
+    setActiveContextMenu({
+      chat,
+      isMobileSheet: false,
+      x: Math.max(10, clampedX),
+      y: Math.max(10, clampedY)
+    });
+  };
 
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,7 +162,20 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
             return (
               <div
                 key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
+                onClick={(e) => {
+                  if (isLongPressTriggeredRef.current) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isLongPressTriggeredRef.current = false;
+                    return;
+                  }
+                  onSelectChat(chat.id);
+                }}
+                onContextMenu={(e) => handleContextMenu(e, chat)}
+                onTouchStart={(e) => handleTouchStart(chat, e)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
                 className={`relative group flex items-center gap-3.5 p-3 rounded-xl cursor-pointer transition-colors duration-150 ${
                   isSelected
                     ? 'border-2 border-black bg-[#FCC105]/20 shadow-[3.5px_3.5px_0px_#000000]'
@@ -164,20 +245,6 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
                     )}
                   </div>
                 </div>
-                {/* Delete button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Are you sure you want to delete your conversation with ${chat.name}? This will permanently delete all messages.`)) {
-                      onDeleteChat(chat.id);
-                    }
-                  }}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-[#2A1215] text-[#FF4D4D] border border-[#FF4D4D]/50 opacity-90 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-[#EF4444] hover:text-[#FFFFFF] cursor-pointer shadow-lg z-10"
-                  title="Delete Conversation"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             );
           })
@@ -193,6 +260,130 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
           </div>
         )}
       </div>
+
+      {/* Context Menu for Desktop (Right-click) */}
+      {activeContextMenu && !activeContextMenu.isMobileSheet && (
+        <div 
+          className="fixed inset-0 z-50 bg-transparent"
+          onClick={() => setActiveContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setActiveContextMenu(null);
+          }}
+        >
+          <div 
+            className="fixed z-50 bg-white text-black border-2 border-black rounded-xl shadow-[4px_4px_0px_#000000] p-1.5 w-52 select-none"
+            style={{ left: activeContextMenu.x, top: activeContextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-1.5 border-b border-black/15 mb-1 flex items-center gap-2">
+              <img 
+                src={activeContextMenu.chat.avatarUrl} 
+                alt={activeContextMenu.chat.name} 
+                className="w-5 h-5 rounded-full border border-black object-cover shrink-0"
+              />
+              <span className="font-black text-xs text-black truncate">{activeContextMenu.chat.name}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const target = activeContextMenu.chat;
+                setActiveContextMenu(null);
+                if (window.confirm(`Delete conversation with ${target.name}? All messages will be permanently removed.`)) {
+                  onDeleteChat(target.id);
+                }
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-black uppercase text-[#EF4444] rounded-lg active:bg-red-50 flex items-center gap-2 cursor-pointer transition-colors"
+            >
+              <Trash2 className="w-4 h-4 stroke-[2.5]" />
+              <span>Delete Conversation</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onSelectChat(activeContextMenu.chat.id);
+                setActiveContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-black uppercase text-black rounded-lg active:bg-neutral-100 flex items-center gap-2 cursor-pointer transition-colors"
+            >
+              <MessageSquarePlus className="w-4 h-4 stroke-[2.2]" />
+              <span>Open Chat</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Action Sheet (Long-press) */}
+      {activeContextMenu && activeContextMenu.isMobileSheet && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+          onClick={() => setActiveContextMenu(null)}
+        >
+          <div 
+            className="w-full sm:max-w-xs bg-white text-black border-t-2 sm:border-2 border-black rounded-t-2xl sm:rounded-2xl p-4 shadow-[0_-4px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sheet Header */}
+            <div className="flex items-center gap-3 pb-3 border-b-2 border-black mb-3.5">
+              <img 
+                src={activeContextMenu.chat.avatarUrl} 
+                alt={activeContextMenu.chat.name} 
+                className="w-10 h-10 rounded-full border-2 border-black shadow-[1.5px_1.5px_0px_#000000] object-cover bg-white shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-black text-sm text-black truncate">{activeContextMenu.chat.name}</h3>
+                <p className="text-[11px] font-semibold text-neutral-600 truncate">Conversation Options</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveContextMenu(null)}
+                className="tactile-btn p-1.5 rounded-lg bg-neutral-100 text-black shrink-0"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = activeContextMenu.chat;
+                  setActiveContextMenu(null);
+                  if (window.confirm(`Delete conversation with ${target.name}? All messages will be permanently removed.`)) {
+                    onDeleteChat(target.id);
+                  }
+                }}
+                className="tactile-btn w-full py-2.5 px-3 rounded-xl bg-[#EF4444] text-white font-black text-xs uppercase flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                <span>Delete Conversation</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectChat(activeContextMenu.chat.id);
+                  setActiveContextMenu(null);
+                }}
+                className="tactile-btn w-full py-2.5 px-3 rounded-xl bg-white text-black font-black text-xs uppercase flex items-center justify-center gap-2"
+              >
+                <MessageSquarePlus className="w-4 h-4 stroke-[2.2]" />
+                <span>Open Chat</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveContextMenu(null)}
+                className="tactile-btn w-full py-2 px-3 rounded-xl bg-neutral-100 text-neutral-700 font-bold text-xs uppercase flex items-center justify-center mt-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer Info */}
       <div className="p-4 bg-[#0A0A0A] border-t border-[#2B2B2B] flex items-center justify-between text-xs text-[#8A8A8A]">
