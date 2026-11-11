@@ -79,8 +79,13 @@ export default function App() {
         const parsed = JSON.parse(saved);
         // Normalize theme: never allow light theme if user has custom wallpaper or image
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
+        if (resolvedTheme === 'neo-brutalist') {
+          resolvedTheme = 'light';
+        } else if (resolvedTheme !== 'light' && resolvedTheme !== 'custom') {
+          resolvedTheme = 'dark';
+        }
         const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
-        if ((resolvedTheme === 'light' || resolvedTheme === 'neo-brutalist') && hasBg) {
+        if (resolvedTheme === 'light' && hasBg) {
           resolvedTheme = 'custom';
         }
         return {
@@ -718,8 +723,13 @@ export default function App() {
       try {
         const parsed = JSON.parse(savedSettings);
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
+        if (resolvedTheme === 'neo-brutalist') {
+          resolvedTheme = 'light';
+        } else if (resolvedTheme !== 'light' && resolvedTheme !== 'custom') {
+          resolvedTheme = 'dark';
+        }
         const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
-        if ((resolvedTheme === 'light' || resolvedTheme === 'neo-brutalist') && hasBg) {
+        if (resolvedTheme === 'light' && hasBg) {
           resolvedTheme = 'custom';
         }
         const merged = {

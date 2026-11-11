@@ -1,8 +1,8 @@
 // Theme & Customization Configuration and Helpers for ChatMe
 
 export const DEFAULT_THEME_SETTINGS = {
-  theme: 'neo-brutalist', // 'neo-brutalist' | 'neo-cyber' | 'dark' | 'light' | 'navy' | 'emerald' | ...
-  appThemeColor: '#F5F1E8', // Base custom color when theme === 'custom'
+  theme: 'dark', // 'dark' (Black Mode) | 'light' (White Mode)
+  appThemeColor: '#000000',
   textColorMode: 'match', // 'match' (auto-match with app theme) | 'custom'
   textColor: 'auto', // 'auto' | '#FFFFFF' | custom hex
   simulationSpeed: 'fast',
@@ -11,7 +11,7 @@ export const DEFAULT_THEME_SETTINGS = {
   accentColor: '#FCC105', // Adaptive accent color: drives buttons, icons, and highlights
   chatBackground: {
     type: 'default', // 'default' | 'color' | 'image' | 'gradient'
-    color: '#F5F1E8',
+    color: '#000000',
     gradient: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 50%, #09090b 100%)',
     imageUrl: '',
     imageOpacity: 0.85,
@@ -19,7 +19,7 @@ export const DEFAULT_THEME_SETTINGS = {
     pattern: false
   },
   bubbleStyle: {
-    shape: 'brutalist', // 'brutalist' | 'modern' | 'pill' | 'sharp' | 'tail' | 'cyber'
+    shape: 'brutalist', // Locked to Neo-Brutalist Tactile shape
     outgoingBg: '#FCC105',
     outgoingText: '#000000',
     incomingBg: '#FFFFFF', // Clean tactile white
@@ -27,125 +27,29 @@ export const DEFAULT_THEME_SETTINGS = {
   }
 };
 
-// Main App Theme Presets (Excluding Splash Screen)
+// Main App Theme Presets: Two Default Themes (White Mode & Black Mode)
 export const APP_THEME_PRESETS = [
   {
-    id: 'neo-brutalist',
-    name: 'Neo-Brutalist Tactile',
-    description: 'Raw tactile paper canvas with bold black borders and 3D offset mechanical shadows',
-    bg: '#F5F1E8',
+    id: 'light',
+    name: 'White Mode',
+    description: 'Crisp bright canvas with tactile borders and clean contrast',
+    bg: '#F8FAFC',
     surface: '#FFFFFF',
-    surfaceSecondary: '#FFFDF5',
+    surfaceSecondary: '#F1F5F9',
     border: '#000000',
     accent: '#FCC105',
     defaultTextColor: '#000000',
     isDark: false
   },
   {
-    id: 'neo-cyber',
-    name: 'Neo-Cyber Dark',
-    description: 'Stark dark canvas with tactile yellow borders and hard offset drop shadows',
-    bg: '#0C0D11',
-    surface: '#16171F',
-    surfaceSecondary: '#1F212C',
-    border: '#FCC105',
-    accent: '#FCC105',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
     id: 'dark',
-    name: 'Default Black',
+    name: 'Black Mode',
     description: 'Signature pitch black with ChatMe Gold accent',
     bg: '#000000',
     surface: '#0A0A0A',
     surfaceSecondary: '#141414',
     border: '#262626',
     accent: '#FCC105',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'light',
-    name: 'Clean White',
-    description: 'Crisp, high-contrast bright theme',
-    bg: '#F8FAFC',
-    surface: '#FFFFFF',
-    surfaceSecondary: '#F1F5F9',
-    border: '#E2E8F0',
-    accent: '#2563EB',
-    defaultTextColor: '#0F172A',
-    isDark: false
-  },
-  {
-    id: 'navy',
-    name: 'Midnight Navy',
-    description: 'Deep oceanic blue with cyan highlights',
-    bg: '#080E1E',
-    surface: '#0F1A36',
-    surfaceSecondary: '#17274E',
-    border: '#22386A',
-    accent: '#38BDF8',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'emerald',
-    name: 'Cyber Emerald',
-    description: 'Deep matrix green with mint glow',
-    bg: '#021C15',
-    surface: '#053327',
-    surfaceSecondary: '#0B4D3C',
-    border: '#106B54',
-    accent: '#34D399',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'violet',
-    name: 'Royal Amethyst',
-    description: 'Rich galaxy purple with lavender highlights',
-    bg: '#110822',
-    surface: '#1E0F38',
-    surfaceSecondary: '#2C1752',
-    border: '#432378',
-    accent: '#C084FC',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'crimson',
-    name: 'Crimson Velvet',
-    description: 'Deep velvet wine with rose highlights',
-    bg: '#1A0409',
-    surface: '#2E0A12',
-    surfaceSecondary: '#47121E',
-    border: '#661C2C',
-    accent: '#FB7185',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'slate',
-    name: 'Nordic Titanium',
-    description: 'Modern executive dark slate with sapphire glow',
-    bg: '#0A0E17',
-    surface: '#131B2B',
-    surfaceSecondary: '#1C283E',
-    border: '#2E3F5E',
-    accent: '#60A5FA',
-    defaultTextColor: '#FFFFFF',
-    isDark: true
-  },
-  {
-    id: 'amber',
-    name: 'Charcoal Gold',
-    description: 'Warm dark charcoal with radiant amber accents',
-    bg: '#12110F',
-    surface: '#1F1C18',
-    surfaceSecondary: '#2F2B24',
-    border: '#474136',
-    accent: '#F59E0B',
     defaultTextColor: '#FFFFFF',
     isDark: true
   }

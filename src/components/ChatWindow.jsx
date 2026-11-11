@@ -376,7 +376,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
   const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
   const resolvedShapeId = (bubbleStyle.shape && bubbleStyle.shape !== 'modern') ? bubbleStyle.shape : 'brutalist';
   const currentShape = BUBBLE_SHAPES.find(s => s.id === resolvedShapeId) || BUBBLE_SHAPES[0];
-  const isLight = theme === 'light' || theme === 'neo-brutalist';
+  const isLight = theme === 'light';
 
   const hasCustomWallpaper = Boolean(
     (chatBackground.type === 'image' && chatBackground.imageUrl) ||
@@ -386,7 +386,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
 
   const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
   const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-  const incomingBg = bubbleStyle.incomingBg || (theme === 'neo-cyber' ? '#16171F' : '#FFFFFF');
+  const incomingBg = bubbleStyle.incomingBg || (theme === 'dark' ? '#1A1A1A' : '#FFFFFF');
   const incomingText = bubbleStyle.incomingText || getReadableTextColor(incomingBg);
 
   // Background calculation
