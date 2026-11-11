@@ -61,12 +61,12 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
       {/* Profile & Settings Trigger */}
       <div className="flex flex-col items-center gap-3 w-full px-2.5">
         
-        {/* Quick Theme Toggle Button (Two Default Themes: White Mode & Black Mode) */}
+        {/* Quick Theme Toggle Button */}
         {onToggleTheme && (
           <button
             onClick={onToggleTheme}
             className="tactile-btn flex flex-col items-center justify-center py-2 w-full rounded-xl text-black bg-white cursor-pointer"
-            title={theme === 'light' ? "Switch to Black Mode" : "Switch to White Mode"}
+            title={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
           >
             {theme === 'light' ? (
               <Sun className="w-4.5 h-4.5 text-black" />
@@ -74,7 +74,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, curre
               <Moon className="w-4.5 h-4.5 text-black" />
             )}
             <span className="text-[8px] mt-0.5 font-black uppercase">
-              {theme === 'light' ? 'White' : 'Black'}
+              {theme === 'light' ? 'Light' : 'Dark'}
             </span>
           </button>
         )}

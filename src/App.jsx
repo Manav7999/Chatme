@@ -79,13 +79,7 @@ export default function App() {
         const parsed = JSON.parse(saved);
         // Normalize theme: never allow light theme if user has custom wallpaper or image
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
-        if (resolvedTheme === 'neo-brutalist') {
-          resolvedTheme = 'light';
-        } else if (resolvedTheme !== 'light' && resolvedTheme !== 'custom') {
-          resolvedTheme = 'dark';
-        }
-        const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
-        if (resolvedTheme === 'light' && hasBg) {
+        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
           resolvedTheme = 'custom';
         }
         return {
@@ -111,24 +105,13 @@ export default function App() {
   });
 
   const handleToggleTheme = () => {
-    const hasImageWallpaper = Boolean(settings.chatBackground?.type === 'image' && settings.chatBackground?.imageUrl);
     let nextTheme;
     if (settings.theme === 'light') {
-      nextTheme = hasImageWallpaper ? 'custom' : 'dark';
+      nextTheme = (settings.chatBackground?.type === 'image' && settings.chatBackground?.imageUrl) ? 'custom' : 'dark';
     } else {
       nextTheme = 'light';
     }
-    const updated = { 
-      ...settings, 
-      theme: nextTheme,
-      accentColor: hasImageWallpaper ? (settings.accentColor || '#FCC105') : '#FCC105',
-      bubbleStyle: {
-        ...settings.bubbleStyle,
-        outgoingBg: hasImageWallpaper ? (settings.bubbleStyle?.outgoingBg || '#FCC105') : '#FCC105',
-        outgoingText: hasImageWallpaper ? (settings.bubbleStyle?.outgoingText || '#000000') : '#000000',
-        shape: 'brutalist'
-      }
-    };
+    const updated = { ...settings, theme: nextTheme };
     setSettings(updated);
     saveToLocalStorage(chats, currentUser, updated);
     applyThemeToDocument(updated);
@@ -143,10 +126,11 @@ export default function App() {
   useEffect(() => {
     if (
       settings?.chatBackground?.type === 'image' && 
-      settings?.chatBackground?.imageUrl
+      settings?.chatBackground?.imageUrl && 
+      (!settings?.accentColor || settings?.accentColor === '#FCC105')
     ) {
       extractPaletteFromImage(settings.chatBackground.imageUrl).then(extracted => {
-        if (extracted && extracted !== settings?.accentColor) {
+        if (extracted && extracted !== '#FCC105') {
           const autoText = getReadableTextColor(extracted);
           setSettings(prev => {
             const updated = {
@@ -734,13 +718,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(savedSettings);
         let resolvedTheme = parsed.theme || DEFAULT_THEME_SETTINGS.theme;
-        if (resolvedTheme === 'neo-brutalist') {
-          resolvedTheme = 'light';
-        } else if (resolvedTheme !== 'light' && resolvedTheme !== 'custom') {
-          resolvedTheme = 'dark';
-        }
-        const hasBg = Boolean(parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC') || parsed.chatBackground?.type === 'gradient');
-        if (resolvedTheme === 'light' && hasBg) {
+        if (resolvedTheme === 'light' && (parsed.chatBackground?.type === 'image' || parsed.chatBackground?.imageUrl || (parsed.chatBackground?.color && parsed.chatBackground.color !== '#FFFFFF' && parsed.chatBackground.color !== '#F8FAFC'))) {
           resolvedTheme = 'custom';
         }
         const merged = {
@@ -2033,8 +2011,6 @@ export default function App() {
               currentUser={currentUser}
               isLoading={isLoadingChats}
               onDeleteChat={handleDeleteChat}
-              theme={settings.theme || 'dark'}
-              onToggleTheme={handleToggleTheme}
             />
           )}
           {/* On mobile, if a chat is active, we show the ChatWindow. Otherwise we hide it. On desktop we show it always. */}

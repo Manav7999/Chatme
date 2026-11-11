@@ -1,8 +1,8 @@
 // Theme & Customization Configuration and Helpers for ChatMe
 
 export const DEFAULT_THEME_SETTINGS = {
-  theme: 'dark', // 'dark' (Black Mode) | 'light' (White Mode)
-  appThemeColor: '#000000',
+  theme: 'neo-brutalist', // 'neo-brutalist' | 'neo-cyber' | 'dark' | 'light' | 'navy' | 'emerald' | ...
+  appThemeColor: '#F5F1E8', // Base custom color when theme === 'custom'
   textColorMode: 'match', // 'match' (auto-match with app theme) | 'custom'
   textColor: 'auto', // 'auto' | '#FFFFFF' | custom hex
   simulationSpeed: 'fast',
@@ -11,7 +11,7 @@ export const DEFAULT_THEME_SETTINGS = {
   accentColor: '#FCC105', // Adaptive accent color: drives buttons, icons, and highlights
   chatBackground: {
     type: 'default', // 'default' | 'color' | 'image' | 'gradient'
-    color: '#000000',
+    color: '#F5F1E8',
     gradient: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 50%, #09090b 100%)',
     imageUrl: '',
     imageOpacity: 0.85,
@@ -19,7 +19,7 @@ export const DEFAULT_THEME_SETTINGS = {
     pattern: false
   },
   bubbleStyle: {
-    shape: 'brutalist', // Locked to Neo-Brutalist Tactile shape
+    shape: 'brutalist', // 'brutalist' | 'modern' | 'pill' | 'sharp' | 'tail' | 'cyber'
     outgoingBg: '#FCC105',
     outgoingText: '#000000',
     incomingBg: '#FFFFFF', // Clean tactile white
@@ -27,29 +27,125 @@ export const DEFAULT_THEME_SETTINGS = {
   }
 };
 
-// Main App Theme Presets: Two Default Themes (White Mode & Black Mode)
+// Main App Theme Presets (Excluding Splash Screen)
 export const APP_THEME_PRESETS = [
   {
-    id: 'light',
-    name: 'White Mode',
-    description: 'Crisp bright canvas with tactile borders and clean contrast',
-    bg: '#F8FAFC',
+    id: 'neo-brutalist',
+    name: 'Neo-Brutalist Tactile',
+    description: 'Raw tactile paper canvas with bold black borders and 3D offset mechanical shadows',
+    bg: '#F5F1E8',
     surface: '#FFFFFF',
-    surfaceSecondary: '#F1F5F9',
+    surfaceSecondary: '#FFFDF5',
     border: '#000000',
     accent: '#FCC105',
     defaultTextColor: '#000000',
     isDark: false
   },
   {
+    id: 'neo-cyber',
+    name: 'Neo-Cyber Dark',
+    description: 'Stark dark canvas with tactile yellow borders and hard offset drop shadows',
+    bg: '#0C0D11',
+    surface: '#16171F',
+    surfaceSecondary: '#1F212C',
+    border: '#FCC105',
+    accent: '#FCC105',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
     id: 'dark',
-    name: 'Black Mode',
+    name: 'Default Black',
     description: 'Signature pitch black with ChatMe Gold accent',
     bg: '#000000',
     surface: '#0A0A0A',
     surfaceSecondary: '#141414',
     border: '#262626',
     accent: '#FCC105',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'light',
+    name: 'Clean White',
+    description: 'Crisp, high-contrast bright theme',
+    bg: '#F8FAFC',
+    surface: '#FFFFFF',
+    surfaceSecondary: '#F1F5F9',
+    border: '#E2E8F0',
+    accent: '#2563EB',
+    defaultTextColor: '#0F172A',
+    isDark: false
+  },
+  {
+    id: 'navy',
+    name: 'Midnight Navy',
+    description: 'Deep oceanic blue with cyan highlights',
+    bg: '#080E1E',
+    surface: '#0F1A36',
+    surfaceSecondary: '#17274E',
+    border: '#22386A',
+    accent: '#38BDF8',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'emerald',
+    name: 'Cyber Emerald',
+    description: 'Deep matrix green with mint glow',
+    bg: '#021C15',
+    surface: '#053327',
+    surfaceSecondary: '#0B4D3C',
+    border: '#106B54',
+    accent: '#34D399',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'violet',
+    name: 'Royal Amethyst',
+    description: 'Rich galaxy purple with lavender highlights',
+    bg: '#110822',
+    surface: '#1E0F38',
+    surfaceSecondary: '#2C1752',
+    border: '#432378',
+    accent: '#C084FC',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'crimson',
+    name: 'Crimson Velvet',
+    description: 'Deep velvet wine with rose highlights',
+    bg: '#1A0409',
+    surface: '#2E0A12',
+    surfaceSecondary: '#47121E',
+    border: '#661C2C',
+    accent: '#FB7185',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'slate',
+    name: 'Nordic Titanium',
+    description: 'Modern executive dark slate with sapphire glow',
+    bg: '#0A0E17',
+    surface: '#131B2B',
+    surfaceSecondary: '#1C283E',
+    border: '#2E3F5E',
+    accent: '#60A5FA',
+    defaultTextColor: '#FFFFFF',
+    isDark: true
+  },
+  {
+    id: 'amber',
+    name: 'Charcoal Gold',
+    description: 'Warm dark charcoal with radiant amber accents',
+    bg: '#12110F',
+    surface: '#1F1C18',
+    surfaceSecondary: '#2F2B24',
+    border: '#474136',
+    accent: '#F59E0B',
     defaultTextColor: '#FFFFFF',
     isDark: true
   }
@@ -68,7 +164,7 @@ export const TEXT_COLOR_PRESETS = [
   { id: 'rose', name: 'Rose Quartz', color: '#FFE4E6', description: 'Soft pastel rose blush' }
 ];
 
-// Available Bubble Shapes (Neo-Brutalist Tactile shape only)
+// Available Bubble Shapes
 export const BUBBLE_SHAPES = [
   {
     id: 'brutalist',
@@ -76,6 +172,41 @@ export const BUBBLE_SHAPES = [
     description: 'Bold 2.5px black border with 3.5px physical 3D drop-shadow and speech notch',
     outgoingClass: 'tactile-bubble-outgoing',
     incomingClass: 'tactile-bubble-incoming'
+  },
+  {
+    id: 'modern',
+    name: 'Modern Notch',
+    description: 'Sleek rounded curves with subtle message notch',
+    outgoingClass: 'rounded-2xl rounded-tr-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]',
+    incomingClass: 'rounded-2xl rounded-tl-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]'
+  },
+  {
+    id: 'pill',
+    name: 'Soft Capsule',
+    description: 'Ultra-smooth rounded pill design',
+    outgoingClass: 'rounded-3xl',
+    incomingClass: 'rounded-3xl'
+  },
+  {
+    id: 'sharp',
+    name: 'Minimal Sharp',
+    description: 'Clean architectural subtle corners',
+    outgoingClass: 'rounded-lg',
+    incomingClass: 'rounded-lg'
+  },
+  {
+    id: 'tail',
+    name: 'Classic Tail',
+    description: 'Speech bubble with distinctive corner tail',
+    outgoingClass: 'rounded-2xl rounded-br-none',
+    incomingClass: 'rounded-2xl rounded-bl-none'
+  },
+  {
+    id: 'cyber',
+    name: 'Cyber Cut',
+    description: 'Futuristic angular edges with accent border',
+    outgoingClass: 'rounded-sm border-r-4',
+    incomingClass: 'rounded-sm border-l-4'
   }
 ];
 
@@ -609,14 +740,20 @@ export function applyThemeToDocument(settings = 'dark') {
 
   // Resolve and apply adaptive theme accent across the entire app
   let activeAccent = '#FCC105';
-  if (hasCustomWallpaper && typeof settings === 'object' && settings?.accentColor) {
-    activeAccent = settings.accentColor;
-  } else if (theme === 'light' || theme === 'dark') {
-    activeAccent = '#FCC105';
-  } else if (typeof settings === 'object' && settings?.accentColor && settings.accentColor.toUpperCase() !== '#FCC105') {
-    activeAccent = settings.accentColor;
-  } else {
-    activeAccent = '#FCC105';
+  if (typeof settings === 'object' && settings) {
+    if (theme !== 'dark' && theme !== 'custom' && preset?.accent) {
+      activeAccent = preset.accent;
+    } else if (settings.accentColor && settings.accentColor.toUpperCase() !== '#FCC105') {
+      activeAccent = settings.accentColor;
+    } else if (settings.bubbleStyle?.outgoingBg && settings.bubbleStyle.outgoingBg.toUpperCase() !== '#FCC105') {
+      activeAccent = settings.bubbleStyle.outgoingBg;
+    } else if (theme === 'custom') {
+      activeAccent = palette.accent || deriveHarmoniousAccentFromColor(appThemeColor);
+    } else {
+      activeAccent = palette.accent || '#FCC105';
+    }
+  } else if (palette?.accent) {
+    activeAccent = palette.accent;
   }
 
   const [ar, ag, ab] = hexToRgb(activeAccent);
@@ -631,7 +768,7 @@ export function applyThemeToDocument(settings = 'dark') {
   root.style.setProperty('--theme-accent-text', accentText);
 
   const isCustomAccent = activeAccent.toUpperCase() !== '#FCC105';
-  if (hasCustomWallpaper && isCustomAccent) {
+  if (isCustomAccent || theme !== 'dark') {
     root.setAttribute('data-custom-accent', 'true');
   } else {
     root.removeAttribute('data-custom-accent');

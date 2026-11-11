@@ -376,17 +376,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
   const effectiveAccent = settings?.accentColor || bubbleStyle.outgoingBg || '#FCC105';
   const resolvedShapeId = (bubbleStyle.shape && bubbleStyle.shape !== 'modern') ? bubbleStyle.shape : 'brutalist';
   const currentShape = BUBBLE_SHAPES.find(s => s.id === resolvedShapeId) || BUBBLE_SHAPES[0];
-  const isLight = theme === 'light';
-
-  const hasCustomWallpaper = Boolean(
-    (chatBackground.type === 'image' && chatBackground.imageUrl) ||
-    (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC') ||
-    chatBackground.type === 'gradient'
-  );
+  const isLight = theme === 'light' || theme === 'neo-brutalist';
 
   const outgoingBg = bubbleStyle.outgoingBg || effectiveAccent;
   const outgoingText = bubbleStyle.outgoingText || getReadableTextColor(outgoingBg);
-  const incomingBg = bubbleStyle.incomingBg || (theme === 'dark' ? '#1A1A1A' : '#FFFFFF');
+  const incomingBg = bubbleStyle.incomingBg || (theme === 'neo-cyber' ? '#16171F' : '#FFFFFF');
   const incomingText = bubbleStyle.incomingText || getReadableTextColor(incomingBg);
 
   // Background calculation
@@ -395,8 +389,6 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
     chatBgStyle = { backgroundColor: chatBackground.color };
   } else if (chatBackground.type === 'gradient' && chatBackground.gradient) {
     chatBgStyle = { backgroundImage: chatBackground.gradient };
-  } else if (chatBackground.type === 'image' && chatBackground.imageUrl) {
-    chatBgStyle = { backgroundColor: '#000000' };
   } else {
     chatBgStyle = { backgroundColor: isLight ? '#F8FAFC' : '#000000' };
   }
@@ -482,13 +474,11 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         )}
       </div>
 
-      {/* Chat Window Header with Frosted Glass Transparency & Adaptive Theme Accents */}
-      <div className={`h-16 md:h-20 px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md transition-all duration-200 shrink-0 ${
-        hasCustomWallpaper 
-          ? 'bg-black/40 border-b border-white/15 shadow-md' 
-          : isLight 
-            ? 'bg-white/75 border-b-2 border-black shadow-sm' 
-            : 'bg-black/60 border-b border-white/10 shadow-sm'
+      {/* Chat Window Header with Neo-Brutalist Tactile Styling */}
+      <div className={`h-16 md:h-20 border-b-2 border-black px-3 md:px-5 flex items-center justify-between select-none z-20 backdrop-blur-md transition-all duration-200 shrink-0 ${
+        isLight 
+          ? 'bg-white/80 shadow-sm' 
+          : 'bg-black/60 shadow-sm'
       }`}>
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {/* Back Button on Mobile */}
@@ -496,9 +486,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button
               type="button"
               onClick={onBack}
-              className={`tactile-btn p-1.5 rounded-xl cursor-pointer mr-0.5 flex items-center justify-center shrink-0 border-2 shadow-[2px_2px_0px_#000000] ${
-                hasCustomWallpaper ? 'bg-black/50 text-white border-white/30' : 'bg-white text-black border-black'
-              }`}
+              className="tactile-btn p-1.5 rounded-xl bg-white text-black cursor-pointer mr-0.5 flex items-center justify-center shrink-0"
               title="Back to conversations"
             >
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
@@ -507,10 +495,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           
           {/* Contact Avatar */}
           <div className="relative shrink-0">
-            <div 
-              className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden border-2 shadow-[2px_2px_0px_#000000]"
-              style={{ borderColor: hasCustomWallpaper ? effectiveAccent : '#000000' }}
-            >
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full overflow-hidden border-2 border-black shadow-[2px_2px_0px_#000000]">
               <img
                 src={chat.avatarUrl}
                 alt={chat.name}
@@ -525,17 +510,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h2 className={`text-xs sm:text-base font-black leading-tight truncate max-w-[80px] xs:max-w-[120px] sm:max-w-[200px] ${
-                hasCustomWallpaper || !isLight ? 'text-white' : 'text-black'
+                isLight ? 'text-black' : 'text-white'
               }`}>
                 {chat.name}
               </h2>
               <span 
-                className="tactile-badge text-[7px] md:text-[8px] px-2 py-0.5 rounded-md shrink-0 hidden xs:inline-block font-bold uppercase tracking-wider border"
-                style={{ 
-                  color: hasCustomWallpaper ? effectiveAccent : '#000000', 
-                  borderColor: hasCustomWallpaper ? `${effectiveAccent}80` : '#000000', 
-                  backgroundColor: hasCustomWallpaper ? `${effectiveAccent}20` : '#FCC105'
-                }}
+                className="tactile-badge text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-md bg-[#FCC105] text-black shrink-0 hidden xs:inline-block"
               >
                 Member
               </span>
@@ -545,12 +525,9 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 </span>
               )}
             </div>
-            <span 
-              className="text-[10px] flex items-center gap-1 mt-0.5 font-bold"
-              style={{ color: hasCustomWallpaper || !isLight ? 'rgba(255,255,255,0.7)' : '#8A8A8A' }}
-            >
+            <span className="text-[10px] text-[#8A8A8A] flex items-center gap-1 mt-0.5 font-bold">
               {chat.isTyping ? (
-                <span className="animate-pulse" style={{ color: effectiveAccent }}>Typing...</span>
+                <span className="animate-pulse text-[#FCC105]">Typing...</span>
               ) : chat.isOnline ? (
                 <>
                   <span className="w-1.5 h-1.5 bg-[#22C55E] rounded-full border border-black" />
@@ -563,47 +540,25 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           </div>
         </div>
 
-        {/* Header Action Buttons (Tactile Mechanical Push Buttons with Adaptive Accents) */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Header Action Buttons (Tactile Mechanical Push Buttons) */}
+        <div className="flex items-center gap-2 text-black shrink-0">
           <button 
             onClick={() => onStartCall('audio')}
-            className={`tactile-btn p-2 rounded-xl transition-all cursor-pointer backdrop-blur-md flex items-center justify-center border-2 shadow-[2px_2px_0px_#000000] ${
-              hasCustomWallpaper 
-                ? 'bg-black/40' 
-                : 'bg-white text-black border-black'
-            }`}
-            style={{ 
-              color: effectiveAccent,
-              borderColor: hasCustomWallpaper ? `${effectiveAccent}60` : '#000000'
-            }}
+            className="tactile-btn p-2 rounded-xl bg-white text-black"
             title="Voice Call"
           >
-            <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+            <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <button 
             onClick={() => onStartCall('video')}
-            className={`tactile-btn p-2 rounded-xl transition-all cursor-pointer backdrop-blur-md flex items-center justify-center border-2 shadow-[2px_2px_0px_#000000] ${
-              hasCustomWallpaper 
-                ? 'bg-black/40' 
-                : 'bg-white text-black border-black'
-            }`}
-            style={{ 
-              color: effectiveAccent,
-              borderColor: hasCustomWallpaper ? `${effectiveAccent}60` : '#000000'
-            }}
+            className="tactile-btn p-2 rounded-xl bg-white text-black"
             title="Video Call"
           >
-            <Video className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+            <Video className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
           <div className="relative group">
-            <button 
-              className={`tactile-btn p-2 rounded-xl transition-all cursor-pointer backdrop-blur-md flex items-center justify-center border-2 shadow-[2px_2px_0px_#000000] ${
-                hasCustomWallpaper 
-                  ? 'bg-black/40 text-white border-white/25' 
-                  : 'bg-white text-black border-black'
-              }`}
-            >
-              <MoreVertical className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+            <button className="tactile-btn p-2 rounded-xl bg-white text-black">
+              <MoreVertical className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
             <div className="hidden group-hover:block absolute right-0 top-11 border-2 border-black rounded-xl shadow-[5px_5px_0px_#000000] py-2 w-52 z-30 overflow-hidden bg-white text-black font-semibold">
               <button 
@@ -1085,12 +1040,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
         </div>
       )}
 
-      {/* Chat Form Input Panel with Frosted Glass Transparency & Adaptive Theme Accents */}
+      {/* Chat Form Input Panel with Frosted Glass Transparency */}
       {isRecording ? (
         <div className={`p-2.5 md:p-4 border-t flex items-center justify-between gap-2 select-none z-20 chat-fade-in w-full max-w-full backdrop-blur-md shrink-0 ${
-          hasCustomWallpaper || !isLight 
-            ? 'bg-black/40 border-white/10 text-white' 
-            : 'bg-white/75 border-black/10 text-black'
+          isLight ? 'bg-white/60 border-black/10' : 'bg-black/40 border-white/10'
         }`}>
           <div className="flex items-center gap-1.5 md:gap-3 text-[#EF4444] font-bold text-xs md:text-sm min-w-0">
             <span className="w-2 h-2 md:w-2.5 md:h-2.5 bg-[#EF4444] rounded-full animate-ping shrink-0" />
@@ -1109,11 +1062,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             <button
               type="button"
               onClick={() => stopRecording(true)}
-              className="tactile-btn px-3 py-1.5 text-xs font-black rounded-lg uppercase"
-              style={{ 
-                backgroundColor: effectiveAccent, 
-                color: getReadableTextColor(effectiveAccent) 
-              }}
+              className="tactile-btn px-3 py-1.5 text-xs font-black bg-[#FCC105] text-black rounded-lg uppercase"
             >
               Send
             </button>
@@ -1122,26 +1071,13 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
       ) : (
         <form 
           onSubmit={handleSend}
-          className={`p-3 flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
-            hasCustomWallpaper 
-              ? 'bg-black/35 border-t border-white/10' 
-              : isLight 
-                ? 'bg-white/75 border-t-2 border-black' 
-                : 'bg-black/60 border-t border-white/10'
+          className={`p-3 border-t-2 border-black flex items-center select-none z-20 w-full max-w-full gap-2.5 md:gap-3 backdrop-blur-md shrink-0 transition-all duration-200 ${
+            isLight ? 'bg-white/80' : 'bg-black/60'
           }`}
         >
-          {/* Main Input Box (Tactile Border & 3D Shadow with Frosted Transparency) */}
+          {/* Main Input Box (Tactile Border & 3D Shadow) */}
           <div 
-            className="flex-1 flex items-center rounded-2xl md:rounded-full overflow-hidden md:px-2.5 md:py-1 py-0 px-0 transition-all duration-150 backdrop-blur-md"
-            style={{
-              backgroundColor: hasCustomWallpaper ? 'rgba(0, 0, 0, 0.5)' : (isLight ? '#FFFFFF' : 'rgba(20, 20, 20, 0.7)'),
-              borderColor: hasCustomWallpaper ? effectiveAccent : '#000000',
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              boxShadow: hasCustomWallpaper
-                ? (isInputFocused ? `0 0 15px ${effectiveAccent}60, 3px 3px 0px #000000` : `3px 3px 0px #000000`)
-                : '4px 4px 0px #000000'
-            }}
+            className="flex-1 flex items-center border-2 border-black shadow-[4px_4px_0px_#000000] rounded-xl md:rounded-2xl overflow-hidden md:px-2.5 md:py-1 py-0 px-0 bg-white text-black"
           >
             {/* Emoji selector trigger */}
             <button
@@ -1150,9 +1086,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowEmojiPicker(!showEmojiPicker);
                 setShowAttachMenu(false);
               }}
-              className={`p-2 pl-3 md:pl-2 cursor-pointer shrink-0 transition-colors ${
-                hasCustomWallpaper ? 'text-white/80 hover:text-white' : 'text-black'
-              }`}
+              className="p-2 pl-3 md:pl-2 text-black cursor-pointer shrink-0"
               title="Emojis"
             >
               <Smile className="w-5 h-5 stroke-[2.2]" />
@@ -1161,16 +1095,12 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             {/* Message Input Text Area */}
             <input
               type="text"
-              placeholder="Type message..."
+              placeholder="Type a message..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
-              className={`flex-1 bg-transparent border-0 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0 ${
-                hasCustomWallpaper || !isLight 
-                  ? 'text-white placeholder-white/50' 
-                  : 'text-black placeholder-neutral-500'
-              }`}
+              className="flex-1 bg-transparent border-0 text-black placeholder-neutral-500 px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-0 min-w-0"
             />
 
             {/* Attachment menu trigger */}
@@ -1180,9 +1110,7 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
                 setShowAttachMenu(!showAttachMenu);
                 setShowEmojiPicker(false);
               }}
-              className={`p-2 pr-3 md:pr-2 cursor-pointer shrink-0 transition-colors ${
-                hasCustomWallpaper ? 'text-white/80 hover:text-white' : 'text-black'
-              }`}
+              className="p-2 pr-3 md:pr-2 text-black cursor-pointer shrink-0"
               title="Attachments"
             >
               <Paperclip className="w-5 h-5 stroke-[2.2]" />
@@ -1191,11 +1119,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
             {/* Attached Send Button (Mobile only) */}
             <button
               type="submit"
-              className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 active:translate-x-0.5 active:translate-y-0.5"
+              className="md:hidden self-stretch px-4 flex items-center justify-center transition-all cursor-pointer shrink-0 focus:outline-none border-l-2 border-black bg-[#FCC105] text-black active:translate-x-0.5 active:translate-y-0.5"
               style={{ 
                 backgroundColor: effectiveAccent, 
-                color: getReadableTextColor(effectiveAccent),
-                borderColor: hasCustomWallpaper ? effectiveAccent : '#000000'
+                color: getReadableTextColor(effectiveAccent) 
               }}
               title="Send message"
             >
@@ -1206,12 +1133,10 @@ export default function ChatWindow({ chat, onSendMessage, onSendMedia, onClearCh
           {/* Standalone Send Button (Desktop only) */}
           <button
             type="submit"
-            className="hidden md:flex w-11 h-11 rounded-full items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none"
+            className="hidden md:flex w-11 h-11 rounded-2xl items-center justify-center transition-all tactile-btn cursor-pointer shrink-0 focus:outline-none bg-[#FCC105] text-black"
             style={{ 
               backgroundColor: effectiveAccent, 
               color: getReadableTextColor(effectiveAccent),
-              border: '2px solid #000000',
-              boxShadow: `3px 3px 0px #000000, 0 0 14px ${effectiveAccent}50`
             }}
             title="Send message"
           >
