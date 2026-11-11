@@ -609,20 +609,14 @@ export function applyThemeToDocument(settings = 'dark') {
 
   // Resolve and apply adaptive theme accent across the entire app
   let activeAccent = '#FCC105';
-  if (typeof settings === 'object' && settings) {
-    if (theme !== 'dark' && theme !== 'custom' && preset?.accent) {
-      activeAccent = preset.accent;
-    } else if (settings.accentColor && settings.accentColor.toUpperCase() !== '#FCC105') {
-      activeAccent = settings.accentColor;
-    } else if (settings.bubbleStyle?.outgoingBg && settings.bubbleStyle.outgoingBg.toUpperCase() !== '#FCC105') {
-      activeAccent = settings.bubbleStyle.outgoingBg;
-    } else if (theme === 'custom') {
-      activeAccent = palette.accent || deriveHarmoniousAccentFromColor(appThemeColor);
-    } else {
-      activeAccent = palette.accent || '#FCC105';
-    }
-  } else if (palette?.accent) {
-    activeAccent = palette.accent;
+  if (hasCustomWallpaper && typeof settings === 'object' && settings?.accentColor) {
+    activeAccent = settings.accentColor;
+  } else if (theme === 'light' || theme === 'dark') {
+    activeAccent = '#FCC105';
+  } else if (typeof settings === 'object' && settings?.accentColor && settings.accentColor.toUpperCase() !== '#FCC105') {
+    activeAccent = settings.accentColor;
+  } else {
+    activeAccent = '#FCC105';
   }
 
   const [ar, ag, ab] = hexToRgb(activeAccent);
@@ -637,7 +631,7 @@ export function applyThemeToDocument(settings = 'dark') {
   root.style.setProperty('--theme-accent-text', accentText);
 
   const isCustomAccent = activeAccent.toUpperCase() !== '#FCC105';
-  if (isCustomAccent || theme !== 'dark') {
+  if (hasCustomWallpaper && isCustomAccent) {
     root.setAttribute('data-custom-accent', 'true');
   } else {
     root.removeAttribute('data-custom-accent');

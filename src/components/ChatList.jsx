@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2, Trash2, X } from 'lucide-react';
+import { Search, Plus, MessageSquarePlus, UserCheck, Sparkles, Share2, Trash2, X, Sun, Moon } from 'lucide-react';
 
 const ChatListSkeleton = () => (
   // ...
@@ -19,7 +19,17 @@ const ChatListSkeleton = () => (
   </div>
 );
 
-export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat, currentUser, isLoading, onDeleteChat }) {
+export default function ChatList({ 
+  chats, 
+  activeChatId, 
+  onSelectChat, 
+  onNewChat, 
+  currentUser, 
+  isLoading, 
+  onDeleteChat,
+  theme = 'dark',
+  onToggleTheme
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeContextMenu, setActiveContextMenu] = useState(null); // { chat, x, y, isMobileSheet }
   const touchTimerRef = useRef(null);
@@ -110,6 +120,22 @@ export default function ChatList({ chats, activeChatId, onSelectChat, onNewChat,
           </div>
         </div>
         <div className="flex gap-2">
+          {/* Theme Mode Toggle (White / Black) */}
+          {onToggleTheme && (
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="tactile-btn w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center cursor-pointer"
+              title={theme === 'light' ? "Switch to Black Mode" : "Switch to White Mode"}
+            >
+              {theme === 'light' ? (
+                <Moon className="w-4 h-4 text-black stroke-[2.2]" />
+              ) : (
+                <Sun className="w-4.5 h-4.5 text-black stroke-[2.2]" />
+              )}
+            </button>
+          )}
+
           {/* Copy Invite Link */}
           <button
             onClick={() => {

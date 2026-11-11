@@ -111,13 +111,24 @@ export default function App() {
   });
 
   const handleToggleTheme = () => {
+    const hasImageWallpaper = Boolean(settings.chatBackground?.type === 'image' && settings.chatBackground?.imageUrl);
     let nextTheme;
     if (settings.theme === 'light') {
-      nextTheme = (settings.chatBackground?.type === 'image' && settings.chatBackground?.imageUrl) ? 'custom' : 'dark';
+      nextTheme = hasImageWallpaper ? 'custom' : 'dark';
     } else {
       nextTheme = 'light';
     }
-    const updated = { ...settings, theme: nextTheme };
+    const updated = { 
+      ...settings, 
+      theme: nextTheme,
+      accentColor: hasImageWallpaper ? (settings.accentColor || '#FCC105') : '#FCC105',
+      bubbleStyle: {
+        ...settings.bubbleStyle,
+        outgoingBg: hasImageWallpaper ? (settings.bubbleStyle?.outgoingBg || '#FCC105') : '#FCC105',
+        outgoingText: hasImageWallpaper ? (settings.bubbleStyle?.outgoingText || '#000000') : '#000000',
+        shape: 'brutalist'
+      }
+    };
     setSettings(updated);
     saveToLocalStorage(chats, currentUser, updated);
     applyThemeToDocument(updated);
@@ -2022,6 +2033,8 @@ export default function App() {
               currentUser={currentUser}
               isLoading={isLoadingChats}
               onDeleteChat={handleDeleteChat}
+              theme={settings.theme || 'dark'}
+              onToggleTheme={handleToggleTheme}
             />
           )}
           {/* On mobile, if a chat is active, we show the ChatWindow. Otherwise we hide it. On desktop we show it always. */}

@@ -196,17 +196,25 @@ export default function ProfileSettings({
 
   const handleThemeSelect = (themeId) => {
     setTheme(themeId);
-    let newAccent = accentColor;
-    const preset = APP_THEME_PRESETS.find(p => p.id === themeId);
-    if (preset) {
-      newAccent = preset.accent;
-      setAccentColor(preset.accent);
-      setBubbleStyle(prev => ({
-        ...prev,
-        outgoingBg: preset.accent,
-        outgoingText: getReadableTextColor(preset.accent)
-      }));
+    let newAccent = '#FCC105';
+    const isCustomWallpaperActive = Boolean(
+      (chatBackground.type === 'image' && chatBackground.imageUrl) ||
+      (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC' && chatBackground.color !== '#000000') ||
+      chatBackground.type === 'gradient'
+    );
+    if (isCustomWallpaperActive && accentColor) {
+      newAccent = accentColor;
+    } else {
+      const preset = APP_THEME_PRESETS.find(p => p.id === themeId);
+      newAccent = preset?.accent || '#FCC105';
     }
+    setAccentColor(newAccent);
+    setBubbleStyle(prev => ({
+      ...prev,
+      outgoingBg: newAccent,
+      outgoingText: getReadableTextColor(newAccent),
+      shape: 'brutalist'
+    }));
     const updated = {
       ...settings,
       theme: themeId,
@@ -216,6 +224,8 @@ export default function ProfileSettings({
       accentColor: newAccent,
       bubbleStyle: {
         ...bubbleStyle,
+        outgoingBg: newAccent,
+        outgoingText: getReadableTextColor(newAccent),
         shape: 'brutalist'
       }
     };
@@ -276,20 +286,24 @@ export default function ProfileSettings({
     onUpdateUser({ name, avatarUrl, isOnline });
     const isCustomWallpaperActive = Boolean(
       (chatBackground.type === 'image' && chatBackground.imageUrl) ||
-      (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC') ||
+      (chatBackground.type === 'color' && chatBackground.color && chatBackground.color !== '#FFFFFF' && chatBackground.color !== '#F8FAFC' && chatBackground.color !== '#000000') ||
       chatBackground.type === 'gradient'
     );
     const finalTheme = (isCustomWallpaperActive && (theme === 'light' || theme === 'neo-brutalist')) ? 'custom' : (theme || 'dark');
+    const finalAccent = (!isCustomWallpaperActive && (finalTheme === 'light' || finalTheme === 'dark')) ? '#FCC105' : accentColor;
+    const finalOutgoingBg = (!isCustomWallpaperActive && (finalTheme === 'light' || finalTheme === 'dark')) ? '#FCC105' : (bubbleStyle.outgoingBg || '#FCC105');
     const updatedSettings = {
       ...settings,
       theme: finalTheme,
       appThemeColor,
       textColorMode: 'match',
       textColor: 'auto',
-      accentColor,
+      accentColor: finalAccent,
       chatBackground,
       bubbleStyle: {
         ...bubbleStyle,
+        outgoingBg: finalOutgoingBg,
+        outgoingText: getReadableTextColor(finalOutgoingBg),
         shape: 'brutalist'
       },
       simulationSpeed,
