@@ -211,9 +211,13 @@ export default function ProfileSettings({
       ...settings,
       theme: themeId,
       appThemeColor,
-      textColorMode,
-      textColor,
-      accentColor: newAccent
+      textColorMode: 'match',
+      textColor: 'auto',
+      accentColor: newAccent,
+      bubbleStyle: {
+        ...bubbleStyle,
+        shape: 'brutalist'
+      }
     };
     applyThemeToDocument(updated);
   };
@@ -225,6 +229,7 @@ export default function ProfileSettings({
     setAccentColor(derived.accent);
     setBubbleStyle(prev => ({
       ...prev,
+      shape: 'brutalist',
       outgoingBg: derived.accent,
       outgoingText: getReadableTextColor(derived.accent)
     }));
@@ -232,39 +237,15 @@ export default function ProfileSettings({
       ...settings,
       theme: 'custom',
       appThemeColor: color,
-      textColorMode,
-      textColor,
-      accentColor: derived.accent
+      textColorMode: 'match',
+      textColor: 'auto',
+      accentColor: derived.accent,
+      bubbleStyle: {
+        ...bubbleStyle,
+        shape: 'brutalist'
+      }
     };
     applyThemeToDocument(updated);
-  };
-
-  const handleTextColorSelect = (color) => {
-    if (color === 'auto' || color === 'match') {
-      setTextColorMode('match');
-      setTextColor('auto');
-      const updated = {
-        ...settings,
-        theme,
-        appThemeColor,
-        textColorMode: 'match',
-        textColor: 'auto',
-        accentColor
-      };
-      applyThemeToDocument(updated);
-    } else {
-      setTextColorMode('custom');
-      setTextColor(color);
-      const updated = {
-        ...settings,
-        theme,
-        appThemeColor,
-        textColorMode: 'custom',
-        textColor: color,
-        accentColor
-      };
-      applyThemeToDocument(updated);
-    }
   };
 
   const handleOutgoingBgChange = (color) => {
@@ -325,11 +306,14 @@ export default function ProfileSettings({
       ...settings,
       theme: finalTheme,
       appThemeColor,
-      textColorMode,
-      textColor,
+      textColorMode: 'match',
+      textColor: 'auto',
       accentColor,
       chatBackground,
-      bubbleStyle,
+      bubbleStyle: {
+        ...bubbleStyle,
+        shape: 'brutalist'
+      },
       simulationSpeed,
       soundEnabled,
       notificationsEnabled
@@ -396,7 +380,7 @@ export default function ProfileSettings({
                 ChatMe Customization & Settings
               </h2>
               <p className="text-[11px] font-semibold text-[#8A8A8A] hidden sm:block">
-                Neo-Brutalist Tactile themes, wallpaper, bubble shapes, and user profile
+                Neo-Brutalist Tactile themes, custom wallpaper, bubble colors, and user profile
               </p>
             </div>
           </div>
@@ -575,134 +559,6 @@ export default function ProfileSettings({
                           title={item.name}
                         />
                       ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. App Text Color Options (Match with App Theme & Custom Text Colors) */}
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                  <label className="text-xs font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-2">
-                    <Type className="w-3.5 h-3.5 text-[#FCC105]" />
-                    App Text Color
-                  </label>
-                  <span className="text-[11px] font-semibold text-[#FCC105]">
-                    {textColorMode === 'match'
-                      ? '✨ Matched with App Theme'
-                      : `Custom: ${TEXT_COLOR_PRESETS.find(p => p.color.toLowerCase() === textColor.toLowerCase())?.name || textColor}`}
-                  </span>
-                </div>
-
-                {/* Option A: Match with App Theme (Auto) */}
-                <div
-                  onClick={() => handleTextColorSelect('auto')}
-                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between gap-3 ${
-                    textColorMode === 'match'
-                      ? 'border-[#FCC105] bg-[#FCC105]/10 shadow-md shadow-[#FCC105]/10'
-                      : 'border-[#2B2B2B] bg-[#0A0A0A] hover:border-[#8A8A8A]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border font-bold text-xs ${
-                      textColorMode === 'match'
-                        ? 'bg-[#FCC105] text-black border-[#FCC105]'
-                        : 'bg-[#1A1A1A] text-[#8A8A8A] border-[#2B2B2B]'
-                    }`}>
-                      Aa
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white">Match with App Theme (Auto)</span>
-                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
-                          Recommended
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#8A8A8A] mt-0.5">
-                        Automatically ensures crystal-clear readability and contrast harmonized to your active theme background.
-                      </p>
-                    </div>
-                  </div>
-                  {textColorMode === 'match' && (
-                    <span className="w-5 h-5 rounded-full bg-[#FCC105] text-black flex items-center justify-center text-xs font-bold shrink-0">
-                      ✓
-                    </span>
-                  )}
-                </div>
-
-                {/* Option B: Custom Text Colors & Swatches */}
-                <div className="p-3.5 rounded-xl border border-[#2B2B2B] bg-[#0A0A0A] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#8A8A8A]">Custom Text Color Presets</span>
-                    <span className="text-[10px] text-[#8A8A8A]">Choose high-visibility readable tint</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {TEXT_COLOR_PRESETS.filter(p => p.color !== 'auto').map((tp) => {
-                      const isSelected = textColorMode === 'custom' && textColor.toLowerCase() === tp.color.toLowerCase();
-                      return (
-                        <button
-                          key={tp.id}
-                          type="button"
-                          onClick={() => handleTextColorSelect(tp.color)}
-                          className={`p-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
-                            isSelected
-                              ? 'border-[#FCC105] bg-white/10 ring-1 ring-[#FCC105]'
-                              : 'border-[#2B2B2B] bg-[#141414] hover:border-white/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span 
-                              className="w-4 h-4 rounded-full border border-white/20 shrink-0 shadow-sm"
-                              style={{ backgroundColor: tp.color }}
-                            />
-                            <span className="text-xs font-semibold truncate text-white">
-                              {tp.name}
-                            </span>
-                          </div>
-                          {isSelected && (
-                            <span className="text-[10px] font-bold text-[#FCC105]">✓</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Custom Text Color Picker Input */}
-                  <div className="pt-2 border-t border-[#2B2B2B]/60 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={textColor === 'auto' ? '#FFFFFF' : textColor}
-                        onChange={(e) => handleTextColorSelect(e.target.value)}
-                        className="w-7 h-7 rounded-lg border border-white/20 cursor-pointer p-0.5 bg-transparent"
-                        title="Pick custom text color"
-                      />
-                      <span className="text-xs text-white font-medium">Custom Text Color Picker</span>
-                    </div>
-                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-black/40 border border-white/10" style={{ color: activeTextPalette.primary }}>
-                      {textColor === 'auto' ? 'Auto (' + activeTextPalette.primary + ')' : textColor}
-                    </span>
-                  </div>
-
-                  {/* Real-time Text Sample Preview Card */}
-                  <div 
-                    className="p-3 rounded-xl border border-white/10 transition-all select-none"
-                    style={{ backgroundColor: activeThemePalette.surface }}
-                  >
-                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1" style={{ color: activeTextPalette.muted }}>
-                      Live Text Sample in {activeThemePalette.name}
-                    </div>
-                    <div className="text-sm font-bold leading-tight" style={{ color: activeTextPalette.primary }}>
-                      ChatMe: End-to-End Encrypted Messaging
-                    </div>
-                    <div className="text-xs mt-1 leading-normal" style={{ color: activeTextPalette.secondary }}>
-                      Secondary text descriptions, chat previews, and subtitles adapt to this color.
-                    </div>
-                    <div className="text-[10px] mt-1 flex items-center gap-1.5" style={{ color: activeTextPalette.muted }}>
-                      <span>Muted timestamps & status</span>
-                      <span>•</span>
-                      <span>10:45 AM</span>
                     </div>
                   </div>
                 </div>
@@ -1052,44 +908,16 @@ export default function ProfileSettings({
 
               </div>
 
-              {/* 4. Chat Bubble Customization: Design / Shape and Colors */}
+              {/* 4. Chat Bubble Colors (Fixed Neo-Brutalist Tactile Shape) */}
               <div className="space-y-4 pt-2">
-                <label className="text-xs font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-2">
-                  <Sliders className="w-3.5 h-3.5 text-[#FCC105]" />
-                  Chat Bubble Shape, Design & Colors
-                </label>
-
-                {/* Bubble Shape Selection */}
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-[#FFFFFF]">Bubble Geometry & Shape</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    {BUBBLE_SHAPES.map((shape) => {
-                      const isSelected = bubbleStyle.shape === shape.id;
-                      return (
-                        <button
-                          key={shape.id}
-                          type="button"
-                          onClick={() => setBubbleStyle(prev => ({ ...prev, shape: shape.id }))}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
-                            isSelected
-                              ? 'border-[#FCC105] bg-[#1A1A1A]'
-                              : 'border-[#2B2B2B] bg-[#0A0A0A] hover:border-[#8A8A8A]'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-[#FFFFFF]">{shape.name}</span>
-                            {isSelected && <span className="text-[#FCC105] font-bold text-xs">✓</span>}
-                          </div>
-                          {/* Visual miniature bubble */}
-                          <div className="flex gap-1 items-center mt-1">
-                            <div className={`h-4 w-10 bg-[#FCC105] ${shape.outgoingClass}`} />
-                            <div className={`h-4 w-7 bg-[#2B2B2B] ${shape.incomingClass}`} />
-                          </div>
-                          <span className="text-[10px] text-[#8A8A8A] leading-tight mt-0.5">{shape.description}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-2">
+                    <Sliders className="w-3.5 h-3.5 text-[#FCC105]" />
+                    Chat Bubble Colors
+                  </label>
+                  <span className="text-[10px] bg-[#FCC105]/20 text-[#FCC105] font-bold px-2 py-0.5 rounded-md border border-[#FCC105]/40 uppercase tracking-wider">
+                    Neo-Brutalist Tactile Shape
+                  </span>
                 </div>
 
                 {/* Sent (Outgoing) Bubble Color */}

@@ -164,7 +164,7 @@ export const TEXT_COLOR_PRESETS = [
   { id: 'rose', name: 'Rose Quartz', color: '#FFE4E6', description: 'Soft pastel rose blush' }
 ];
 
-// Available Bubble Shapes
+// Available Bubble Shapes (Neo-Brutalist Tactile shape only)
 export const BUBBLE_SHAPES = [
   {
     id: 'brutalist',
@@ -172,41 +172,6 @@ export const BUBBLE_SHAPES = [
     description: 'Bold 2.5px black border with 3.5px physical 3D drop-shadow and speech notch',
     outgoingClass: 'tactile-bubble-outgoing',
     incomingClass: 'tactile-bubble-incoming'
-  },
-  {
-    id: 'modern',
-    name: 'Modern Notch',
-    description: 'Sleek rounded curves with subtle message notch',
-    outgoingClass: 'rounded-2xl rounded-tr-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]',
-    incomingClass: 'rounded-2xl rounded-tl-xs border-2 border-black/70 shadow-[2.5px_2.5px_0px_#000000]'
-  },
-  {
-    id: 'pill',
-    name: 'Soft Capsule',
-    description: 'Ultra-smooth rounded pill design',
-    outgoingClass: 'rounded-3xl',
-    incomingClass: 'rounded-3xl'
-  },
-  {
-    id: 'sharp',
-    name: 'Minimal Sharp',
-    description: 'Clean architectural subtle corners',
-    outgoingClass: 'rounded-lg',
-    incomingClass: 'rounded-lg'
-  },
-  {
-    id: 'tail',
-    name: 'Classic Tail',
-    description: 'Speech bubble with distinctive corner tail',
-    outgoingClass: 'rounded-2xl rounded-br-none',
-    incomingClass: 'rounded-2xl rounded-bl-none'
-  },
-  {
-    id: 'cyber',
-    name: 'Cyber Cut',
-    description: 'Futuristic angular edges with accent border',
-    outgoingClass: 'rounded-sm border-r-4',
-    incomingClass: 'rounded-sm border-l-4'
   }
 ];
 
